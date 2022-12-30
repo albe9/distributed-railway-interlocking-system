@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?fileVersion 4.0.0?><cproject storage_type_id="org.eclipse.cdt.core.XmlProjectDescriptionStorage">
+	<storageModule moduleId="org.eclipse.cdt.core.settings">
+		<buildSystem id="ARM LLVM">
+			<storageModule id="ARM LLVM" moduleId="org.eclipse.cdt.core.settings"/>
+		</buildSystem>
+		<cconfiguration id="ARM LLVM">
+			<storageModule id="ARM LLVM" moduleId="defaultConfigurationDataProvider" name="ARM LLVM">
+				<sourceEntries/>
+				<folderData id="ARM LLVM.1159149628" name="" path="">
+					<languageData contentTypeIds="org.eclipse.cdt.core.cSource;org.eclipse.cdt.core.cHeader" id="ARM LLVM.1159149628.840545263" languageId="com.windriver.cdt.core.wrLlvmC" name="Wind River LLVM C" supportedEntryKinds="includePath;includeFile;macro;macroFile">
+						<settingEntries/>
+					</languageData>
+					<languageData contentTypeIds="org.eclipse.cdt.core.cxxSource;org.eclipse.cdt.core.cxxHeader" id="ARM LLVM.1159149628.1474987164" languageId="com.windriver.cdt.core.wrLlvmCpp" name="Wind River LLVM C++" supportedEntryKinds="includePath;includeFile;macro;macroFile">
+						<settingEntries/>
+					</languageData>
+				</folderData>
+				<buildData id="ARM LLVM.939767676"/>
+				<targetPlatformData binaryParsers="com.windriver.ide.core.WRElfParserVxWorks;org.eclipse.cdt.core.GNU_ELF" id="ARM LLVM.32374829"/>
+			</storageModule>
+			<storageModule buildSystemId="com.windriver.cdt.core.WRLlvmCfgDataProvider" id="ARM LLVM" moduleId="org.eclipse.cdt.core.settings" name="ARM LLVM">
+				<externalSettings/>
+				<extensions>
+					<extension id="com.windriver.ide.core.WRElfParserVxWorks" point="org.eclipse.cdt.core.BinaryParser"/>
+					<extension id="org.eclipse.cdt.core.GNU_ELF" point="org.eclipse.cdt.core.BinaryParser"/>
+				</extensions>
+			</storageModule>
+			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
+		</cconfiguration>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
+</cproject>
