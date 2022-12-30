@@ -3,11 +3,23 @@
 
 #include "logTask.h"
 
+int LOG_FD;
 
-void logMessage(char* msg){
+
+void mytest(void){
+	printf("\nprova\n");
+}
+
+void logMessage(char* msg, char* task_name){
+	char final_msg[1024] = "task : ";
 	
+	//TODO inserire controllo su lunghezza messaggio
 	
-	if(write(LOG_FD, msg, strlen(msg)) < 0){
+	strcat(final_msg, task_name);
+	strcat(final_msg, "\t");	
+	strcat(final_msg, msg);	
+	strcat(final_msg, "\n");
+	if(write(LOG_FD, final_msg, strlen(final_msg)) < 0){
 		perror("\nErrore nella scrittura di un log:");
 	}
 	
@@ -28,15 +40,12 @@ void logInit(void){
 	//Crea il file di log
 	if ((LOG_FD = open("/usr/log/log.txt", O_RDWR | O_CREAT, 00700)) < 0){
 		perror("\nErrore apertura file di log");
-}
+	}
 	
 	
-	
-	
-	logMessage("\tMessaggio 1 :\n");
-	logMessage("\tMessaggio 2 :\n");
-	logMessage("\tMessaggio 3 :\n");
+	logMessage("Messaggio log di prova", "tLog");
 	
 	
 	close(LOG_FD);
+	
 }

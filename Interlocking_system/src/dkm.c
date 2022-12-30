@@ -137,7 +137,11 @@ void wifiServerRoutine(void){
 }
 
 void startLog(void){
-	taskId = taskSpawn("log_init_task", 1, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	taskId = taskSpawn("tLog", 1, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+}
+
+void test(void){
+	taskId = taskSpawn("tTest", 1, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
 }
 
 
