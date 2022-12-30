@@ -81,7 +81,7 @@
             <stringAttribute key="BLD::Info|Macro|APICHECK|value|rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP" value="0"/>
             <listAttribute key="BLD::Info|Incl|rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP">
                 <stringAttribute value="-I$(VSB_DIR)/share/h"/>
-                <stringAttribute value="C:/WindRiver/workspace/test_raspberry3/includes"/>
+                <stringAttribute value="$(PRJ_ROOT_DIR)/includes"/>
                 <stringAttribute value="-isystem$(VSB_DIR)/krnl/h/system"/>
                 <stringAttribute value="-isystem$(VSB_DIR)/krnl/h/public"/>
             </listAttribute>

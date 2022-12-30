@@ -3,14 +3,12 @@
 #include "vxWorks.h"
 #include "stdio.h"
 #include <errno.h>
-#include <string.h>
 #include "taskLib.h"
 #include <arpa/inet.h>
 #include "sockLib.h"
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+
+#include "logTask.h"
+
 
 
 TASK_ID taskId;
@@ -21,39 +19,6 @@ void myRoutine(_Vx_usr_arg_t message){
 	logMsg("Task name : %s", taskName(0), 0, 0, 0, 0, 0);
 }
 
-void logMessage(char* msg){
-	
-	//if(write(log_fd, buffer, nbytes))
-	
-}
-
-int log_fd;
-
-void logRoutine(void){
-	//Crea file di log
-	
-	struct stat st = {0};
-	//Controlla se esiste directory di log, altrimenti la crea
-	if (stat("/usr/log", &st) == -1) {
-	    if(mkdir("/usr/log", 00700) < 0){
-	    	perror("\nErrore creazione directory di log:");
-	    }
-	}
-	//Crea il file di log
-	if ((log_fd = open("/usr/log/log.txt", O_RDWR | O_CREAT, 00700)) < 0){
-		perror("\nErrore apertura file di log");
-	}
-	
-	
-	
-	
-	logMessage("\tMessaggio 1 :\n");
-	logMessage("\tMessaggio 2 :\n");
-	logMessage("\tMessaggio 3 :\n");
-	
-	
-	close(log_fd);
-}
 
 
 void myRoutine4(void){
@@ -171,8 +136,8 @@ void wifiServerRoutine(void){
 	printf("\nFine connessione\n");
 }
 
-void logInit(void){
-	taskId = taskSpawn("log_init_task", 1, 0, 20000,(FUNCPTR) logRoutine, 0,0,0,0,0,0,0,0,0,0);
+void startLog(void){
+	taskId = taskSpawn("log_init_task", 1, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
 
