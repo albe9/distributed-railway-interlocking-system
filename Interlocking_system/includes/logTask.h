@@ -8,14 +8,16 @@
 #ifndef INCLUDES_LOGTASK_H_
 #define INCLUDES_LOGTASK_H_
 
-#include "stdio.h"
+
+#include <stdio.h>
+#include <semLib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-
+#include "global_variables.h" 
 
 
 extern void logMessage(char* msg, char* task_name);
