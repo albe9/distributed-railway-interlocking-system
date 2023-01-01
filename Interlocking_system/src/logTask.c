@@ -62,7 +62,7 @@ void logInit(void){
 	
 	logMessage("Messaggio log di prova", "tLog");
 	
-	
+	//test
 	close(LOG_FD);
 	
 }
