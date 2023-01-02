@@ -1,18 +1,21 @@
 /* includes */
 
-#include "vxWorks.h"
-#include "stdio.h"
+#include <vxWorks.h>
+#include <stdio.h>
 #include <errno.h>
-#include "taskLib.h"
+#include <taskLib.h>
 #include <arpa/inet.h>
-#include "sockLib.h"
+#include <sockLib.h>
 
 #include "logTask.h"
-
+#include "global_variables.h"
 
 
 
 TASK_ID taskId;
+
+//test per il passaggio di stringhe come parametro
+/*
 char message[20] = "log di prova";
 
 void myRoutine(_Vx_usr_arg_t message){
@@ -21,7 +24,7 @@ void myRoutine(_Vx_usr_arg_t message){
 }
 
 
-
+//test per creare un elenco di task con relativi id (per disattivarli ecc) 
 void myRoutine4(void){
 	int maxTasks = 50;
 	TASK_ID id_list[maxTasks];
@@ -40,6 +43,12 @@ void myRoutine4(void){
 	}
 	
 }
+
+void start3(void){
+	taskId = taskSpawn("test task", 1, 0, 20000,(FUNCPTR) myRoutine4, 0,0,0,0,0,0,0,0,0,0);
+}
+
+*/
 
 void wifiRoutine(void){
 	
@@ -138,17 +147,25 @@ void wifiServerRoutine(void){
 }
 
 void startLog(void){
-	taskId = taskSpawn("tLog", 1, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskSpawn("LogTask", 1, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void test(void){
 	taskId = taskSpawn("tTest", 1, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
 }
 
-
-void start3(void){
-	taskId = taskSpawn("test task", 1, 0, 20000,(FUNCPTR) myRoutine4, 0,0,0,0,0,0,0,0,0,0);
+void setTime(void){
+	taskSpawn("SetTimeTask", 1, 0, 20000,(FUNCPTR) setCurrentTime, 0,0,0,0,0,0,0,0,0,0);
 }
+
+void myTd(char * task_to_delete){
+	printf("\n%s\n",task_to_delete);
+	TASK_ID tid_to_delete = taskNameToId(task_to_delete);
+	printf("task id : %i\n",tid_to_delete);
+	taskDeleteForce(tid_to_delete);
+}
+
+
 void wifi(void){
 	taskId = taskSpawn("wifi_task", 1, 0, 20000,(FUNCPTR) wifiRoutine, 0,0,0,0,0,0,0,0,0,0);
 }
