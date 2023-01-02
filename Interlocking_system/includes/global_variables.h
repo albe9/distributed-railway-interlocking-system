@@ -13,7 +13,6 @@
 #include "taskLib.h"
 #include "semLib.h"
 
-
-SEM_ID SEM_LOG;
+TASK_ID LOG_TID;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */
