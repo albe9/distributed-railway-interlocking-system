@@ -9,6 +9,7 @@
 #define INCLUDES_INITTASK_H_
 
 #include "global_variables.h"
+#include "wifiTask.h"
 
 
 extern void setCurrentTime(time_t current_time);
