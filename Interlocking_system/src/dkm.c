@@ -7,9 +7,9 @@
 #include <arpa/inet.h>
 #include <sockLib.h>
 
-#include "logTask.h"
 #include "global_variables.h"
-
+#include "initTask.h"
+#include "logTask.h"
 
 
 TASK_ID taskId;
@@ -147,11 +147,11 @@ void wifiServerRoutine(void){
 }
 
 void startLog(void){
-	LOG_TID = taskSpawn("LogTask", 1, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskSpawn("LogTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void test(void){
-	taskId = taskSpawn("tTest", 1, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
+	taskId = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void setTime(void){
