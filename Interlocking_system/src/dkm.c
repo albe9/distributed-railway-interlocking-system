@@ -61,7 +61,7 @@ void test(void){
 }
 
 void startInit(void){
-	INIT_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
+	INIT_TID = taskSpawn("initTask", 50, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void startWifi(void){
