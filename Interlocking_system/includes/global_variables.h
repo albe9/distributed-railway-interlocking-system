@@ -26,5 +26,7 @@
 #include <unistd.h>
 
 TASK_ID LOG_TID;
+TASK_ID TEST_TID;
+TASK_ID INIT_TID;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */

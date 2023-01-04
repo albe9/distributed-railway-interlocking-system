@@ -151,7 +151,11 @@ void startLog(void){
 }
 
 void test(void){
-	taskId = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
+	TEST_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
+}
+
+void startInit(void){
+	INIT_TID = taskSpawn("tTest", 10, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void setTime(void){
