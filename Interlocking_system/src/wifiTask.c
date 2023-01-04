@@ -8,16 +8,14 @@
 
 #include "wifiTask.h"
 
-int HOST_PORT = 6543;
-char HOST_IP[] = "192.168.1.35";
-int sock_server = 0, fd_server = 0;
 
-void addServer(char* server_ip, int server_port){
+
+void connectToServer(conn *conn_server, char* server_ip, int server_port){
 	
 	
 	struct sockaddr_in serv_addr;
 	
-	if ((sock_server = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+	if ((conn_server->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		perror("\nErrore nella creazione del socket client function : ");
 	}
 	
@@ -26,28 +24,32 @@ void addServer(char* server_ip, int server_port){
 	serv_addr.sin_port = htons(server_port);
  
  
-	if ((fd_server = connect(sock_server, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
+	if ((conn_server->fd = connect(conn_server->sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
 		perror("\nErrore connessione fallita client function : ");
 	}
 	
 	
 }
 
-void sendToServer(char *msg){
+void addServer(conn *conn_server, char* server_ip, int server_port){
 	
-	send(sock_server, msg, strlen(msg), 0);
+	//TODO inserire i server aggiunti in un'apposita struttura
 }
 
-void readFromServer(char* buffer, ssize_t buf_size){
+void sendToServer(conn *conn_server, char *msg){
+	
+	send(conn_server->sock, msg, strlen(msg), 0);
+}
+
+void readFromServer(conn *conn_server, char* buffer, ssize_t buf_size){
 	
 	ssize_t valread;
-	valread = read(sock_server, buffer, buf_size);
-	printf("Messaggio ricevuto : %s\n", buffer);
+	valread = read(conn_server->sock, buffer, buf_size);
 }
 
-void removeServer(void){
+void removeServer(conn *conn_server){
 	// closing the connected socket
-	close(fd_server);
+	close(conn_server->fd);
 }
 /*
 void setServer(void){
@@ -113,10 +115,6 @@ void setServer(void){
 
 void wifiMain(void){
 	
-	addServer(HOST_IP, HOST_PORT);
-	sendToServer("Messaggio di prova verso l'host");
-	char buffer[1024] = {"\0"};
-	readFromServer(buffer, 1024);
 }
 
 

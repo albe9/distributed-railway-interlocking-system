@@ -13,13 +13,18 @@
 
 #include "global_variables.h"
 
+typedef struct{
+	int sock;
+	int fd;
+}conn;
 
-extern void addServer(char* server_ip, int server_port);
-extern void sendToServer(char *msg);
-extern void readFromServer(char* buffer, ssize_t buf_size);
+extern void addServer(conn *conn_server, char* server_ip, int server_port);
+extern void connectToServer(conn *conn_server, char* server_ip, int server_port);
+extern void sendToServer(conn *conn_server, char *msg);
+extern void readFromServer(conn *conn_server, char* buffer, ssize_t buf_size);
 
 extern void setClient(void);
 extern void wifiMain(void);
-extern void removeServer(void);
+extern void removeServer(conn *conn_server);
 
 #endif /* INCLUDES_WIFITASK_H_ */
