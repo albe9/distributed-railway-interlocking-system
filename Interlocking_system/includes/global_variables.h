@@ -17,7 +17,6 @@
 #include <semLib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -25,9 +24,13 @@
 #include <taskLib.h>
 #include <unistd.h>
 
+
+#define RASP_ID 1
+
 TASK_ID LOG_TID;
 TASK_ID TEST_TID;
 TASK_ID INIT_TID;
 TASK_ID WIFI_TID;
+
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */
