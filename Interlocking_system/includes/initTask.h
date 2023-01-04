@@ -11,6 +11,8 @@
 #include "global_variables.h"
 
 
-extern void setCurrentTime(void);
+extern void setCurrentTime(time_t current_time);
+extern void initMain(void);
+
 
 #endif /* INCLUDES_INITTASK_H_ */

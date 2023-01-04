@@ -9,7 +9,8 @@
 #include "initTask.h"
 
 
-void setCurrentTime(void){
+void setCurrentTime(time_t current_time){
+	/*
 	struct tm current_time;
 	current_time.tm_sec  = 0;				//seconds after the minute – [0, 61] (until C99)[0, 60]
 	current_time.tm_min  = 37;				//minutes after the hour – [0, 59]
@@ -20,10 +21,10 @@ void setCurrentTime(void){
 	current_time.tm_wday = 0;				//days since Sunday – [0, 6]
 	current_time.tm_yday = 1;				//days since January 1 – [0, 365]
 	
-
 	time_t current_time_clike = mktime(&current_time);
+	*/
 	struct timeval current_timeval;
-	current_timeval.tv_sec = current_time_clike;
+	current_timeval.tv_sec = current_time;
 	current_timeval.tv_usec = 0;
 	
 	
@@ -39,3 +40,13 @@ void setCurrentTime(void){
 	timeinfo = localtime (&rawtime);
 	printf ("Current local time and date: %s", asctime(timeinfo));	
 }
+
+void initMain(void){
+	
+	
+	setCurrentTime(1672855095);
+	
+	
+	
+}
+
