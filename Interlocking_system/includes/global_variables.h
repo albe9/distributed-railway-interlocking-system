@@ -14,6 +14,7 @@
 #define INCLUDES_GLOBAL_VARIABLES_H_
 
 #include <fcntl.h>
+#include <msgQLib.h>
 #include <semLib.h>
 #include <stdio.h>
 #include <string.h>
