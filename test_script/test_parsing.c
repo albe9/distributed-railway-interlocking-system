@@ -1,31 +1,57 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 /*
-    test string: 
-    Time:1673204636,Route:a,rasp_id_prev:0,rasp_id_next:2,prev_ip:127.0.0.1,next_ip:127.0.0.1,Stop:1
+    test data:
+    first msg: 
+        -"1673375234,2"
+    second msg:
+        -"1,0,2,127.0.0.1,127.0.0.1;2,0,2,127.0.0.1,127.0.0.1;"
 
 */
 
+typedef struct{
+    int route_id;
+    int rasp_id_prev;
+    int rasp_id_next;
+    char prev_ip[20];
+    char next_ip[20];
+}route;
+
 int main(){
 
-    char test_msg[] = "Time:1673204636,Route:a,rasp_id_prev:0,rasp_id_next:2,prev_ip:127.0.0.1,next_ip:127.0.0.1,Stop:1"; 
-    char *token;
-    char *key;
-    token = strtok(test_msg, ",");
 
-    while(token != NULL){
-        printf("%s\n",token);
-        token = strtok(NULL, ",");
+    char config_data[] = "1673375234,2;1,0,2,127.0.0.1,127.0.0.1;2,0,2,127.0.0.1,127.0.0.1;";
+
+    char *token;
+
+    token = strtok(config_data, ";");
+    
+
+    time_t current_time = 0;
+    int route_count = 0;
+
+    sscanf(token,"%i,%i", &current_time, &route_count);
+
+    printf("Dati : %i %i",current_time,route_count);
+
+    
+    
+    route *routes = (route*)malloc(route_count * sizeof(route));
+
+    
+    for(int i=0;i<route_count;i++){
+        token = strtok(NULL, ";");
+        sscanf(token,"%i,%i,%i,%[0-9.],%[0-9.]",&(routes + i)->route_id,&(routes + i)->rasp_id_prev,
+            &(routes + i)->rasp_id_next,(routes + i)->prev_ip,(routes + i)->next_ip);
         
-        key = strtok(token, ":");
-        while(key != NULL){
-            printf("%s\n",key);
-            key = strtok(NULL, ",");
-            
-        }
     }
 
+    free(routes);
+    
+   
     return(0);
     
 }
