@@ -24,7 +24,7 @@ Routes_test =  \
             "rasp_id_next" : "-1",
             "prev_ip" : "127.0.0.1",
             "next_ip" : "-1",
-        }
+        },
     },
     2: 
     {
@@ -33,7 +33,7 @@ Routes_test =  \
             "rasp_id_prev" : "0",
             "rasp_id_next" : "2",
             "prev_ip" : "127.0.0.1",
-            "next_ip" : "127.0.0.1",
+            "next_ip" : "192.168.1.1",
         },
     },
     3: 
@@ -48,69 +48,99 @@ Routes_test =  \
     }
 }
 
+def query_node_data(rasp_id, routes):
 
-def make_config(rasp_id, routes):
+    """
+        Estrae le informazioni relative ad un singolo nodo dalla mappa dei tracciati
+    """
+
+    node_data = \
+    {
+        "prev_node_ips" : set(),
+        "next_node_ips" : set(),
+        "route_ids"     : set(),
+    }
+
+    
+
+    for route_id, route_data in routes.items():
+        if rasp_id in route_data:
+            node_data["prev_node_ips"].add(route_data[rasp_id]["prev_ip"])
+            node_data["next_node_ips"].add(route_data[rasp_id]["next_ip"])
+            node_data["route_ids"].add(route_id)
+
+    return node_data
+
+def make_config_string(rasp_id, routes):
     """
         Definizione protocollo : 
             -primo pacchetto:
                 -Time since epoch locale,
+                -Numero di nodi precedenti
+                -Numero di nodi successivi
                 -Numero di route di cui fa parte il nodo
-            -secondo/successivi paccehtti:
+            -secondo pacchetto:
+                -prev_ip,
+            -terzo pacchetto:
+                -next_ip,
+            -quarto pacchetto:
                 -route_id,
                 -rasp_id_prev,
                 -rasp_id_next,
-                -prev_ip,
-                -next_ip,
+                
+        Solo il primo pacchetto è unico, i restanti possono essere multipli (rappresentano array)
     """
 
-    config_data = []
+    config_data = ""
     #primo pacchetto 
+    node_data = query_node_data(rasp_id, routes)
     msg = f"{int(time.time())},"
-    route_count = 0
-    for route_data in routes.values():
-        if rasp_id in route_data:
-            route_count += 1
-            continue
-    
-    msg += f"{route_count}"
-    config_data.append(msg)
-    #secondo pacchetto, TODO : valutare se spezzare il pacchetto in più parti
-    msg = ""
-    for route_id, route_data in routes.items():
-        if rasp_id in route_data:
-            msg += f"{route_id}"
-            for value in route_data[rasp_id].values():
-                msg += ","
-                msg += f"{value}"
-            msg += ";"    
-    config_data.append(msg)
+    msg += f"{len(node_data['prev_node_ips'])},"
+    msg += f"{len(node_data['next_node_ips'])},"
+    msg += f"{len(node_data['route_ids'])};"
+
+    #secondo pacchetto
+    for ip in node_data['prev_node_ips']:
+        msg += f"{ip},"
+    msg = msg.removesuffix(',')
+    msg += ";" 
+    #terzo pacchetto
+    for ip in node_data['next_node_ips']:
+        msg += f"{ip},"
+    msg = msg.removesuffix(',')
+    msg += ";" 
+    #quarto pacchetto
+
+
+    print(msg)
 
     return config_data
 
 
 
 
-def server_loop():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(('0.0.0.0', PORT))       #accetta connessioni da qualsiasi indirizzo sulla porta PORT
-        s.listen()
-        conn, addr = s.accept()
-        with conn:
-            print(f"Connected by {addr}")
-            rasp_msg = conn.recv(1024)
-            print(f"messaggio ricevuto : {rasp_msg.decode()}")
+# def server_loop():
+#     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+#         s.bind(('0.0.0.0', PORT))       #accetta connessioni da qualsiasi indirizzo sulla porta PORT
+#         s.listen()
+#         conn, addr = s.accept()
+#         with conn:
+#             print(f"Connected by {addr}")
+#             rasp_msg = conn.recv(1024)
+#             print(f"messaggio ricevuto : {rasp_msg.decode()}")
 
-            rasp_msg = rasp_msg.decode().strip()
-            rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
+#             rasp_msg = rasp_msg.decode().strip()
+#             rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
 
-            msg = make_config(rasp_id, Routes_test)
-            conn.send(msg.encode())
+#             msg = make_config(rasp_id, Routes_test)
+#             conn.send(msg.encode())
         
             
-        s.close()
+#         s.close()
+
 
 def main():
-    print(make_config(1,Routes_test))
+    make_config_string(1,Routes_test)
 
 if __name__ == "__main__":
     main()

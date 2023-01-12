@@ -4,12 +4,7 @@
 #include <time.h>
 
 /*
-    test data:
-    first msg: 
-        -"1673375234,2"
-    second msg:
-        -"1,0,2,127.0.0.1,127.0.0.1;2,0,2,127.0.0.1,127.0.0.1;"
-
+    test data: 
 */
 
 typedef struct{
