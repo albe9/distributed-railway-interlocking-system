@@ -1,1 +1,0 @@
-/usr/bin/gcc -g -rdynamic CMakeFiles/Virtualized_raspberry.dir/main.c.o -o Virtualized_raspberry  libinit.a libwifi.a 
