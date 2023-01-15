@@ -1,0 +1,17 @@
+[
+{
+  "directory": "/home/albe/distributed-railway-interlocking-system/build",
+  "command": "/usr/bin/gcc  -I/home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/includes -g -o CMakeFiles/init.dir/src/initTask.c.o -c /home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/src/initTask.c",
+  "file": "/home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/src/initTask.c"
+},
+{
+  "directory": "/home/albe/distributed-railway-interlocking-system/build",
+  "command": "/usr/bin/gcc  -I/home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/includes -g -o CMakeFiles/wifi.dir/src/wifiTask.c.o -c /home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/src/wifiTask.c",
+  "file": "/home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/src/wifiTask.c"
+},
+{
+  "directory": "/home/albe/distributed-railway-interlocking-system/build",
+  "command": "/usr/bin/gcc  -I/home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/includes -I/home/albe/distributed-railway-interlocking-system/build -g -o CMakeFiles/Virtualized_raspberry.dir/main.c.o -c /home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/main.c",
+  "file": "/home/albe/distributed-railway-interlocking-system/test_script/virtualized_raspberry/main.c"
+}
+]

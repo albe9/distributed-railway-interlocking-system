@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "global_variables.h": "c",
+        "inittask.h": "c"
+    }
+}
