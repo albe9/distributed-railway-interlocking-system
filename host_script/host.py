@@ -146,6 +146,7 @@ def make_config_string(rasp_id, routes):
 
 def server_loop(routes):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('0.0.0.0', PORT))       #accetta connessioni da qualsiasi indirizzo sulla porta PORT
         s.listen()
         conn, addr = s.accept()

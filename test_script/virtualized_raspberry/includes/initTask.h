@@ -13,9 +13,26 @@
 #include "global_variables.h"
 #include "wifiTask.h"
 
+#define IP_LEN 20
+
+typedef struct{
+    int route_id;
+    int rasp_id_prev;
+    int rasp_id_next;
+}route;
+
+typedef struct{
+    int prev_node_count;
+    int next_node_count;
+    int route_count;
+    char **prev_ips;
+    char **next_ips;
+}network;
 
 
 extern void setCurrentTime(time_t current_time);
+extern int parseConfigString(char* config_string,route **routes, network *net);
+void printConfigInfo(route *routes, network *net);
 extern void initMain(void);
 
 
