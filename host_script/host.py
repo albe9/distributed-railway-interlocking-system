@@ -87,8 +87,12 @@ def make_config_string(rasp_id, routes):
                 -route_id,
                 -rasp_id_prev,
                 -rasp_id_next,
-                
-        Tra ogni pacchetto c'è un separatore ';' mentre tra ogni dato di un pacchetto c'è ','.
+
+        Separatori : 
+        ';' tra due tipologie di pacchetto differenti
+        '-' tra due pacchetti dello stesso tipo (accade solo con i pacchetti di tipo 4)
+        ',' tra i dati dello stesso pacchetto        
+        
     """
 
     config_data = ""
@@ -110,9 +114,10 @@ def make_config_string(rasp_id, routes):
     msg = msg.removesuffix(',')
     msg += ";" 
     #quarto pacchetto e successivi
-    for route in node_data['routes']:
-        msg += f'{*route,}'
-
+    for route_id, prev_id, next_id in node_data['routes']:
+        msg += f"{route_id},{prev_id},{next_id}-"
+    msg = msg.removesuffix('-')
+    msg += ";"
 
     print(msg)
 
