@@ -44,7 +44,7 @@ int parseConfigString(char* config_string,route *routes, network *net){
     
     //analizzo il primo pacchetto
     
-    sscanf(packet[0],"%i,%i,%i,%i", &current_time, &net->prev_node_count, &net->next_node_count, &net->route_count);
+    sscanf(packet[0],"%li,%i,%i,%i", &current_time, &net->prev_node_count, &net->next_node_count, &net->route_count);
 
     //alloco lo spazio per le stringhe degli ip precedenti e successivi e per le routes
     net->prev_ips = malloc(net->prev_node_count * sizeof(char *));
