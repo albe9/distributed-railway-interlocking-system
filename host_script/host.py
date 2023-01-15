@@ -154,11 +154,11 @@ def server_loop(routes):
             rasp_msg = conn.recv(1024)
             print(f"messaggio ricevuto : {rasp_msg.decode()}")
 
-            # rasp_msg = rasp_msg.decode().strip()
-            # rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
+            rasp_msg = rasp_msg.decode().strip()
+            rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
 
-            # msg = make_config_string(rasp_id, routes)
-            # conn.send(msg.encode())
+            msg = make_config_string(rasp_id, routes)
+            conn.send(msg.encode())
         
             
         s.close()

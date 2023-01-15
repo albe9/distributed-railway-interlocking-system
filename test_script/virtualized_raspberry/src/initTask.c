@@ -42,12 +42,11 @@ void initMain(void){
 	char msg[50];
 	snprintf(msg, 50, "Connessione da raspberry con RASP_ID : %i", RASP_ID);
 	sendToServer(&conn_host, msg);
-	// char buffer[1024] = {0};
-	// for(int i = 0;i<3;i++){
-	// 	readFromServer(&conn_host, buffer, 1024);
-	// 	printf("\n\%s",buffer);
-	// 	memset(buffer, 0 ,1024);
-	// }
+	char config_string[1024] = {0};
+	
+	readFromServer(&conn_host, config_string, 1024);
+	printf("\n%s",config_string);
+	
 
 }
 
