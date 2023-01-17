@@ -1,5 +1,6 @@
 import socket
 import time
+import sys
 
 
 HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
@@ -144,29 +145,29 @@ def make_config_string(rasp_id, routes):
 
 
 
-def server_loop(routes):
+def server_loop(node_num, routes):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('0.0.0.0', PORT))       #accetta connessioni da qualsiasi indirizzo sulla porta PORT
         s.listen()
-        conn, addr = s.accept()
-        with conn:
-            print(f"Connected by {addr}")
-            rasp_msg = conn.recv(1024)
-            print(f"messaggio ricevuto : {rasp_msg.decode()}")
+        for node_idx in range(node_num):
+            conn, addr = s.accept()
+            with conn:
+                print(f"Connected by {addr}")
+                rasp_msg = conn.recv(1024)
+                print(f"messaggio ricevuto : {rasp_msg.decode()}")
 
-            rasp_msg = rasp_msg.decode().strip()
-            rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
+                rasp_msg = rasp_msg.decode().strip()
+                rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
 
-            msg = make_config_string(rasp_id, routes)
-            conn.send(msg.encode())
-        
+                msg = make_config_string(rasp_id, routes)
+                conn.send(msg.encode())
             
         s.close()
 
 
 def main():
-    server_loop(Routes_real)
+    server_loop(int(sys.argv[1]), Routes_real)
 
 if __name__ == "__main__":
     main()
