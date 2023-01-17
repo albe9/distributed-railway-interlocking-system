@@ -52,9 +52,7 @@ TASK_ID WIFI_TID;
 #include <time.h>
 #include <unistd.h>
 
-#define RASP_ID 1
-
-
-
+extern int RASP_ID;
+extern char RASP_IP[20];
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */

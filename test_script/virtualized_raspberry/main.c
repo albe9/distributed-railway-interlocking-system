@@ -6,17 +6,16 @@
 int main(int argc, char *argv[]){
 
     if(argc > 1){
-        int rasp_id = -1;
-        char rasp_ip[20];
         
-        strcpy(rasp_ip,argv[1]);    
-        rasp_id = atoi(argv[2]);
         
-        printf("ip : %s id : %i\n",rasp_ip,rasp_id);
+        strcpy(RASP_IP,argv[1]);    
+        RASP_ID = atoi(argv[2]);
+        
+        printf("ip : %s id : %i\n",RASP_IP,RASP_ID);
     }
     
 
-    //initMain();
+    initMain();
 
     return(0);
     

@@ -139,7 +139,7 @@ void initMain(void){
 	//apro la connessione con l'host per ricevere i dati di configurazione
 	int HOST_PORT = 6543;
 	// char HOST_IP[] = "192.168.1.35";
-	char HOST_IP[] = "172.23.78.253";
+	char HOST_IP[] = "172.23.78.0";
 	conn conn_host = {.fd = 0, .sock = 0};
 	
 
