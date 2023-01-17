@@ -1,0 +1,19 @@
+Installare Ubuntu su wsl 
+Da vscode installare estensione "wsl"
+Aprire terminale wsl
+sudo apt-get update 
+sudo apt-get install build-essential gdb
+sudo apt-get install git
+sudo apt-get install cmake
+Cambiare directory su /home 
+Digitare code .
+Qui si aprirà vscode da wsl
+Su vscode installate le estensioni di c/c++ e di cmake ["C/C++ Extension Pack" e "CMake Tools"]
+Premete CTRL+SHIFT+P e digitare Git: Clone e cliccare da GitHub e clonare la repository del progetto
+Vi chiederà di aprire una repository clonata o aggiungerla al workspace, cliccare apri
+Cambiate branch da quello che vi ha aperto [dovrebbe essere il main] a config_test
+Premete CTRL+SHIFT+P e digitare CMake: Configure
+Vi chiederà di scegliere il kit di compilazione ad esempio GCC 11.3.0 x86_64-linux-gnu
+Vi chiederà di scegliere il percorso dove si trova il file CMakeList.txt
+Premete CTRL+SHIFT+P e digitare CMake: Build
+Premete CTRL+SHIFT+P e digitare CMake: Run without Debugging e se tutto è andato bene si riceve messaggi
