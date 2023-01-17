@@ -20,4 +20,4 @@ done
 # esegue i file compilati con i relativi args
 
 ../../build/Virtualized_raspberry "172.23.78.1" 1
-# ../../build/Virtualized_raspberry "172.23.78.2" 2
+../../build/Virtualized_raspberry "172.23.78.2" 2
