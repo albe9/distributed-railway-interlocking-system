@@ -10,8 +10,9 @@ include_directories(includes)
 
 add_library(init src/initTask.c)
 add_library(wifi src/wifiTask.c)
+add_library(global src/global_variables.c)
 
-target_link_libraries(Virtualized_raspberry PUBLIC init wifi)
+target_link_libraries(Virtualized_raspberry PUBLIC init wifi global)
 
 
 target_include_directories(Virtualized_raspberry PUBLIC
