@@ -2,52 +2,97 @@ import socket
 import time
 import sys
 
-
-HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
 PORT = 6543  # Port to listen on (non-privileged ports are > 1023)
+HOST_IP_SUFFIX = "172.23.78."
 
-id_to_ip_dict = {}
 
- # Da scegliere la sintassi, per adesso dict che associa ad ogni nodo(Tramite RASP_ID) il nodo precedente e successivo
+class Node:
+    def __init__(self, rasp_id_prev: int, prev_ip: str, rasp_id_next: int, next_ip: str):
+        self.rasp_id_prev = rasp_id_prev
+        self.prev_ip = prev_ip
+        self.rasp_id_next = rasp_id_next
+        self.next_ip = next_ip
+class Route:
+    def __init__(self, route_id: int):
+        self.route_id = route_id
+        self.node_list = []
+    def add_node(self, node_to_add: Node) -> int:
+        self.node_list.append(node_to_add)
+        return 1
+    def remove_node(self, note_to_remove: Node) -> int:
+        self.node_list.remove(note_to_remove)
+        return 1
+
+
+# I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
+# rasp_id 0 è stato assegnato all'host che ha ip 172.23.78.0
+# rasp_id -9999 è stato assegnato al nodo [che non esiste] successivo al capolinea ed esso avrà ip -9999
+# Gli ip sono stati assegnati a partire da quello dell'host, ad esempio il rasp 1 ha ip [172.23.78].1, il rasp 2 ha [172.23.78].2
+# Per visualizzare queste rotte accedere a ProgettoSWE4ES>Diagrammi>Routes
 Routes_test =  \
 {
-    1:
+    #id univoco della rotta
+    1: 
     {
-        1 :
+        # id univoco del nodo in tutta la rete
+        1 : 
         {
             "rasp_id_prev" : "0",
+            "prev_ip" : HOST_IP_SUFFIX + "0",
             "rasp_id_next" : "2",
-            "prev_ip" : "127.0.0.1",
-            "next_ip" : "127.0.0.1",
+            "next_ip" : HOST_IP_SUFFIX + "2",            
         },
+
         2 :
         {
             "rasp_id_prev" : "1",
-            "rasp_id_next" : "-1",
-            "prev_ip" : "127.0.0.1",
-            "next_ip" : "-1",
-        },
+            "prev_ip" : HOST_IP_SUFFIX + "1",
+            "rasp_id_next" : "3",
+            "next_ip" : HOST_IP_SUFFIX + "3",    
+       },
+
+       3 :
+       {
+            "rasp_id_prev" : "2",
+            "prev_ip" : HOST_IP_SUFFIX + "2",
+            "rasp_id_next" : "4",
+            "next_ip" : HOST_IP_SUFFIX + "4",  
+       },
+
+       4 :
+       {
+            "rasp_id_prev" : "3",
+            "prev_ip" : HOST_IP_SUFFIX + "3",
+            "rasp_id_next" : "5",
+            "next_ip" : HOST_IP_SUFFIX + "5",  
+       },
+
+       5 :
+       {
+            "rasp_id_prev" : "4",
+            "prev_ip" : HOST_IP_SUFFIX + "4",
+            "rasp_id_next" : "-9999",
+            "next_ip" : HOST_IP_SUFFIX + "3",  
+       },
     },
+
     2: 
     {
         1 :
         {
-            "rasp_id_prev" : "0",
-            "rasp_id_next" : "3",
-            "prev_ip" : "127.0.0.1",
-            "next_ip" : "192.168.1.1",
+            
         },
-    },
-    3: 
-    {
+
         2 :
         {
-            "rasp_id_prev" : "0",
-            "rasp_id_next" : "2",
-            "prev_ip" : "127.0.0.1",
-            "next_ip" : "127.0.0.1",
+            
         },
-    }
+
+        3 :
+        {
+            
+        },
+    },
 }
 
 Routes_real = {
@@ -168,7 +213,8 @@ def server_loop(node_num, routes):
 
 
 def main():
-    server_loop(int(sys.argv[1]), Routes_real)
+    # server_loop(int(sys.argv[1]), Routes_real)
+    print(query_node_data(1, Routes_real))
 
 if __name__ == "__main__":
     main()
