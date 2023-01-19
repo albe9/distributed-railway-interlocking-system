@@ -79,7 +79,9 @@ def query_node_data(rasp_id, routes):
     node_data = \
     {
         "prev_node_ips" : set(),
+        "prev_node_ids" : set(),
         "next_node_ips" : set(),
+        "next_node_ids" : set(),
         "routes" : []
         
     }
@@ -88,7 +90,9 @@ def query_node_data(rasp_id, routes):
     for route_id, route_data in routes.items():
         if rasp_id in route_data:
             node_data["prev_node_ips"].add(route_data[rasp_id]["prev_ip"])
+            node_data["prev_node_ids"].add(route_data[rasp_id]["rasp_id_prev"])
             node_data["next_node_ips"].add(route_data[rasp_id]["next_ip"])
+            node_data["next_node_ids"].add(route_data[rasp_id]["rasp_id_next"])
             node_data["routes"].append([route_id,route_data[rasp_id]["rasp_id_prev"],route_data[rasp_id]["rasp_id_next"]]) 
 
     return node_data
@@ -103,8 +107,10 @@ def make_config_string(rasp_id, routes):
                 -Numero di route di cui fa parte il nodo,
             -secondo pacchetto:
                 -prev_node_ips,
+                -prev_node_ids,
             -terzo pacchetto:
                 -next_node_ips,
+                -next_node_ids,
             -quarto pacchetto e successivi:
                 -route_id,
                 -rasp_id_prev,
@@ -128,11 +134,15 @@ def make_config_string(rasp_id, routes):
     #secondo pacchetto
     for ip in node_data['prev_node_ips']:
         config_string += f"{ip},"
+    for id in node_data['prev_node_ids']:
+        config_string += f"{id},"
     config_string = config_string.removesuffix(',')
     config_string += ";" 
     #terzo pacchetto
     for ip in node_data['next_node_ips']:
         config_string += f"{ip},"
+    for id in node_data['next_node_ids']:
+        config_string += f"{id},"
     config_string = config_string.removesuffix(',')
     config_string += ";" 
     #quarto pacchetto e successivi

@@ -27,6 +27,8 @@ typedef struct{
     int route_count;
     char **prev_ips;
     char **next_ips;
+    int *prev_ids;
+    int *next_ids;
 }network;
 
 
