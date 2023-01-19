@@ -124,7 +124,9 @@ def query_node_data(rasp_id, routes):
     node_data = \
     {
         "prev_node_ips" : set(),
+        "prev_node_ids" : set(),
         "next_node_ips" : set(),
+        "next_node_ids" : set(),
         "routes" : []
         
     }
@@ -133,7 +135,9 @@ def query_node_data(rasp_id, routes):
     for route_id, route_data in routes.items():
         if rasp_id in route_data:
             node_data["prev_node_ips"].add(route_data[rasp_id]["prev_ip"])
+            node_data["prev_node_ids"].add(route_data[rasp_id]["rasp_id_prev"])
             node_data["next_node_ips"].add(route_data[rasp_id]["next_ip"])
+            node_data["next_node_ids"].add(route_data[rasp_id]["rasp_id_next"])
             node_data["routes"].append([route_id,route_data[rasp_id]["rasp_id_prev"],route_data[rasp_id]["rasp_id_next"]]) 
 
     return node_data
@@ -148,8 +152,10 @@ def make_config_string(rasp_id, routes):
                 -Numero di route di cui fa parte il nodo,
             -secondo pacchetto:
                 -prev_node_ips,
+                -prev_node_ids,
             -terzo pacchetto:
                 -next_node_ips,
+                -next_node_ids,
             -quarto pacchetto e successivi:
                 -route_id,
                 -rasp_id_prev,
@@ -157,7 +163,7 @@ def make_config_string(rasp_id, routes):
 
         Separatori : 
         ';' tra due tipologie di pacchetto differenti
-        '-' tra due pacchetti dello stesso tipo (accade solo con i pacchetti di tipo 4)
+        '/' tra due pacchetti dello stesso tipo (accade solo con i pacchetti di tipo 4)
         ',' tra i dati dello stesso pacchetto        
         
     """
@@ -173,17 +179,21 @@ def make_config_string(rasp_id, routes):
     #secondo pacchetto
     for ip in node_data['prev_node_ips']:
         config_string += f"{ip},"
+    for id in node_data['prev_node_ids']:
+        config_string += f"{id},"
     config_string = config_string.removesuffix(',')
     config_string += ";" 
     #terzo pacchetto
     for ip in node_data['next_node_ips']:
         config_string += f"{ip},"
+    for id in node_data['next_node_ids']:
+        config_string += f"{id},"
     config_string = config_string.removesuffix(',')
     config_string += ";" 
     #quarto pacchetto e successivi
     for route_id, prev_id, next_id in node_data['routes']:
-        config_string += f"{route_id},{prev_id},{next_id}-"
-    config_string = config_string.removesuffix('-')
+        config_string += f"{route_id},{prev_id},{next_id}/"
+    config_string = config_string.removesuffix('/')
     config_string += ";"
 
     return config_string
@@ -196,6 +206,7 @@ def server_loop(node_num, routes):
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('0.0.0.0', PORT))       #accetta connessioni da qualsiasi indirizzo sulla porta PORT
         s.listen()
+        #aspetto la connessione di ogni nodo nella rete per inviare
         for node_idx in range(node_num):
             conn, addr = s.accept()
             with conn:
@@ -208,7 +219,8 @@ def server_loop(node_num, routes):
 
                 msg = make_config_string(rasp_id, routes)
                 conn.send(msg.encode())
-            
+         
+
         s.close()
 
 

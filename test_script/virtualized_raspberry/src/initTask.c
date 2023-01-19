@@ -66,6 +66,10 @@ int parseConfigString(char* config_string,route **routes, network *net){
         net->next_ips[ip_idx] = malloc(IP_LEN * sizeof(char));
     }
 
+    net->prev_ids = malloc(net->prev_node_count * sizeof(int));
+    net->next_ids = malloc(net->next_node_count * sizeof(int));
+
+
     *routes = (route*)malloc(net->route_count * sizeof(route));
 
     //secondo pacchetto
@@ -82,6 +86,17 @@ int parseConfigString(char* config_string,route **routes, network *net){
 
         strcpy(net->prev_ips[ip_idx],ip);
     }
+    char* id;
+
+    for(int id_idx = 0; id_idx < net->prev_node_count; id_idx++){
+        id = strtok(NULL, ",");
+        if(id == NULL)return(-1);
+        else{
+            net->prev_ids[id_idx] = atoi(id);
+        }
+
+    }
+
     //terzo pacchetto
     
     for(int ip_idx = 0; ip_idx < net->next_node_count; ip_idx++){
@@ -95,14 +110,24 @@ int parseConfigString(char* config_string,route **routes, network *net){
 
         strcpy(net->next_ips[ip_idx],ip);
     }
+
+    for(int id_idx = 0; id_idx < net->next_node_count; id_idx++){
+        id = strtok(NULL, ",");
+        if(id == NULL)return(-1);
+        else{
+            net->next_ids[id_idx] = atoi(id);
+        }
+
+    }
+
     //quarto pacchetto
     char *route_data;
     for(int route_idx = 0; route_idx < net->route_count; route_idx++){
         if (route_idx == 0){
-            route_data = strtok(packet[3], "-");
+            route_data = strtok(packet[3], "/");
         }
         else{
-            route_data = strtok(NULL, "-");
+            route_data = strtok(NULL, "/");
         }
         if(route_data == NULL)return(-1);
 
@@ -116,22 +141,22 @@ int parseConfigString(char* config_string,route **routes, network *net){
 }
 
 void printConfigInfo(route *routes, network *net){
-	printf("Config del nodo:\n\t-Nodi precedenti :%i\n\t-Nodi successivi :%i\n\t-Routes :%i\n",
+	printf("Config del nodo:\n\t-Nodi precedenti : %i\n\t-Nodi successivi : %i\n\t-Routes : %i\n",
 			net->prev_node_count,net->next_node_count,net->route_count);
-	printf("Ip precendenti : \n");
-	for(int ip_idx = 0;ip_idx < net->prev_node_count;ip_idx ++){
-		printf("\t-%s\n",net->prev_ips[ip_idx]);
+	printf("Ip precendenti (id) : \n");
+	for(int node_idx = 0;node_idx < net->prev_node_count;node_idx ++){
+		printf("\t-%s (%i)\n",net->prev_ips[node_idx], net->prev_ids[node_idx]);
 	}
-	printf("Ip successivi : \n");
-	for(int ip_idx = 0;ip_idx < net->next_node_count;ip_idx ++){
-		printf("\t-%s\n",net->next_ips[ip_idx]);
+	printf("Ip successivi (id) : \n");
+	for(int node_idx = 0;node_idx < net->next_node_count;node_idx ++){
+		printf("\t-%s (%i)\n",net->next_ips[node_idx], net->next_ids[node_idx]);
 	}
 	printf("Routes : \n");
 	for(int route_idx = 0;route_idx < net->route_count;route_idx++){
 		printf("\t-Route id : %i\n\t-Node id precedente : %i\n\t-Node id successivo : %i\n\n",
 				routes[route_idx].route_id, routes[route_idx].rasp_id_prev, routes[route_idx].rasp_id_next);
 	}
-	
+	printf("--------------------------------------------------------\n");
 }
 
 void initMain(void){
