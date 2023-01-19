@@ -5,6 +5,7 @@ import time
 HOST = "127.0.0.1"  # Standard loopback interface address (localhost)
 PORT = 6543  # Port to listen on (non-privileged ports are > 1023)
 
+id_to_ip_dict = {}
 
  # Da scegliere la sintassi, per adesso dict che associa ad ogni nodo(Tramite RASP_ID) il nodo precedente e successivo
 Routes_test =  \
@@ -158,6 +159,9 @@ def server_loop(routes):
             rasp_msg = rasp_msg.decode().strip()
             rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
 
+            # Aggiungi l'ID del raspberry al dizionario degli ip e port
+            id_to_ip_dict[rasp_id] = addr
+
             msg = make_config_string(rasp_id, routes)
             conn.send(msg.encode())
         
@@ -166,7 +170,8 @@ def server_loop(routes):
 
 
 def main():
-    server_loop(Routes_real)
+    while(True):
+        server_loop(Routes_real)
 
 if __name__ == "__main__":
     main()
