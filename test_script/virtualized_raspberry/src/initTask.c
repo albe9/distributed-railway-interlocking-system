@@ -124,10 +124,10 @@ int parseConfigString(char* config_string,route **routes, network *net){
     char *route_data;
     for(int route_idx = 0; route_idx < net->route_count; route_idx++){
         if (route_idx == 0){
-            route_data = strtok(packet[3], "-");
+            route_data = strtok(packet[3], "/");
         }
         else{
-            route_data = strtok(NULL, "-");
+            route_data = strtok(NULL, "/");
         }
         if(route_data == NULL)return(-1);
 

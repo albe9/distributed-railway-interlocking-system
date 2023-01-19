@@ -118,7 +118,7 @@ def make_config_string(rasp_id, routes):
 
         Separatori : 
         ';' tra due tipologie di pacchetto differenti
-        '-' tra due pacchetti dello stesso tipo (accade solo con i pacchetti di tipo 4)
+        '/' tra due pacchetti dello stesso tipo (accade solo con i pacchetti di tipo 4)
         ',' tra i dati dello stesso pacchetto        
         
     """
@@ -179,6 +179,7 @@ def server_loop(node_num, routes):
 
 def main():
     server_loop(int(sys.argv[1]), Routes_real)
+    # print(make_config_string(2,Routes_real))
 
 if __name__ == "__main__":
     main()
