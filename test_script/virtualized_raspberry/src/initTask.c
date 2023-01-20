@@ -162,23 +162,59 @@ void printConfigInfo(route *routes, network *net){
 void initMain(void){
 	
 	//apro la connessione con l'host per ricevere i dati di configurazione
-	int HOST_PORT = 6543;
 	// char HOST_IP[] = "192.168.1.35";
 	char HOST_IP[] = "172.23.78.0";
-	conn conn_host = {.fd = 0, .sock = 0};
+	connection host_s = {.fd=0, .sock=0, .connected_id=0};
 	
 
-	connectToServer(&conn_host, HOST_IP, HOST_PORT);
+	connectToServer(&host_s, HOST_IP, SERVER_PORT);
 	char msg[50];
 	snprintf(msg, 50, "Connessione da raspberry con RASP_ID : %i", RASP_ID);
-	sendToServer(&conn_host, msg);
+	sendToConn(&host_s, msg);
 	char config_string[1024] = {0};
 	
-	readFromServer(&conn_host, config_string, 1024);
+	readFromConn(&host_s, config_string, 1024);
 	if(parseConfigString(config_string, &node_routes, &node_net) == -1){
 		printf("ERRORE nel parsing della config_string");
 	}
+    else{
+        printf("Configurazione ricevuta\n");
+        //printConfigInfo(node_routes, &node_net);
+    }
+    
+    //Notifico l'host dell'avvenuta configurazione
+    memset(msg, 0, 50);
+    snprintf(msg, 50, "Configurazione eseguita su RASP_ID : %i", RASP_ID);
+    sendToConn(&host_s, msg);
+    
+    //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
+    memset(msg, 0, 50);
+    readFromConn(&host_s, msg, 50);
+    printf("[MSG] : %s\n", msg);
 	
-	printConfigInfo(node_routes, &node_net);
+
+    //qui parte il protocollo per instaurare le connessioni dei nodi a catena
+    //prima fase : client
+    
+    
+    for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
+        //tento di connettermi al nodo precedente ripetutamente finchè non apre la connessione
+        int conn_status = 0;
+        do{
+            conn_status = addConnToServer(node_net.prev_ips[node_idx], SERVER_PORT, node_net.prev_ids[node_idx]);
+        }while(conn_status == CONN_REFUSED);
+    }
+    
+
+    //seconda fase : server
+    for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
+        if(node_net.next_ids[node_idx] == -1){
+            //TODO gestire ultima posizione, potrebbe andare bene skippare e gestirla in seguito con le route
+        }
+        else{
+            addConnToClient(node_net.next_ids[node_idx]);
+        }
+    }
+
 }
 
