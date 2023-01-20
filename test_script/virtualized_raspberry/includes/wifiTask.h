@@ -8,31 +8,28 @@
 #ifndef INCLUDES_WIFITASK_H_
 #define INCLUDES_WIFITASK_H_
 
-//raspberry
-/*
-#include <arpa/inet.h>
-#include <sockLib.h>
 
-#include "global_variables.h"
-*/
-//linux
 #include <arpa/inet.h>
 
 #include "global_variables.h"
 
+#define CONN_REFUSED -2
 
 typedef struct{
 	int sock;
 	int fd;
-}conn;
+	int connected_id;
+}connection;
 
-extern void addServer(conn *conn_server, char* server_ip, int server_port);
-extern void connectToServer(conn *conn_server, char* server_ip, int server_port);
-extern void sendToServer(conn *conn_server, char *msg);
-extern void readFromServer(conn *conn_server, char* buffer, ssize_t buf_size);
+extern int addConnToServer(char* server_ip, int server_port, int server_id);
+extern int connectToServer(connection *conn_server, char* server_ip, int server_port);
+extern int addConnToClient(int client_id);
+extern int connectToClient(connection *conn_client);
 
-extern void setClient(void);
+extern void sendToConn(connection *conn, char *msg);
+extern void readFromConn(connection *conn, char* buffer, ssize_t buf_size);
+
 extern void wifiMain(void);
-extern void removeServer(conn *conn_server);
+extern void removeServer(connection *conn_server);
 
 #endif /* INCLUDES_WIFITASK_H_ */
