@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #host ip addr : 172.23.78.0
-N_IP=6
+N_IP=2
 #aggiungo N_IP all'interfaccia di rete eth0
 for ((label=0; label<=$N_IP; label++))
 do
@@ -19,7 +19,7 @@ done
 
 # esegue i file compilati con i relativi args
 
-../../build/Virtualized_raspberry "172.23.78.1" 1
+../../build/Virtualized_raspberry "172.23.78.1" 1 &
 ../../build/Virtualized_raspberry "172.23.78.2" 2
 # ../../build/Virtualized_raspberry "172.23.78.3" 3
 # ../../build/Virtualized_raspberry "172.23.78.4" 4
