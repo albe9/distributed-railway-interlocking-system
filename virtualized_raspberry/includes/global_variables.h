@@ -52,6 +52,10 @@ TASK_ID WIFI_TID;
 #include <time.h>
 #include <unistd.h>
 
+
+#define MAX_CONN 50               //numero massimo di connessioni per un nodo
+
+extern int SERVER_PORT;
 extern int RASP_ID;
 extern char RASP_IP[20];
 

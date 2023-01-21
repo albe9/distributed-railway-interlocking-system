@@ -108,14 +108,14 @@ Routes_real = {
         {
             "rasp_id_prev" : "0",
             "rasp_id_next" : "2",
-            "prev_ip" : "172.23.78.253",
-            "next_ip" : "172.23.78.253",
+            "prev_ip" : "172.23.78.0",
+            "next_ip" : "172.23.78.2",
         },
         2 :
         {
             "rasp_id_prev" : "1",
             "rasp_id_next" : "-1",
-            "prev_ip" : "172.23.78.253",
+            "prev_ip" : "172.23.78.1",
             "next_ip" : "-1",
         },
     },
@@ -210,24 +210,60 @@ def make_config_string(rasp_id, routes):
 def server_loop(node_num, routes):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind((HOST_IP, PORT))       #accetta connessioni sull'indirizzo HOST_IP e porta PORT
+        s.listen()
+        #aspetto la connessione di ogni nodo nella rete per inviare
+        connected_nodes = []
+        for node_idx in range(node_num):
+            conn, addr = s.accept()
+            connected_nodes.append(conn)
+            print(f"Connected by {addr}")
+            rasp_msg = conn.recv(1024)
+            print(f"[MSG] : {rasp_msg.decode()}")
+
+            rasp_msg = rasp_msg.decode().strip()
+            rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
+
+            msg = make_config_string(rasp_id, routes)
+            conn.send(msg.encode())
+
+        #Controllo che tutti i nodi della rete abbiano effettuato la configurazione
+        for conn in connected_nodes:
+            rasp_msg = conn.recv(1024)  
+            print(f"[MSG] : {rasp_msg.decode()}")
+
+        #Avverto tutti i nodi che possono iniziare a connettersi in catena
+        for conn in connected_nodes:
+            conn.send("Avvio connessioni".encode())
+            conn.close()
+        
+        connected_nodes.clear()
+        #attendo le connessioni dai nodi direttamente collegati all'host (i primi di ogni root)
+        first_nodes = [node_id for route in routes.values() for node_id, node_data in route.items() if node_data["rasp_id_prev"] == "0"]
+        for node_id in first_nodes:
+            conn, addr = s.accept()
+            connected_nodes.append(conn)
+            #TODO definire protocollo prima connessione, per adesso rispondo con ip dell'host
+            print(f"Connected by {addr}")
+            msg = conn.recv(20)
+            print(f"[MSG] : {msg.decode()}")
+            conn.send("RASP_ID : 0".encode())
+
+        s.close()
+
+def test(node_num, routes):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind(('0.0.0.0', PORT))       #accetta connessioni da qualsiasi indirizzo sulla porta PORT
         s.listen()
         #aspetto la connessione di ogni nodo nella rete per inviare
+        node_net = []
         for node_idx in range(node_num):
             conn, addr = s.accept()
-            with conn:
-                print(f"Connected by {addr}")
-                rasp_msg = conn.recv(1024)
-                print(f"messaggio ricevuto : {rasp_msg.decode()}")
-
-                rasp_msg = rasp_msg.decode().strip()
-                rasp_id = int(rasp_msg.split("RASP_ID : ")[1])
-
-                msg = make_config_string(rasp_id, routes)
-                conn.send(msg.encode())
-         
-
-        s.close()
+            node_net.append(conn)
+            print(f"Connected by {addr}")
+            
+            conn.send("sono l'host".encode())
 
 
 def main():
