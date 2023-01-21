@@ -179,7 +179,7 @@ void initMain(void){
 	}
     else{
         printf("Configurazione ricevuta\n");
-        //printConfigInfo(node_routes, &node_net);
+        // printConfigInfo(node_routes, &node_net);
     }
     
     //Notifico l'host dell'avvenuta configurazione
@@ -208,7 +208,7 @@ void initMain(void){
 
     //seconda fase : server
     for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
-        if(node_net.next_ids[node_idx] == -1){
+        if(node_net.next_ids[node_idx] == TAIL_ID){
             //TODO gestire ultima posizione, potrebbe andare bene skippare e gestirla in seguito con le route
         }
         else{

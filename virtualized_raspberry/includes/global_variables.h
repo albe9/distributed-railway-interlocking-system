@@ -54,6 +54,7 @@ TASK_ID WIFI_TID;
 
 
 #define MAX_CONN 50               //numero massimo di connessioni per un nodo
+#define TAIL_ID -9999             //Id associato al nodo successivo all'ultimo nodo di una route
 
 extern int SERVER_PORT;
 extern int RASP_ID;
