@@ -169,7 +169,7 @@ void initMain(void){
 
 	connectToServer(&host_s, HOST_IP, SERVER_PORT);
 	char msg[50];
-	snprintf(msg, 50, "Connessione da raspberry con RASP_ID : %i", RASP_ID);
+	snprintf(msg, 50, "RASP_ID : %i", RASP_ID);
 	sendToConn(&host_s, msg);
 	char config_string[1024] = {0};
 	
