@@ -4,24 +4,95 @@ import sys
 
 PORT = 6543  # Port to listen on (non-privileged ports are > 1023)
 HOST_IP_SUFFIX = "172.23.78."
-
+HOST_ID = 0
+TAIL_ID = -9999
 
 class Node:
-    def __init__(self, rasp_id_prev: int, prev_ip: str, rasp_id_next: int, next_ip: str):
-        self.rasp_id_prev = rasp_id_prev
-        self.prev_ip = prev_ip
-        self.rasp_id_next = rasp_id_next
-        self.next_ip = next_ip
+    # rasp_id deve essere univoco in tutto il grafo
+    # per costruire l'ip del nodo si utilizza l'ip dell'host
+    # nel caso di id 0 o -9999 si costruisce un nodo host o tail
+    # TODO: controllare in fase di costruzione l'unicità del rasp_id
+    def __init__(self, rasp_id: int):
+        if rasp_id is not TAIL_ID:
+            self.rasp_id = rasp_id
+            self.rasp_ip: str = HOST_IP_SUFFIX + f"{rasp_id}"
+        elif rasp_id == TAIL_ID:
+            self.rasp_id = TAIL_ID
+            self.rasp_ip = TAIL_ID
+        else:
+            print("Qualcosa è andato storto in fase di creazione del nodo, rasp_id errato...")
+
 class Route:
-    def __init__(self, route_id: int):
+    # route_id deve essere univoco in tutto il grafo
+    # TODO: controllare in fase di construzione l'unicità del route_id e che non ci siano  magari nodi doppi in una route inseriti per sbaglio
+    def __init__(self, route_id: int, ordered_list_of_nodes: list[Node]):
         self.route_id = route_id
-        self.node_list = []
-    def add_node(self, node_to_add: Node) -> int:
-        self.node_list.append(node_to_add)
-        return 1
-    def remove_node(self, note_to_remove: Node) -> int:
-        self.node_list.remove(note_to_remove)
-        return 1
+        # Aggiungi alla lista dei nodi il nodo host in posizione 0 e nodo tail in ultima posizione
+        self.nodes_list = ordered_list_of_nodes
+        self.nodes_list.insert(0, Node(HOST_ID))
+        self.nodes_list.insert(len(self.nodes_list), Node(TAIL_ID))
+    def get_node_info(self, wanted_rasp_id: int):
+        # TODO: aggiungere controlli che il nodo wanted_rasp_id esista all'interno della route
+        # Cerchiamo l'indice del nodo voluto in questa route
+        index_in_this_route = None
+        for node in self.nodes_list:
+            if node.rasp_id == wanted_rasp_id:
+                index_in_this_route = self.nodes_list.index(node)
+                break
+        if index_in_this_route:
+            # TODO: aggiungere controllo di out of range nel caso venga chiesto il nodo 0    
+            # Se presente il nodo nella rotta otteniamo informazioni sul nodo precedente e successivo su quella rotta       
+            prev_node_ip = self.nodes_list[index_in_this_route - 1].rasp_ip
+            prev_node_id = self.nodes_list[index_in_this_route - 1].rasp_id
+            next_node_ip = self.nodes_list[index_in_this_route + 1].rasp_ip
+            next_node_id = self.nodes_list[index_in_this_route + 1].rasp_id
+            return (prev_node_ip, prev_node_id, next_node_ip, next_node_id)
+        else:
+            # Se il nodo non è presente nella rotta torniamo None
+            return None
+class Graph:
+    def __init__(self, unordered_list_of_routes: list[Route]):
+        # routes è un dizionario con chiave l'id della rotta e come valore la lista di nodi di quella rotta
+        self.routes = unordered_list_of_routes
+        
+    def query_node_data(self, wanted_rasp_id: int, wanted_route_id: int) -> dict:
+        # TODO: capire meglio perchè ips e non ip, in quanto in una rotta un nodo ha solo un precedente e un successivo
+        prev_node_ips = []
+        prev_node_ids = []
+        next_node_ips = []
+        next_node_ids = []
+        routes = []
+        for route in self.routes:
+            # Controlliamo che quella rotta abbia quel nodo e se lo ha salviamo le info
+            node_info = route.get_node_info(wanted_rasp_id=wanted_rasp_id)       
+            if node_info:
+                prev_node_ips.append(node_info[0])
+                prev_node_ids.append(node_info[1])
+                next_node_ips.append(node_info[2])
+                next_node_ids.append(node_info[3])
+                routes.append([route.route_id, node_info[1], node_info[3]])
+        node_data = \
+            {
+                "prev_node_ips" : set(prev_node_ips),
+                "prev_node_ids" : set(prev_node_ids),
+                "next_node_ips" : set(next_node_ips),
+                "next_node_ids" : set(next_node_ids),
+                "routes" : routes
+           }
+        return node_data
+
+node1 = Node(1)
+node2 = Node(2)
+node3 = Node(3)
+node4 = Node(4)
+node5 = Node(5)
+node12 = Node(12)
+node13 = Node(13)
+
+route1 = Route(1, [node1, node2, node3, node4, node5])
+route2 = Route(2, [node12, node4, node13])
+
+graph = Graph([route1, route2])
 
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
@@ -29,71 +100,6 @@ class Route:
 # rasp_id -9999 è stato assegnato al nodo [che non esiste] successivo al capolinea ed esso avrà ip -9999
 # Gli ip sono stati assegnati a partire da quello dell'host, ad esempio il rasp 1 ha ip [172.23.78].1, il rasp 2 ha [172.23.78].2
 # Per visualizzare queste rotte accedere a ProgettoSWE4ES>Diagrammi>Routes
-Routes_test =  \
-{
-    #id univoco della rotta
-    1: 
-    {
-        # id univoco del nodo in tutta la rete
-        1 : 
-        {
-            "rasp_id_prev" : "0",
-            "prev_ip" : HOST_IP_SUFFIX + "0",
-            "rasp_id_next" : "2",
-            "next_ip" : HOST_IP_SUFFIX + "2",            
-        },
-
-        2 :
-        {
-            "rasp_id_prev" : "1",
-            "prev_ip" : HOST_IP_SUFFIX + "1",
-            "rasp_id_next" : "3",
-            "next_ip" : HOST_IP_SUFFIX + "3",    
-       },
-
-       3 :
-       {
-            "rasp_id_prev" : "2",
-            "prev_ip" : HOST_IP_SUFFIX + "2",
-            "rasp_id_next" : "4",
-            "next_ip" : HOST_IP_SUFFIX + "4",  
-       },
-
-       4 :
-       {
-            "rasp_id_prev" : "3",
-            "prev_ip" : HOST_IP_SUFFIX + "3",
-            "rasp_id_next" : "5",
-            "next_ip" : HOST_IP_SUFFIX + "5",  
-       },
-
-       5 :
-       {
-            "rasp_id_prev" : "4",
-            "prev_ip" : HOST_IP_SUFFIX + "4",
-            "rasp_id_next" : "-9999",
-            "next_ip" : HOST_IP_SUFFIX + "3",  
-       },
-    },
-
-    2: 
-    {
-        1 :
-        {
-            
-        },
-
-        2 :
-        {
-            
-        },
-
-        3 :
-        {
-            
-        },
-    },
-}
 
 Routes_real = {
     1:
@@ -226,7 +232,8 @@ def server_loop(node_num, routes):
 
 def main():
     # server_loop(int(sys.argv[1]), Routes_real)
-    print(query_node_data(1, Routes_real))
+    #print(query_node_data(1, Routes_real))
+    print(graph.query_node_data(3, 1))
 
 if __name__ == "__main__":
     main()
