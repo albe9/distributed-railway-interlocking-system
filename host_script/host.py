@@ -74,10 +74,8 @@ class Graph:
         """ 
         node_data = \
             {
-                "prev_node_ips" : set(),
-                "prev_node_ids" : set(),
-                "next_node_ips" : set(),
-                "next_node_ids" : set(),
+                "prev_node" : dict(),
+                "next_node" : dict(),
                 "routes" : []
            }
         
@@ -85,12 +83,10 @@ class Graph:
             # Controlliamo che quella rotta abbia quel nodo e se lo ha salviamo le info
             node_info = route.get_node_info(wanted_rasp_id=wanted_rasp_id)       
             if node_info:
-                node_data["prev_node_ips"].add(node_info[0])
-                node_data["prev_node_ids"].add(node_info[1])
-                node_data["next_node_ips"].add(node_info[2])
-                node_data["next_node_ids"].add(node_info[3])
+                node_data["prev_node"][node_info[1]] = node_info[0]
+                node_data["next_node"][node_info[3]] = node_info[2]
                 node_data["routes"].append([route.route_id, node_info[1], node_info[3]])
-        
+
         return node_data
     
     def get_first_nodes(self) -> set:
@@ -102,19 +98,7 @@ class Graph:
         
         return first_nodes
 
-node1 = Node(1)
-node2 = Node(2)
-node3 = Node(3)
-node4 = Node(4)
-node5 = Node(5)
-node12 = Node(12)
-node13 = Node(13)
 
-route1 = Route(1, [node1, node2, node3, node4, node5])
-route2 = Route(2, [node12, node4, node13])
-
-graph = Graph([route1, route2])
-graph_testing = Graph([Route(1, [node1, node2, node3])])
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
 # rasp_id 0 è stato assegnato all'host che ha ip 172.23.78.0
@@ -122,52 +106,6 @@ graph_testing = Graph([Route(1, [node1, node2, node3])])
 # Gli ip sono stati assegnati a partire da quello dell'host, ad esempio il rasp 1 ha ip [172.23.78].1, il rasp 2 ha [172.23.78].2
 # Per visualizzare queste rotte accedere a ProgettoSWE4ES>Diagrammi>Routes
 
-Routes_real = {
-    1:
-    {
-        1 :
-        {
-            "rasp_id_prev" : "0",
-            "rasp_id_next" : "2",
-            "prev_ip" : "172.23.78.0",
-            "next_ip" : "172.23.78.2",
-        },
-        2 :
-        {
-            "rasp_id_prev" : "1",
-            "rasp_id_next" : "-1",
-            "prev_ip" : "172.23.78.1",
-            "next_ip" : "-1",
-        },
-    },
-}
-
-def query_node_data(rasp_id, routes):
-
-    """
-        Estrae le informazioni relative ad un singolo nodo dalla mappa dei tracciati
-    """
-
-    node_data = \
-    {
-        "prev_node_ips" : set(),
-        "prev_node_ids" : set(),
-        "next_node_ips" : set(),
-        "next_node_ids" : set(),
-        "routes" : []
-        
-    }
-
-
-    for route_id, route_data in routes.items():
-        if rasp_id in route_data:
-            node_data["prev_node_ips"].add(route_data[rasp_id]["prev_ip"])
-            node_data["prev_node_ids"].add(route_data[rasp_id]["rasp_id_prev"])
-            node_data["next_node_ips"].add(route_data[rasp_id]["next_ip"])
-            node_data["next_node_ids"].add(route_data[rasp_id]["rasp_id_next"])
-            node_data["routes"].append([route_id,route_data[rasp_id]["rasp_id_prev"],route_data[rasp_id]["rasp_id_next"]]) 
-
-    return node_data
 
 def make_config_string(rasp_id, node_data):
     """
@@ -198,25 +136,33 @@ def make_config_string(rasp_id, node_data):
     config_string = ""
     #primo pacchetto 
     config_string += f"{int(time.time())},"
-    config_string += f"{len(node_data['prev_node_ips'])},"
-    config_string += f"{len(node_data['next_node_ips'])},"
+    config_string += f"{len(node_data['prev_node'])},"
+    config_string += f"{len(node_data['next_node'])},"
     config_string += f"{len(node_data['routes'])};"
 
     #secondo pacchetto
-    for ip in node_data['prev_node_ips']:
-        config_string += f"{ip},"
-    for id in node_data['prev_node_ids']:
-        config_string += f"{id},"
-    config_string = config_string.removesuffix(',')
-    config_string += ";" 
-    #terzo pacchetto
-    for ip in node_data['next_node_ips']:
-        config_string += f"{ip},"
-    for id in node_data['next_node_ids']:
-        config_string += f"{id},"
-    config_string = config_string.removesuffix(',')
-    config_string += ";" 
-    #quarto pacchetto e successivi
+    ip_str = ""
+    id_str = ""
+    for id,ip in node_data['prev_node'].items():
+        id_str += f"{id},"
+        ip_str += f"{ip},"
+
+    id_str = id_str.removesuffix(',')
+    id_str += ";" 
+    config_string += ip_str + id_str
+    
+    # #terzo pacchetto
+    ip_str = ""
+    id_str = ""
+    for id,ip in node_data['next_node'].items():
+        id_str += f"{id},"
+        ip_str += f"{ip},"
+
+    id_str = id_str.removesuffix(',')
+    id_str += ";" 
+    config_string += ip_str + id_str 
+
+    # #quarto pacchetto e successivi
     for route_id, prev_id, next_id in node_data['routes']:
         config_string += f"{route_id},{prev_id},{next_id}/"
     config_string = config_string.removesuffix('/')
@@ -261,7 +207,6 @@ def server_loop(node_num, net_graph):
         #attendo le connessioni dai nodi direttamente collegati all'host (i primi di ogni root)
         first_nodes = net_graph.get_first_nodes()
         for node_id in first_nodes:
-            print("testing : ", node_id)
             conn, addr = s.accept()
             connected_nodes.append(conn)
             #TODO definire protocollo prima connessione, per adesso rispondo con ip dell'host
@@ -276,9 +221,37 @@ def test(node_num, routes):
     pass
 
 
+node1 = Node(1)
+node2 = Node(2)
+node3 = Node(3)
+node4 = Node(4)
+node5 = Node(5)
+node12 = Node(12)
+node13 = Node(13)
+
+route1 = Route(1, [node1, node2, node3, node4, node5])
+route2 = Route(2, [node12, node4, node13])
+
+graph = Graph([route1, route2])
+graph_testing = Graph([Route(1, [node1, node2, node3])])
+graph_testing2 = Graph([Route(1, [node1, node2, node3]), Route(2, [node1, node2, node4])])
+
+graph_testing3 = Graph([Route(1, [node1, node2, node3]), Route(2, [node4, node2, node5])])
+
 def main():
-    server_loop(int(sys.argv[1]), graph_testing)
-    
+    server_loop(int(sys.argv[1]), graph_testing3)
+    # node_data = graph_testing3.query_node_data(1)
+    # print(node_data)
+    # node_data = graph_testing3.query_node_data(2)
+    # print(node_data)
+    # node_data = graph_testing3.query_node_data(3)
+    # print(node_data)
+    # node_data = graph_testing3.query_node_data(4)
+    # print(node_data)
+    # node_data = graph_testing3.query_node_data(5)
+    # print(node_data)
+
+    # print(make_config_string(3, node_data))
     
 
 if __name__ == "__main__":

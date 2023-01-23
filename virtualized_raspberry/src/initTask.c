@@ -178,8 +178,8 @@ void initMain(void){
 		printf("ERRORE nel parsing della config_string");
 	}
     else{
-        printf("Configurazione ricevuta\n");
-        // printConfigInfo(node_routes, &node_net);
+        printf("[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
+        //printConfigInfo(node_routes, &node_net);
     }
     
     //Notifico l'host dell'avvenuta configurazione
@@ -190,7 +190,7 @@ void initMain(void){
     //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
     memset(msg, 0, 50);
     readFromConn(&host_s, msg, 50);
-    printf("[MSG] : %s\n", msg);
+    printf("[RASP_ID : %i] : %s\n", RASP_ID, msg);
 	
 
     //qui parte il protocollo per instaurare le connessioni dei nodi a catena
@@ -212,9 +212,14 @@ void initMain(void){
             //TODO gestire ultima posizione, potrebbe andare bene skippare e gestirla in seguito con le route
         }
         else{
-            addConnToClient(node_net.next_ids[node_idx]);
+            addConnToClient();
         }
     }
+
+
+    //TODO gestione risposte ok task successivi
+    //TODO eliminare strutture e memoria allocata per il taskInit una volta concluso
+    printf("[RASP_ID : %i] Finito\n", RASP_ID);
 
 }
 

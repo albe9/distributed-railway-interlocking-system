@@ -56,6 +56,7 @@ int addConnToServer(char* server_ip, int server_port, int server_id){
 		if(conn_status){
 			return(conn_status);
 		}
+		
 		char msg[20];
 		snprintf(msg, 20, "RASP_ID : %i", RASP_ID);
 		sendToConn(&node_conn[total_conn], msg);
@@ -66,11 +67,11 @@ int addConnToServer(char* server_ip, int server_port, int server_id){
 		returned_id = strtok(msg, ":");
 		returned_id = strtok(NULL, ":");
 		if(returned_id == NULL || atoi(returned_id) != server_id){
-			printf("Errore id server non corrispondente\n");
+			printf("Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i\n", server_id, atoi(returned_id));
 			//TODO gestire errore
 		}
 		else{
-			printf("Server id : %i aggiunto correttamente\n", server_id);
+			printf("[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, server_id);
 			node_conn[total_conn].connected_id = server_id;
 			total_conn++;
 			return(0);
@@ -82,7 +83,7 @@ int addConnToServer(char* server_ip, int server_port, int server_id){
 	}
 }
 
-extern int addConnToClient(int client_id){
+extern int addConnToClient(){
 	if(total_conn < MAX_CONN - 1){
 		//tento di connettermi al client, in caso di errore lo restituisco
 		int conn_status = connectToClient(&node_conn[total_conn]);
@@ -94,15 +95,16 @@ extern int addConnToClient(int client_id){
 		readFromConn(&node_conn[total_conn], msg, 20);
 		returned_id = strtok(msg, ":");
 		returned_id = strtok(NULL, ":");
-		if(returned_id == NULL || atoi(returned_id) != client_id){
-			printf("Errore id client non corrispondente\n");
+		if(returned_id == NULL){
+			printf("Errore id client non ricevuto correttamente\n");
 			//TODO gestire errore
 		}
 		else{
+			int client_id = atoi(returned_id);
 			memset(msg, 0, 20);
 			snprintf(msg, 20, "RASP_ID : %i", RASP_ID);
 			sendToConn(&node_conn[total_conn], msg);
-			printf("Client id : %i aggiunto correttamente\n", client_id);
+			printf("[RASP_ID : %i] Client id : %i aggiunto correttamente\n", RASP_ID, client_id);
 			node_conn[total_conn].connected_id = client_id;
 			total_conn++;
 			return(0);
@@ -144,13 +146,18 @@ extern int connectToClient(connection *conn_client){
 	}
 	
 	//TODO definire il numero massimo di connessioni in coda
-	listen(server_sock , 3);
+	listen(server_sock , 10);
 
 	addrlen = sizeof(struct sockaddr_in);
 	if ((conn_client->sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&addrlen)) < 0)
 	{
 		perror("accept failed");
 	}
+
+	
+	char host_addr[INET_ADDRSTRLEN];
+	inet_ntop(AF_INET, &(client.sin_addr), host_addr, INET_ADDRSTRLEN);
+	printf("[RASP_ID : %i] connesso : %s\n", RASP_ID, host_addr);
 	
 	shutdown(server_sock, SHUT_RDWR);
 	if (close(server_sock) < 0){

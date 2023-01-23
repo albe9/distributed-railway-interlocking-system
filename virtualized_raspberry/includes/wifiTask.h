@@ -23,7 +23,7 @@ typedef struct{
 
 extern int addConnToServer(char* server_ip, int server_port, int server_id);
 extern int connectToServer(connection *conn_server, char* server_ip, int server_port);
-extern int addConnToClient(int client_id);
+extern int addConnToClient();
 extern int connectToClient(connection *conn_client);
 
 extern void sendToConn(connection *conn, char *msg);
