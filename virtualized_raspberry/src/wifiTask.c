@@ -40,9 +40,11 @@ int connectToServer(connection *conn_server, char* server_ip, int server_port){
  
  
 	if ((conn_server->fd = connect(conn_server->sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-		//perror("\nErrore connessione fallita");
-		close(conn_server->sock);
-		return(CONN_REFUSED);
+		if(errno == ECONNREFUSED){
+			close(conn_server->sock);
+			return(CONN_REFUSED);
+		}
+		perror("\nErrore connessione fallita");
 	}
 	
 	return(0);
@@ -56,7 +58,8 @@ int addConnToServer(char* server_ip, int server_port, int server_id){
 		if(conn_status){
 			return(conn_status);
 		}
-		
+		printf("[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
+
 		char msg[20];
 		snprintf(msg, 20, "RASP_ID : %i", RASP_ID);
 		sendToConn(&node_conn[total_conn], msg);
@@ -146,7 +149,8 @@ extern int connectToClient(connection *conn_client){
 	}
 	
 	//TODO definire il numero massimo di connessioni in coda
-	listen(server_sock , 10);
+	printf("[RASP_ID : %i] sto aspettando connessioni\n", RASP_ID);
+	listen(server_sock , 1);
 
 	addrlen = sizeof(struct sockaddr_in);
 	if ((conn_client->sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&addrlen)) < 0)
@@ -157,7 +161,7 @@ extern int connectToClient(connection *conn_client){
 	
 	char host_addr[INET_ADDRSTRLEN];
 	inet_ntop(AF_INET, &(client.sin_addr), host_addr, INET_ADDRSTRLEN);
-	printf("[RASP_ID : %i] connesso : %s\n", RASP_ID, host_addr);
+	printf("[RASP_ID : %i] ricevuta connessione da : %s\n", RASP_ID, host_addr);
 	
 	shutdown(server_sock, SHUT_RDWR);
 	if (close(server_sock) < 0){

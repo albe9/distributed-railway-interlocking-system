@@ -38,6 +38,7 @@ TASK_ID WIFI_TID;
 */
 
 //Linux
+#include <errno.h>
 #include <fcntl.h>
 // #include <msgQLib.h>
 // #include <semLib.h>
