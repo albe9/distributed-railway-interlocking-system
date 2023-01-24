@@ -1,1 +1,1 @@
-python3 ../host_script/host.py 5
+python3 ../host_script/host.py 7
