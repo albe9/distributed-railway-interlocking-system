@@ -1,0 +1,5 @@
+[RASP_ID : 7] Configurazione ricevuta
+[RASP_ID : 7] : Avvio connessioni
+[RASP_ID : 7] connesso al server 172.23.78.2
+[RASP_ID : 7] Server id : 2 aggiunto correttamente
+[RASP_ID : 7] Finito
