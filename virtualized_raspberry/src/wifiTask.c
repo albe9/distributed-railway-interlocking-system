@@ -7,6 +7,7 @@
 
 
 #include "wifiTask.h"
+#include "my_debug.h"
 
 //variabili statiche (scope locale) per il taskWifi
 static connection node_conn[MAX_CONN];
@@ -51,30 +52,31 @@ int connectToServer(connection *conn_server, char* server_ip, int server_port){
 }
 
 int addConnToServer(char* server_ip, int server_port, int server_id){
-	
 	if(total_conn < MAX_CONN - 1){
 		//tento di connettermi al server, in caso di errore lo restituisco
 		int conn_status = connectToServer(&node_conn[total_conn], server_ip, server_port);
 		if(conn_status){
 			return(conn_status);
 		}
-		printf("[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
+		fprintf(debug_file, "[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
+		// printf("[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
 
 		char msg[20];
 		snprintf(msg, 20, "RASP_ID : %i", RASP_ID);
 		sendToConn(&node_conn[total_conn], msg);
 
 		memset(msg, 0, 20);
-		char *returned_id;
+		int returned_id;
 		readFromConn(&node_conn[total_conn], msg, 20);
-		returned_id = strtok(msg, ":");
-		returned_id = strtok(NULL, ":");
-		if(returned_id == NULL || atoi(returned_id) != server_id){
-			printf("Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i\n", server_id, atoi(returned_id));
+		sscanf(msg, "RASP_ID : %i", &returned_id);
+		if(returned_id != server_id){
+			printf("Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i\n", server_id, returned_id);
 			//TODO gestire errore
+			return(-1);
 		}
 		else{
-			printf("[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, server_id);
+			fprintf(debug_file, "[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, returned_id);
+			// printf("[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, server_id);
 			node_conn[total_conn].connected_id = server_id;
 			total_conn++;
 			return(0);
@@ -83,42 +85,11 @@ int addConnToServer(char* server_ip, int server_port, int server_id){
 	else{
 		printf("Errore raggiunto numero massimo di socket per questo nodo\n");
 		//TODO gestire errore
+		return(-1);
 	}
 }
 
-extern int addConnToClient(){
-	if(total_conn < MAX_CONN - 1){
-		//tento di connettermi al client, in caso di errore lo restituisco
-		int conn_status = connectToClient(&node_conn[total_conn]);
-		if(conn_status){
-			return(conn_status);
-		}
-		char msg[20];
-		char *returned_id;
-		readFromConn(&node_conn[total_conn], msg, 20);
-		returned_id = strtok(msg, ":");
-		returned_id = strtok(NULL, ":");
-		if(returned_id == NULL){
-			printf("Errore id client non ricevuto correttamente\n");
-			//TODO gestire errore
-		}
-		else{
-			int client_id = atoi(returned_id);
-			memset(msg, 0, 20);
-			snprintf(msg, 20, "RASP_ID : %i", RASP_ID);
-			sendToConn(&node_conn[total_conn], msg);
-			printf("[RASP_ID : %i] Client id : %i aggiunto correttamente\n", RASP_ID, client_id);
-			node_conn[total_conn].connected_id = client_id;
-			total_conn++;
-			return(0);
-		}
-	}
-	else{
-		printf("Errore raggiunto numero massimo di socket per questo nodo\n");
-		//TODO gestire errore
-	}
-}
-extern int connectToClient(connection *conn_client){
+extern int addConnToClient(int num_client){
 
 	int server_sock, addrlen;
 	struct sockaddr_in server, client;
@@ -149,20 +120,52 @@ extern int connectToClient(connection *conn_client){
 	}
 	
 	//TODO definire il numero massimo di connessioni in coda
-	printf("[RASP_ID : %i] sto aspettando connessioni\n", RASP_ID);
-	listen(server_sock , 1);
+	listen(server_sock , 10);
+	fprintf(debug_file, "[RASP_ID : %i] sto aspettando connessioni\n", RASP_ID);
+	// printf("[RASP_ID : %i] sto aspettando connessioni\n", RASP_ID);
+
 
 	addrlen = sizeof(struct sockaddr_in);
-	if ((conn_client->sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&addrlen)) < 0)
-	{
-		perror("accept failed");
-	}
+	
+	
+	
+	for(int client_idx=0; client_idx<num_client;client_idx++){
+		if(total_conn < MAX_CONN - 1){
 
+			//tento di accettare un client
+			if ((node_conn[total_conn].sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&addrlen)) < 0)
+			{
+				perror("accept failed");
+			}
+
+			
+			char host_addr[INET_ADDRSTRLEN];
+			inet_ntop(AF_INET, &(client.sin_addr), host_addr, INET_ADDRSTRLEN);
+			fprintf(debug_file, "[RASP_ID : %i] ricevuta connessione da : %s\n", RASP_ID, host_addr);
+			// printf("[RASP_ID : %i] ricevuta connessione da : %s\n", RASP_ID, host_addr);
+
+			char msg[20];
+			int client_id;
+			readFromConn(&node_conn[total_conn], msg, 20);
+			
+			sscanf(msg,"RASP_ID : %i", &client_id);
+			
+			memset(msg, 0, 20);
+			snprintf(msg, 20, "RASP_ID : %i", RASP_ID);
+			sendToConn(&node_conn[total_conn], msg);
+			fprintf(debug_file, "[RASP_ID : %i] Client id : %i aggiunto correttamente\n", RASP_ID, client_id);
+			// printf("[RASP_ID : %i] Client id : %i aggiunto correttamente\n", RASP_ID, client_id);
+			node_conn[total_conn].connected_id = client_id;
+			total_conn++;
+			
+		}
+		else{
+			printf("Errore raggiunto numero massimo di socket per questo nodo\n");
+			//TODO gestire errore
+		}
+	}
 	
-	char host_addr[INET_ADDRSTRLEN];
-	inet_ntop(AF_INET, &(client.sin_addr), host_addr, INET_ADDRSTRLEN);
-	printf("[RASP_ID : %i] ricevuta connessione da : %s\n", RASP_ID, host_addr);
-	
+
 	shutdown(server_sock, SHUT_RDWR);
 	if (close(server_sock) < 0){
 		perror("Errore chiusura server socket");

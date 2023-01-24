@@ -1,7 +1,7 @@
 #include "global_variables.h"
 #include "wifiTask.h"
 #include "initTask.h"
-
+#include "my_debug.h"
 
 int main(int argc, char *argv[]){
 
@@ -14,9 +14,8 @@ int main(int argc, char *argv[]){
         //printf("ip : %s id : %i\n",RASP_IP,RASP_ID);
     }
     
-
+    startDebug();
     initMain();
-
     
 
     return(0);

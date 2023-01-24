@@ -7,7 +7,7 @@
 
 
 #include "initTask.h"
-
+#include "my_debug.h"
 
 void setCurrentTime(time_t current_time){
 	
@@ -178,7 +178,8 @@ void initMain(void){
 		printf("ERRORE nel parsing della config_string");
 	}
     else{
-        printf("[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
+        fprintf(debug_file, "[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
+        // printf("[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
         //printConfigInfo(node_routes, &node_net);
     }
     
@@ -190,7 +191,8 @@ void initMain(void){
     //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
     memset(msg, 0, 50);
     readFromConn(&host_s, msg, 50);
-    printf("[RASP_ID : %i] : %s\n", RASP_ID, msg);
+    fprintf(debug_file, "[RASP_ID : %i] : %s\n", RASP_ID, msg);
+    // printf("[RASP_ID : %i] : %s\n", RASP_ID, msg);
 	
 
     //qui parte il protocollo per instaurare le connessioni dei nodi a catena
@@ -207,19 +209,23 @@ void initMain(void){
     
 
     //seconda fase : server
-    for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
-        if(node_net.next_ids[node_idx] == TAIL_ID){
-            //TODO gestire ultima posizione, potrebbe andare bene skippare e gestirla in seguito con le route
-        }
-        else{
-            addConnToClient();
-        }
+
+    //abbiamo assunto che nessuna route può terminare con uno scambio,
+    //quindi tutti i nodi di terminazione avranno un solo nodo successivo con id : TAIL_ID
+
+    if(node_net.next_node_count == 1 && node_net.next_ids[0] == TAIL_ID){
+        //TODO gestire nodo di terminazione, potrebbe andare bene skippare e gestirla in seguito con le route
     }
+    else{
+        addConnToClient(node_net.next_node_count);
+    }
+
 
 
     //TODO gestione risposte ok task successivi
     //TODO eliminare strutture e memoria allocata per il taskInit una volta concluso
-    printf("[RASP_ID : %i] Finito\n", RASP_ID);
+    fprintf(debug_file, "[RASP_ID : %i] Finito\n", RASP_ID);
+    // printf("[RASP_ID : %i] Finito\n", RASP_ID);
 
 }
 
