@@ -226,32 +226,18 @@ node2 = Node(2)
 node3 = Node(3)
 node4 = Node(4)
 node5 = Node(5)
-node12 = Node(12)
-node13 = Node(13)
+node6 = Node(6)
+node7 = Node(7)
 
-route1 = Route(1, [node1, node2, node3, node4, node5])
-route2 = Route(2, [node12, node4, node13])
-
-graph = Graph([route1, route2])
 graph_testing = Graph([Route(1, [node1, node2, node3])])
 graph_testing2 = Graph([Route(1, [node1, node2, node3]), Route(2, [node1, node2, node4])])
-
 graph_testing3 = Graph([Route(1, [node1, node2, node3]), Route(2, [node4, node2, node5])])
+graph_testing4 = Graph([Route(1, [node1, node2, node3]), 
+                        Route(2, [node4, node2, node5]), 
+                        Route(3, [node6, node2, node7])])
 
 def main():
-    server_loop(int(sys.argv[1]), graph_testing3)
-    # node_data = graph_testing3.query_node_data(1)
-    # print(node_data)
-    # node_data = graph_testing3.query_node_data(2)
-    # print(node_data)
-    # node_data = graph_testing3.query_node_data(3)
-    # print(node_data)
-    # node_data = graph_testing3.query_node_data(4)
-    # print(node_data)
-    # node_data = graph_testing3.query_node_data(5)
-    # print(node_data)
-
-    # print(make_config_string(3, node_data))
+    server_loop(int(sys.argv[1]), graph_testing4)
     
 
 if __name__ == "__main__":
