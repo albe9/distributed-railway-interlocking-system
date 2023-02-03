@@ -2,3 +2,4 @@
 build/**
 *.exe
 wrsdk-vxworks7-raspberrypi4b
+connect/vxWorks
