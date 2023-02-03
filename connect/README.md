@@ -1,0 +1,1 @@
+copiare il file vxWorks (kernel per connettersi al raspberry) da onedrive nella cartella connect
