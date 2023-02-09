@@ -3,3 +3,5 @@ build/**
 *.exe
 wrsdk-vxworks7-raspberrypi4b
 connect/vxWorks
+connect/build.config
+connect/wrdbg_scripts/log_*.txt

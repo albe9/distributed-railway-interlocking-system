@@ -1,2 +1,0 @@
-target connect vxworks7:TCP:192.168.1.215:1534 -kernel ./../../../../../../distributed-railway-interlocking-system/connect/vxWorks
-
