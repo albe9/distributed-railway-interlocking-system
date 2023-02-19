@@ -23,17 +23,17 @@ int connectToServer(connection *conn_server, char* server_ip, int server_port){
 	}
 	
 	//linux
-	struct sockaddr_in local_addr;
-	local_addr.sin_family = AF_INET;
-	local_addr.sin_addr.s_addr = inet_addr(RASP_IP);
-	local_addr.sin_port = 0;
+	// struct sockaddr_in local_addr;
+	// local_addr.sin_family = AF_INET;
+	// local_addr.sin_addr.s_addr = inet_addr(RASP_IP);
+	// local_addr.sin_port = 0;
 		
 	//Bind
-	if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
-	{
-		perror("Errore durante il Bind");
-		close(conn_server->sock);
-	}
+	// if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
+	// {
+	// 	perror("Errore durante il Bind");
+	// 	close(conn_server->sock);
+	// }
 
 	serv_addr.sin_addr.s_addr = inet_addr(server_ip);
 	serv_addr.sin_family = AF_INET;
