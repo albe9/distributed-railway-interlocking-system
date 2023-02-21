@@ -29,21 +29,31 @@ while read target;
 
 
 
-
-
-echo -e "Premi qualsiasi tasto per chiudere le connessioni\n"
-read -r -s -n 1 
-
 cleanup(){
     #chiudo la scrittura sulla pipe
     exec 3>&-
     while read target;
         do
-            rm /tmp/fifo_$target
+            if [ -p "/tmp/fifo_$target" ];
+            then 
+                rm /tmp/fifo_$target
+            fi
         done < target.txt
 }
 
 
 trap cleanup EXIT
+
+
+
+echo -e "Premi qualsiasi tasto per chiudere le connessioni\n"
+# read -r -s -n 1 
+
+sleep infinity &
+wait $!
+
+
+
+
 
 
