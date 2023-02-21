@@ -190,7 +190,7 @@ void initMain(void){
     //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
     memset(msg, 0, 50);
     readFromConn(&host_s, msg, 50);
-    // fprintf(debug_file, "[RASP_ID : %i] : %s\n", RASP_ID, msg);
+    // fprintf(debug_file, "[RASP_ID : %i] %s\n", RASP_ID, msg);
     // printf("[RASP_ID : %i] : %s\n", RASP_ID, msg);
 	
 
@@ -213,15 +213,30 @@ void initMain(void){
     //quindi tutti i nodi di terminazione avranno un solo nodo successivo con id : TAIL_ID
 
     if(node_net.next_node_count == 1 && node_net.next_ids[0] == TAIL_ID){
-        //TODO gestire nodo di terminazione, potrebbe andare bene skippare e gestirla in seguito con le route
+        // Caso nodo di terminazione
+        memset(msg, 0, 50);
+        snprintf(msg, 50, "RASP_ID : %i", RASP_ID);
+        for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
+            sendToConn(getConn(node_idx), msg);
+        }
     }
     else{
         addConnToClient(node_net.next_node_count);
+        // Attendo che tutti i nodi collegati notifichino l'avvenuta connessione
+        for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
+            memset(msg, 0, 50);
+            readFromConn(getConn(node_net.prev_node_count + node_idx), msg, 50);
+            // fprintf(debug_file, "[RASP_ID : %i] %s ha stabilito tutte le sue connessioni\n", RASP_ID, msg);
+        }
+        // Ricevuta la notifica da tutt i nodi successivi , informo quelli precedenti
+        memset(msg, 0, 50);
+        snprintf(msg, 50, "RASP_ID : %i", RASP_ID);
+        for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
+            sendToConn(getConn(node_idx), msg);
+        }
     }
 
 
-
-    //TODO gestione risposte ok task successivi
     //TODO eliminare strutture e memoria allocata per il taskInit una volta concluso
     // fprintf(debug_file, "[RASP_ID : %i] Finito\n", RASP_ID);
     // printf("[RASP_ID : %i] Finito\n", RASP_ID);

@@ -11,8 +11,9 @@ int main(int argc, char *argv[]){
         strcpy(RASP_IP,argv[1]);    
         RASP_ID = atoi(argv[2]);
         
-        //printf("ip : %s id : %i\n",RASP_IP,RASP_ID);
+        // printf("ip : %s id : %i\n",RASP_IP,RASP_ID);
     }
+    
     
     startDebug();
     initMain();

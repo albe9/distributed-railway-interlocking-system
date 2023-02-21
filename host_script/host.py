@@ -182,8 +182,8 @@ def make_config_string(rasp_id, node_data):
 def server_loop(node_num, net_graph):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # s.bind((HOST_IP, PORT))       #accetta connessioni sull'indirizzo HOST_IP e porta PORT
-        s.bind(("0.0.0.0", PORT))
+        s.bind((HOST_IP, PORT))       #accetta connessioni sull'indirizzo HOST_IP e porta PORT
+        # s.bind(("0.0.0.0", PORT))
         s.listen()
         #aspetto la connessione di ogni nodo nella rete per inviare
         connected_nodes = []
@@ -222,6 +222,13 @@ def server_loop(node_num, net_graph):
             print(f"[MSG] : {msg.decode()}")
             conn.send("RASP_ID : 0".encode())
 
+        #attendo il messaggio dai nodi con la conferma che tutte le connessioni sono state stabilite
+        for conn in connected_nodes:
+            msg = conn.recv(20)
+            print(f"[MSG] : {msg.decode()}")
+
+        print("Tutte le connessioni sono state stabilite")
+
         s.close()
 
 def test(node_num, routes):
@@ -237,14 +244,14 @@ node6 = Node(6)
 node7 = Node(7)
 
 graph_testing = Graph([Route(1, [node1, node2, node3])])
-graph_testing2 = Graph([Route(1, [node1, node2, node3]), Route(2, [node1, node2, node4])])
+graph_testing2 = Graph([Route(1, [node1, node2, node3, node4]), Route(2, [node1, node2, node5, node4])])
 graph_testing3 = Graph([Route(1, [node1, node2, node3]), Route(2, [node4, node2, node5])])
 graph_testing4 = Graph([Route(1, [node1, node2, node3]), 
                         Route(2, [node4, node2, node5]), 
                         Route(3, [node6, node2, node7])])
 
 def main():
-    server_loop(int(sys.argv[1]), graph_testing)
+    server_loop(int(sys.argv[1]), graph_testing3)
     # print(sys.argv[1], sys.argv[2])
 
 if __name__ == "__main__":

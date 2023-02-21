@@ -12,6 +12,7 @@
 //variabili statiche (scope locale) per il taskWifi
 static connection node_conn[MAX_CONN];
 static int total_conn = 0;
+static bool flag_blocking = true;
 
 int connectToServer(connection *conn_server, char* server_ip, int server_port){
 	//TODO gestire errori ed assegnare codici da ritornare per tutti i casi
@@ -23,17 +24,17 @@ int connectToServer(connection *conn_server, char* server_ip, int server_port){
 	}
 	
 	//linux
-	// struct sockaddr_in local_addr;
-	// local_addr.sin_family = AF_INET;
-	// local_addr.sin_addr.s_addr = inet_addr(RASP_IP);
-	// local_addr.sin_port = 0;
+	struct sockaddr_in local_addr;
+	local_addr.sin_family = AF_INET;
+	local_addr.sin_addr.s_addr = inet_addr(RASP_IP);
+	local_addr.sin_port = 0;
 		
 	//Bind
-	// if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
-	// {
-	// 	perror("Errore durante il Bind");
-	// 	close(conn_server->sock);
-	// }
+	if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
+	{
+		perror("Errore durante il Bind");
+		close(conn_server->sock);
+	}
 
 	serv_addr.sin_addr.s_addr = inet_addr(server_ip);
 	serv_addr.sin_family = AF_INET;
@@ -174,15 +175,26 @@ extern int addConnToClient(int num_client){
 	return(0);
 }
 
+void setBlockingMode(bool blocking_mode){
+	flag_blocking = blocking_mode;
+}
+
+connection* getConn(int conn_idx){
+	return(&node_conn[conn_idx]);
+}
+
 void sendToConn(connection *conn, char *msg){
 	
 	send(conn->sock, msg, strlen(msg), 0);
 }
 
-void readFromConn(connection *conn, char* buffer, ssize_t buf_size){
+ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 	
 	ssize_t valread;
-	valread = recv(conn->sock, buffer, buf_size, 0);
+	do{
+		valread = recv(conn->sock, buffer, buf_size, 0);
+	}while(flag_blocking && valread == 0);
+	return(valread);
 }
 
 void removeServer(connection *conn_server){
