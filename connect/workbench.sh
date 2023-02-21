@@ -88,8 +88,14 @@ load_module(){
 
     #itero  i log finchè tutti non hanno caricato i moduli
     loading=${#logs[@]}
+    start=$SECONDS
     while [ $loading -gt 0 ];
         do
+            duration=$(( SECONDS - start ))
+            if [ $duration -gt 10];
+                then
+                    echo "Problema, attesa per il load maggiore di 10 secondi, chiudo il processo"
+                fi
             sleep 1
             for log in ${logs[@]};
                 do
