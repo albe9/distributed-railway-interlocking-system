@@ -85,7 +85,7 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
         else{
             ip = strtok(NULL, ",");
         }
-        if(ip == NULL)return(-1);
+        if(ip == NULL)return(E_PARSING);
 
         strcpy(net->prev_ips[ip_idx],ip);
     }
@@ -93,7 +93,7 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
 
     for(int id_idx = 0; id_idx < net->prev_node_count; id_idx++){
         id = strtok(NULL, ",");
-        if(id == NULL)return(-1);
+        if(id == NULL)return(E_PARSING);
         else{
             net->prev_ids[id_idx] = atoi(id);
         }
@@ -109,14 +109,14 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
         else{
             ip = strtok(NULL, ",");
         }
-        if(ip == NULL)return(-1);
+        if(ip == NULL)return(E_PARSING);
 
         strcpy(net->next_ips[ip_idx],ip);
     }
 
     for(int id_idx = 0; id_idx < net->next_node_count; id_idx++){
         id = strtok(NULL, ",");
-        if(id == NULL)return(-1);
+        if(id == NULL)return(E_PARSING);
         else{
             net->next_ids[id_idx] = atoi(id);
         }
@@ -132,7 +132,7 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
         else{
             route_data = strtok(NULL, "/");
         }
-        if(route_data == NULL)return(-1);
+        if(route_data == NULL)return(E_PARSING);
 
 
         sscanf(route_data,"%i,%i,%i", &(*routes)[route_idx].route_id,
@@ -177,9 +177,8 @@ void initMain(void){
 	char config_string[1024] = {0};
 	
 	readFromConn(&host_s, config_string, 1024);
-	if(parseConfigString(config_string, &node_routes, &node_net) == -1){
-		printf("ERRORE nel parsing della config_string");
-        //return (E_PARSING);
+	if(parseConfigString(config_string, &node_routes, &node_net) == E_PARSING){
+        return (E_PARSING);
 	}
     else{
         fprintf(debug_file, "[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
@@ -208,7 +207,7 @@ void initMain(void){
         int conn_status = 0;
         do{
             conn_status = addConnToServer(node_net.prev_ips[node_idx], SERVER_PORT, node_net.prev_ids[node_idx]);
-        }while(conn_status == CONN_REFUSED);
+        }while(conn_status == E_CONN_REFUSED);
     }
     
 

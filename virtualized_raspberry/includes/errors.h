@@ -11,9 +11,6 @@ enum _EXIT_NUMBER {
     E_SUCCESS = 0,
     E_INVALID_ID,
     E_MAX_CONNECTION_NUMBER,
-    E_CREATE_SOCKET,
-    E_BIND,
-    E_CONNECTION,
 
     //TIME
     E_SET_TIME,
@@ -34,9 +31,6 @@ const char *errorDescription(exit_number exit_number) {
         case E_INVALID_ID: return "INVALID CONNECTION SERVER ID"; break;
         case E_MAX_CONNECTION_NUMBER: return "REACHED THE MAXIMUM NUMBER OF CONNECTIONS"; break;
         case E_CONN_REFUSED: return "UNABLE TO CONNECT TO HOST, CONNECTION REFUSED"; break;
-        case E_CREATE_SOCKET: return "UNABLE TO CREATE SOCKET"; break;
-        case E_BIND: return "UNABLE TO BIND"; break;
-        case E_CONNECTION: return "UNABLE TO CONNECT"; break;
 
         case E_SET_TIME: return "UNABLE TO SET TIME"; break;
 

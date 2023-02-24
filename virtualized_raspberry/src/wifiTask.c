@@ -9,7 +9,6 @@
 #include "wifiTask.h"
 #include "my_debug.h"
 
-#include "errors.h"
 
 //variabili statiche (scope locale) per il taskWifi
 static connection node_conn[MAX_CONN];
@@ -22,7 +21,7 @@ exit_number connectToServer(connection *conn_server, char* server_ip, int server
 	struct sockaddr_in serv_addr;
 	
 	if ((conn_server->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		return E_CREATE_SOCKET;
+		return E_DEFAUL_ERROR;
 	}
 	
 	//linux
@@ -35,7 +34,7 @@ exit_number connectToServer(connection *conn_server, char* server_ip, int server
 	if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
 	{
 		close(conn_server->sock);
-		return E_BIND;
+		return E_DEFAUL_ERROR;
 	}
 
 	serv_addr.sin_addr.s_addr = inet_addr(server_ip);
@@ -44,11 +43,11 @@ exit_number connectToServer(connection *conn_server, char* server_ip, int server
  
 	//CONTROLLARE QUESTA FUNZIONE
 	if ((conn_server->fd = connect(conn_server->sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-		if(errno == ECONNREFUSED){
+		if(errno == E_CONN_REFUSED){
 			close(conn_server->sock);
 			return(E_CONN_REFUSED);
 		}
-		return E_CONNECTION;
+		return E_DEFAUL_ERROR;
 	}
 	
 	return E_SUCCESS;
@@ -59,7 +58,7 @@ exit_number addConnToServer(char* server_ip, int server_port, int server_id){
 		//tento di connettermi al server, in caso di errore lo restituisco
 		int conn_status = connectToServer(&node_conn[total_conn], server_ip, server_port);
 		if(conn_status){
-			return E_CONNECTION;
+			return E_DEFAUL_ERROR;
 		}
 		fprintf(debug_file, "[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
 		// printf("[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
@@ -102,7 +101,7 @@ extern exit_number addConnToClient(int num_client){
 	
 	if ((server_sock = socket(AF_INET , SOCK_STREAM , 0)) < 0)
 	{
-		return E_CREATE_SOCKET;
+		return E_DEFAUL_ERROR;
 	}
 	
 	//Setto le opzioni del socket affinchè possa riutilizzare la stessa porta(e indirizzo)
@@ -119,7 +118,7 @@ extern exit_number addConnToClient(int num_client){
 	//Bind
 	if( bind(server_sock,(struct sockaddr *)&server , sizeof(server)) < 0)
 	{
-		return E_BIND;
+		return E_DEFAUL_ERROR;
 	}
 	
 	//TODO definire il numero massimo di connessioni in coda
@@ -138,7 +137,7 @@ extern exit_number addConnToClient(int num_client){
 			//tento di accettare un client
 			if ((node_conn[total_conn].sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&addrlen)) < 0)
 			{
-				return E_CONNECTION;
+				return E_DEFAUL_ERROR;
 			}
 
 			

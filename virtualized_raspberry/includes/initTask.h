@@ -33,7 +33,7 @@ typedef struct{
 
 
 extern void setCurrentTime(time_t current_time);
-extern int parseConfigString(char* config_string,route **routes, network *net);
+extern exit_number parseConfigString(char* config_string,route **routes, network *net);
 void printConfigInfo(route *routes, network *net);
 extern void initMain(void);
 
