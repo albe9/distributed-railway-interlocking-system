@@ -9,6 +9,8 @@
 #include "initTask.h"
 #include "my_debug.h"
 
+#include "errors.h"
+
 void setCurrentTime(time_t current_time){
 	
 	struct timeval current_timeval;
@@ -17,7 +19,8 @@ void setCurrentTime(time_t current_time){
 	
 	
 	if(settimeofday(&current_timeval, NULL) < 0){
-		perror("Errore nel settare il tempo :");
+        perror("Errore nel settare il tempo :"); 
+        //TODO dobbiamo scegliere se usare errors turante la fase di log oppure cambiare da void a exit_error il setCurrentTime
 	}
 	
 	
@@ -34,7 +37,7 @@ time_t current_time = 0;
 route *node_routes;
 
 
-int parseConfigString(char* config_string,route **routes, network *net){
+exit_number parseConfigString(char* config_string,route **routes, network *net){
     //TODO: gestire gli errori durante il parsing
 
     char *packet[4];
@@ -137,7 +140,7 @@ int parseConfigString(char* config_string,route **routes, network *net){
     }
 
 
-    return(0);
+    return(E_SUCCESS);
 }
 
 void printConfigInfo(route *routes, network *net){
@@ -176,6 +179,7 @@ void initMain(void){
 	readFromConn(&host_s, config_string, 1024);
 	if(parseConfigString(config_string, &node_routes, &node_net) == -1){
 		printf("ERRORE nel parsing della config_string");
+        //return (E_PARSING);
 	}
     else{
         fprintf(debug_file, "[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);

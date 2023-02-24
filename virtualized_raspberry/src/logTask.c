@@ -58,7 +58,7 @@ void logMessage(char* msg, char* task_name){
 
 
 void logInit(void){
-	//Crea la directory e il file di log se non sono già esistenti
+	//Crea la directory e il file di log se non sono giï¿½ esistenti
 	
 	struct stat st = {0};
 	//Controlla se esiste directory di log, altrimenti la crea
@@ -67,7 +67,7 @@ void logInit(void){
 	    	perror("\nErrore creazione directory di log:");
 	    }
 	}
-	//Crea/apre il file di log in modalità append
+	//Crea/apre il file di log in modalitï¿½ append
 	if ((LOG_FD = open("/usr/log/log.txt",O_RDWR | O_APPEND  | O_CREAT, 00700)) < 0){
 		perror("\nErrore apertura file di log");
 	}
