@@ -42,6 +42,7 @@ TASK_ID WIFI_TID;
 #include <fcntl.h>
 // #include <msgQLib.h>
 // #include <semLib.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

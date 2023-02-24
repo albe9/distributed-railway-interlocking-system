@@ -1,7 +1,8 @@
-/.vscode
+*.vscode
 build/**
 *.exe
 wrsdk-vxworks7-raspberrypi4b
 connect/vxWorks
 connect/build.config
-connect/wrdbg_scripts/log_*.txt
+connect/log_files/*.txt
+virtualized_raspberry/debug/debug*.txt

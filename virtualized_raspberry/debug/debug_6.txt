@@ -1,8 +1,0 @@
-[RASP_ID : 6] Configurazione ricevuta
-[RASP_ID : 6] : Avvio connessioni
-[RASP_ID : 6] connesso al server 172.23.78.0
-[RASP_ID : 6] Server id : 0 aggiunto correttamente
-[RASP_ID : 6] sto aspettando connessioni
-[RASP_ID : 6] ricevuta connessione da : 172.23.78.2
-[RASP_ID : 6] Client id : 2 aggiunto correttamente
-[RASP_ID : 6] Finito

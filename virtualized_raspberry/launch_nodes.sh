@@ -1,14 +1,23 @@
 #!/bin/bash
 
-#host ip addr : 172.23.78.0
-N_IP=7
-#aggiungo N_IP all'interfaccia di rete eth0
+if [ ! $1 ];
+then 
+    echo "inserire il nome dell'interfaccia (es eth0)"
+    exit
+fi
+
+#wlp0s20f3
+net_interface=$1
+
+# host ip addr : 192.168.1.210
+N_IP=5
+#aggiungo N_IP all'interfaccia di rete $net_interface
 for ((label=0; label<=$N_IP; label++))
 do
-    ip=$(ip address show dev eth0 label eth0:$label)
+    ip=$(ip address show dev $net_interface label $net_interface:$label)
     if [ -z "$ip" ]
     then
-        sudo ip address add 172.23.78.$label/24 dev eth0 label eth0:$label
+        sudo ip address add 192.168.1.21$label/24 dev $net_interface label $net_interface:$label
     fi
 done
 
@@ -19,10 +28,15 @@ done
 
 # esegue i file compilati con i relativi args
 
-../build/Virtualized_raspberry "172.23.78.1" 1 &
-../build/Virtualized_raspberry "172.23.78.2" 2 &
-../build/Virtualized_raspberry "172.23.78.3" 3 &
-../build/Virtualized_raspberry "172.23.78.4" 4 &
-../build/Virtualized_raspberry "172.23.78.5" 5 &
-../build/Virtualized_raspberry "172.23.78.6" 6 &
-../build/Virtualized_raspberry "172.23.78.7" 7
+for ((label=1; label<=$N_IP; label++))
+do
+    ../build/Virtualized_raspberry "192.168.1.21$label" $label &
+done
+
+remove_ip(){
+
+    for ((label=0; label<=$N_IP; label++))
+    do
+        sudo ip address del 192.168.1.21$label/24 dev $net_interface label $net_interface:$label
+    done
+}

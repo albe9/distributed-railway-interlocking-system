@@ -14,6 +14,7 @@
 //variabili statiche (scope locale) per il taskWifi
 static connection node_conn[MAX_CONN];
 static int total_conn = 0;
+static bool flag_blocking = true;
 
 exit_number connectToServer(connection *conn_server, char* server_ip, int server_port){
 	//TODO gestire errori ed assegnare codici da ritornare per tutti i casi
@@ -176,15 +177,26 @@ extern exit_number addConnToClient(int num_client){
 	return E_SUCCESS;
 }
 
+void setBlockingMode(bool blocking_mode){
+	flag_blocking = blocking_mode;
+}
+
+connection* getConn(int conn_idx){
+	return(&node_conn[conn_idx]);
+}
+
 void sendToConn(connection *conn, char *msg){
 	
 	send(conn->sock, msg, strlen(msg), 0);
 }
 
-void readFromConn(connection *conn, char* buffer, ssize_t buf_size){
+ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 	
 	ssize_t valread;
-	valread = recv(conn->sock, buffer, buf_size, 0);
+	do{
+		valread = recv(conn->sock, buffer, buf_size, 0);
+	}while(flag_blocking && valread == 0);
+	return(valread);
 }
 
 void removeServer(connection *conn_server){

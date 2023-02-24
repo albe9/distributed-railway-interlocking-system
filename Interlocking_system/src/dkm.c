@@ -60,7 +60,12 @@ void test(void){
 	TEST_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
 }
 
-void startInit(void){
+void startInit(int rasp_id){
+	//Setto l'id e l'ip del raspberry
+	RASP_ID = rasp_id;
+	snprintf(RASP_IP, 20, "192.168.1.21%i", RASP_ID);
+	printf("%s\n", RASP_IP);
+
 	INIT_TID = taskSpawn("initTask", 50, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
 

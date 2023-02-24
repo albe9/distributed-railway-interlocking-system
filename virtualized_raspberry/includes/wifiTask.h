@@ -26,8 +26,10 @@ extern int addConnToServer(char* server_ip, int server_port, int server_id);
 extern int connectToServer(connection *conn_server, char* server_ip, int server_port);
 extern int addConnToClient(int num_client);
 
+extern void setBlockingMode(bool blocking_mode);
+extern connection* getConn(int conn_idx);
 extern void sendToConn(connection *conn, char *msg);
-extern void readFromConn(connection *conn, char* buffer, ssize_t buf_size);
+extern ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size);
 
 extern void wifiMain(void);
 extern void removeServer(connection *conn_server);
