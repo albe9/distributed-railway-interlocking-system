@@ -9,10 +9,16 @@ launch_connect(){
             then 
                 echo "Connessione già eseguita"
                 return 0
+            else
+                #crea una named pipe per ogni target su cui potremmo collegarci ed inviare comandi 
+                mkfifo /tmp/fifo_$target
             fi
+            
         done < target.txt
 
     gnome-terminal --tab -- bash -c "./connect.sh; bash"
+
+    sleep 1
 }
 
 build(){
@@ -56,7 +62,7 @@ build(){
 
 load_module(){
 
-    #verifico che la connessione ai target sia attiva (basta controllare la presenza delle pipe)
+    #verifico che le pipe esistano
     while read target;
         do
             if [ ! -p "/tmp/fifo_$target" ];
@@ -92,9 +98,10 @@ load_module(){
     while [ $loading -gt 0 ];
         do
             duration=$(( SECONDS - start ))
-            if [ $duration -gt 10];
+            if [ $duration -gt 25 ];
                 then
-                    echo "Problema, attesa per il load maggiore di 10 secondi, chiudo il processo"
+                    echo "Problema, attesa per il load maggiore di 25 secondi, chiudo il processo"
+                    exit
                 fi
             sleep 1
             for log in ${logs[@]};
