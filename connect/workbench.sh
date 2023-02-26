@@ -1,5 +1,11 @@
 #!/bin/bash
 
+#salvo i target in un array
+TARGETS=()
+while read target;
+    do
+        TARGETS+=("$target")
+    done < target.txt
 
 launch_connect(){
     #verifico che la connessione ai target non sia già attiva (basta controllare la presenza delle pipe)
@@ -44,6 +50,8 @@ build(){
             if [ $? -eq 0 ];
                 then
                     echo "Build fallito"
+                    #resetto i file oggetto falliti
+                    # rm -R ./../Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/Interlocking_system*
                     break
                 fi
             grep 'Build Finished' ./log_files/build_log.txt
@@ -78,13 +86,21 @@ load_module(){
     cd ./connect
 
     logs=()
+    for target in ${TARGETS[@]};
+        do
+            #salvo i file di log in un array
+            logs+=("log_$target.txt")
+            #resetto i log
+            > ./log_files/"log_$target.txt"
+        done
+    
+    sleep 4
+
     while read target;
         do
             ping -c2 $target > /dev/null 2>&1 &
             if [ $? -eq 0 ]; 
             then
-                #salvo i file di log in un array
-                logs+=("log_$target.txt")
                 #invio il comando per caricare i moduli
                 echo "module load $module_path" > /tmp/fifo_$target
             else 
@@ -92,31 +108,51 @@ load_module(){
             fi
         done < target.txt
 
-    #resetto i log
-    for log in ${logs[@]};
-        > ./log_files/$log
-    done
+    
     #itero  i log finchè tutti non hanno caricato i moduli
-    loading=${#logs[@]}
+    # loading=${#logs[@]}
+    # start=$SECONDS
+    # while [ $loading -gt 0 ];
+    #     do
+    #         duration=$(( SECONDS - start ))
+    #         if [ $duration -gt 60 ];
+    #             then
+    #                 echo "Problema, attesa per il load maggiore di 60 secondi, chiudo il processo"
+    #                 exit
+    #             fi
+    #         sleep 1
+    #         for log in ${logs[@]};
+    #             do
+    #                 grep -Pzo 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/$log > /dev/null 2>&1 
+    #                 if [ $? -eq 0 ]; 
+    #                     then
+    #                         echo $log ha caricato
+    #                         loading=$(( $loading - 1 ))
+    #                     fi
+    #             done
+    #     done
+
     start=$SECONDS
-    while [ $loading -gt 0 ];
+    for log in ${logs[@]};
         do
-            duration=$(( SECONDS - start ))
-            if [ $duration -gt 60 ];
-                then
-                    echo "Problema, attesa per il load maggiore di 25 secondi, chiudo il processo"
-                    exit
-                fi
-            sleep 1
-            for log in ${logs[@]};
+            while [ true ];
                 do
+                    duration=$(( SECONDS - start ))
+                    if [ $duration -gt 60 ];
+                        then
+                            echo "Problema, attesa per il load maggiore di 60 secondi, chiudo il processo"
+                            exit
+                        fi
+                    sleep 1
+
                     grep -Pzo 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/$log > /dev/null 2>&1 
                     if [ $? -eq 0 ]; 
                         then
                             echo $log ha caricato
-                            loading=$(( $loading - 1 ))
+                            break
                         fi
                 done
+            
         done
 }
 

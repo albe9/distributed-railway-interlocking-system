@@ -1,10 +1,13 @@
-start=$SECONDS
-while true;
-    do  
-        duration=$(( SECONDS - start ))
-        if [ $duration -gt 3 ];
-            then
-                echo "chiuso"
-                break
-            fi
-    done
+ logs=()
+    while read target;
+        do
+            #salvo i file di log in un array
+            logs+=("log_$target.txt")
+        done < target.txt
+
+    #resetto i log
+    for log in ${logs[@]};
+        do
+            > ./log_files/$log
+        done
+
