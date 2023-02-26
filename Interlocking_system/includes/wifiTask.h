@@ -22,9 +22,9 @@ typedef struct{
 }connection;
 
 
-extern int addConnToServer(char* server_ip, int server_port, int server_id);
-extern int connectToServer(connection *conn_server, char* server_ip, int server_port);
-extern int addConnToClient(int num_client);
+extern exit_number addConnToServer(char* server_ip, int server_port, int server_id);
+extern exit_number connectToServer(connection *conn_server, char* server_ip, int server_port);
+extern exit_number addConnToClient(int num_client);
 
 extern void setBlockingMode(bool blocking_mode);
 extern connection* getConn(int conn_idx);

@@ -13,13 +13,13 @@ static connection node_conn[MAX_CONN];
 static int total_conn = 0;
 static bool flag_blocking = true;
 
-int connectToServer(connection *conn_server, char* server_ip, int server_port){
+exit_number connectToServer(connection *conn_server, char* server_ip, int server_port){
 	//TODO gestire errori ed assegnare codici da ritornare per tutti i casi
 	
 	struct sockaddr_in serv_addr;
 	
 	if ((conn_server->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-		perror("\nErrore nella creazione del socket");
+		return E_DEFAUL_ERROR;
 	}
 	
 	//linux
@@ -31,8 +31,8 @@ int connectToServer(connection *conn_server, char* server_ip, int server_port){
 	//Bind
 	if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
 	{
-		perror("Errore durante il Bind");
 		close(conn_server->sock);
+		return E_DEFAUL_ERROR;
 	}
 
 	serv_addr.sin_addr.s_addr = inet_addr(server_ip);
@@ -41,22 +41,22 @@ int connectToServer(connection *conn_server, char* server_ip, int server_port){
  
  
 	if ((conn_server->fd = connect(conn_server->sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
-		if(errno == ECONNREFUSED){
+		if(errno == E_CONN_REFUSED){
 			close(conn_server->sock);
-			return(CONN_REFUSED);
+			return(E_CONN_REFUSED);
 		}
-		perror("\nErrore connessione fallita");
+		return E_DEFAUL_ERROR;
 	}
 	
-	return(0);
+	return E_SUCCESS;
 }
 
-int addConnToServer(char* server_ip, int server_port, int server_id){
+exit_number addConnToServer(char* server_ip, int server_port, int server_id){
 	if(total_conn < MAX_CONN - 1){
 		//tento di connettermi al server, in caso di errore lo restituisco
 		int conn_status = connectToServer(&node_conn[total_conn], server_ip, server_port);
 		if(conn_status){
-			return(conn_status);
+			return E_DEFAUL_ERROR;
 		}
 		// fprintf(debug_file, "[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
 		// printf("[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
@@ -70,26 +70,27 @@ int addConnToServer(char* server_ip, int server_port, int server_id){
 		readFromConn(&node_conn[total_conn], msg, 20);
 		sscanf(msg, "RASP_ID : %i", &returned_id);
 		if(returned_id != server_id){
-			printf("Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i\n", server_id, returned_id);
+			//printf("Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i\n", server_id, returned_id);
 			//TODO gestire errore
-			return(-1);
+			return E_INVALID_ID;
 		}
 		else{
 			// fprintf(debug_file, "[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, returned_id);
 			// printf("[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, server_id);
 			node_conn[total_conn].connected_id = server_id;
 			total_conn++;
-			return(0);
+			return E_SUCCESS;
 		}
 	}
 	else{
 		printf("Errore raggiunto numero massimo di socket per questo nodo\n");
 		//TODO gestire errore
-		return(-1);
+		return E_MAX_CONNECTION_NUMBER;
 	}
+	
 }
 
-extern int addConnToClient(int num_client){
+extern exit_number addConnToClient(int num_client){
 
 	int server_sock, addrlen;
 	struct sockaddr_in server, client;
@@ -98,8 +99,7 @@ extern int addConnToClient(int num_client){
 	
 	if ((server_sock = socket(AF_INET , SOCK_STREAM , 0)) < 0)
 	{
-		printf("\nImpossibile creare il socket\n");
-		perror("Errore ");
+		return E_DEFAUL_ERROR;
 	}
 	
 	//Setto le opzioni del socket affinchè possa riutilizzare la stessa porta(e indirizzo)
@@ -116,7 +116,7 @@ extern int addConnToClient(int num_client){
 	//Bind
 	if( bind(server_sock,(struct sockaddr *)&server , sizeof(server)) < 0)
 	{
-		perror("Errore durante il Bind");
+		return E_DEFAUL_ERROR;
 	}
 	
 	//TODO definire il numero massimo di connessioni in coda
@@ -135,7 +135,7 @@ extern int addConnToClient(int num_client){
 			//tento di accettare un client
 			if ((node_conn[total_conn].sock = accept(server_sock, (struct sockaddr *)&client, (socklen_t*)&addrlen)) < 0)
 			{
-				perror("accept failed");
+				return E_DEFAUL_ERROR;
 			}
 
 			
@@ -160,7 +160,7 @@ extern int addConnToClient(int num_client){
 			
 		}
 		else{
-			printf("Errore raggiunto numero massimo di socket per questo nodo\n");
+			return E_MAX_CONNECTION_NUMBER;
 			//TODO gestire errore
 		}
 	}
@@ -168,10 +168,10 @@ extern int addConnToClient(int num_client){
 
 	shutdown(server_sock, SHUT_RDWR);
 	if (close(server_sock) < 0){
-		perror("Errore chiusura server socket");
+		return E_DEFAUL_ERROR;
 	}
 
-	return(0);
+	return E_SUCCESS;
 }
 
 void setBlockingMode(bool blocking_mode){

@@ -41,7 +41,6 @@ exit_number connectToServer(connection *conn_server, char* server_ip, int server
 	serv_addr.sin_family = AF_INET;
 	serv_addr.sin_port = htons(server_port);
  
-	//CONTROLLARE QUESTA FUNZIONE
 	if ((conn_server->fd = connect(conn_server->sock, (struct sockaddr*)&serv_addr, sizeof(serv_addr))) < 0) {
 		if(errno == E_CONN_REFUSED){
 			close(conn_server->sock);

@@ -13,6 +13,7 @@
 #ifndef INCLUDES_GLOBAL_VARIABLES_H_
 #define INCLUDES_GLOBAL_VARIABLES_H_
 
+#include "errors.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <msgQLib.h>
