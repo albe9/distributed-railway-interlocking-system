@@ -92,13 +92,17 @@ load_module(){
             fi
         done < target.txt
 
+    #resetto i log
+    for log in ${logs[@]};
+        > ./log_files/$log
+    done
     #itero  i log finchè tutti non hanno caricato i moduli
     loading=${#logs[@]}
     start=$SECONDS
     while [ $loading -gt 0 ];
         do
             duration=$(( SECONDS - start ))
-            if [ $duration -gt 25 ];
+            if [ $duration -gt 60 ];
                 then
                     echo "Problema, attesa per il load maggiore di 25 secondi, chiudo il processo"
                     exit
@@ -111,7 +115,6 @@ load_module(){
                         then
                             echo $log ha caricato
                             loading=$(( $loading - 1 ))
-                            > ./log_files/$log
                         fi
                 done
         done
