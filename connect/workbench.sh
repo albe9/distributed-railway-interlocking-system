@@ -9,7 +9,7 @@ while read target;
 
 launch_connect(){
     #verifico che la connessione ai target non sia già attiva (basta controllare la presenza delle pipe)
-    while read target;
+    for target in ${TARGETS[@]};
         do
             if [ -p "/tmp/fifo_$target" ];
             then 
@@ -20,14 +20,31 @@ launch_connect(){
                 mkfifo /tmp/fifo_$target
             fi
             
-        done < target.txt
+        done
 
     gnome-terminal --tab -- bash -c "./connect.sh; bash"
 
-    sleep 1
+    #itero i raspberry per verificare che le connessioni siano tutte effettuate
+    for target in ${TARGETS[@]};
+        do
+            while true
+                do  
+                    sleep 0.5
+                    grep 'Connected to' ./log_files/log_$target.txt
+                    if [ $? -eq 0 ];
+                        then
+                            #resetto il log e passo al prossimo raspberry
+                            > ./log_files/log_$target.txt
+                            break
+                        fi
+                done
+        done
 }
 
 build(){
+
+    # Elimino i file generati precedentemente
+    rm -R ./../Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/*
 
     WINDRIVER_PATH=$(grep -Po '(?<=\[WindRiver_path\] : ")[^"]*' ./build.config)
 
@@ -46,13 +63,19 @@ build(){
     while true
         do  
             sleep 1
+            grep 'Nessuna regola per generare' ./log_files/build_log.txt
+            if [ $? -eq 0 ];
+                then
+                    echo "Riprovo il build"
+                    build
+                    break
+                fi
             grep 'Build Failed' ./log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Build fallito"
-                    #resetto i file oggetto falliti
-                    # rm -R ./../Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/Interlocking_system*
-                    break
+                    stty sane
+                    exit
                 fi
             grep 'Build Finished' ./log_files/build_log.txt
             if [ $? -eq 0 ];
@@ -71,32 +94,22 @@ build(){
 load_module(){
 
     #verifico che le pipe esistano
-    while read target;
+    for target in ${TARGETS[@]};
         do
             if [ ! -p "/tmp/fifo_$target" ];
             then 
                 launch_connect
                 break
             fi
-        done < target.txt
+        done
     
 
     cd ./../
     module_path=$PWD/Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/Interlocking_system_partialImage/Debug/Interlocking_system_partialImage.o
     cd ./connect
 
-    logs=()
-    for target in ${TARGETS[@]};
-        do
-            #salvo i file di log in un array
-            logs+=("log_$target.txt")
-            #resetto i log
-            > ./log_files/"log_$target.txt"
-        done
-    
-    sleep 4
 
-    while read target;
+    for target in ${TARGETS[@]};
         do
             ping -c2 $target > /dev/null 2>&1 &
             if [ $? -eq 0 ]; 
@@ -106,54 +119,57 @@ load_module(){
             else 
                 "Host $target not connected"
             fi
-        done < target.txt
+        done
 
     
     #itero  i log finchè tutti non hanno caricato i moduli
-    # loading=${#logs[@]}
-    # start=$SECONDS
-    # while [ $loading -gt 0 ];
-    #     do
-    #         duration=$(( SECONDS - start ))
-    #         if [ $duration -gt 60 ];
-    #             then
-    #                 echo "Problema, attesa per il load maggiore di 60 secondi, chiudo il processo"
-    #                 exit
-    #             fi
-    #         sleep 1
-    #         for log in ${logs[@]};
-    #             do
-    #                 grep -Pzo 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/$log > /dev/null 2>&1 
-    #                 if [ $? -eq 0 ]; 
-    #                     then
-    #                         echo $log ha caricato
-    #                         loading=$(( $loading - 1 ))
-    #                     fi
-    #             done
-    #     done
 
     start=$SECONDS
-    for log in ${logs[@]};
+    for target in ${TARGETS[@]};
         do
             while [ true ];
                 do
                     duration=$(( SECONDS - start ))
                     if [ $duration -gt 60 ];
                         then
-                            echo "Problema, attesa per il load maggiore di 60 secondi, chiudo il processo"
+                            echo "Problema, attesa per il load maggiore di 60 secondi, controlla i log"
                             exit
                         fi
                     sleep 1
 
-                    grep -Pzo 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/$log > /dev/null 2>&1 
+                    grep -Pzo 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/log_$target.txt > /dev/null 2>&1 
                     if [ $? -eq 0 ]; 
                         then
-                            echo $log ha caricato
+                            echo "log_$target.txt" ha caricato
+                            #resetto il log
+                            > ./log_files/log_$target.txt
                             break
                         fi
                 done
             
         done
+}
+
+task_delete(){
+
+    for target in ${TARGETS[@]};
+        do
+            ( echo "reset" ; sleep 3 ; echo "td initTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ; echo "td wifiTask" ; sleep 2 ) | telnet $target &
+        done
+}
+
+reboot_rasp(){
+
+    for target in ${TARGETS[@]};
+        do
+            ( echo "cmd" ; sleep 2 ; echo "reboot -c" ; sleep 2 ) | telnet $target &
+        done
+    
+    rm /tmp/fifo*
+}
+
+see_log(){
+    gnome-terminal --tab -- bash -c "./see_log.sh; bash"
 }
 
 help_workbench(){
@@ -167,12 +183,15 @@ echo -e "Opzioni:
         -c  (compile)          Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto
         -b  (build)            Esegue il Build del progetto, in caso di errori salva lo stato in log_files/build_log.txt
         -l  (load)             Esegue il Load del modulo sui raspberry
+        -o  (output)           Mostro i log dei raspberry
+        -d  (delete)           Effettua il task delete nei raspberry (per ora task_wifi)
+        -r  (reboot)           Effettua il reboot dei raspberry
         -h  (help)             Mostra questo messaggio
     "
 
 }
 
-while getopts "cblh" options;
+while getopts "cblodrh" options;
     do                                  
         case "${options}" in      
             c)
@@ -186,6 +205,18 @@ while getopts "cblh" options;
             l)
                 echo "Eseguo il load del modulo"
                 load_module
+                ;;
+            o)
+                echo "Mostro i log"
+                see_log
+                ;;
+            d)
+                echo "Delete dei task"
+                task_delete
+                ;;
+            r)
+                echo "Reboot dei raspberry"
+                reboot_rasp
                 ;;
             h)
                 help_workbench
