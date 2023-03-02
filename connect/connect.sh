@@ -27,13 +27,9 @@ while read target;
 cleanup(){
     #chiudo la scrittura sulla pipe
     exec 3>&-
-    while read target;
-        do
-            if [ -p "/tmp/fifo_$target" ];
-            then 
-                rm /tmp/fifo_$target
-            fi
-        done < target.txt
+    
+    rm /tmp/fifo*
+            
 }
 
 
