@@ -12,12 +12,14 @@
 #include <arpa/inet.h>
 
 #include "global_variables.h"
+#include "logTask.h"
+#include <sys/select.h>
+// #include <epollLib.h>
 
 #define CONN_REFUSED -2
 
 typedef struct{
 	int sock;
-	int fd;
 	int connected_id;
 }connection;
 
@@ -32,6 +34,6 @@ extern void sendToConn(connection *conn, char *msg);
 extern ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size);
 
 extern void wifiMain(void);
-extern void removeServer(connection *conn_server);
+extern exit_number resetConnections();
 
 #endif /* INCLUDES_WIFITASK_H_ */
