@@ -8,7 +8,6 @@
 
 #include "global_variables.h"
 #include "initTask.h"
-#include "logTask.h"
 #include "wifiTask.h"
 
 
@@ -60,17 +59,20 @@ void test(void){
 	TEST_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
 }
 
-void startInit(int rasp_id){
+void startInit(int rasp_id, char* host_ip){
 	//Setto l'id e l'ip del raspberry
 	RASP_ID = rasp_id;
 	snprintf(RASP_IP, 20, "192.168.1.21%i", RASP_ID);
-	printf("%s\n", RASP_IP);
-
+	//Setto l'ip dell'host
+	snprintf(HOST_IP, 20, host_ip);
+	printf("\n\n%s", HOST_IP);
 	INIT_TID = taskSpawn("initTask", 50, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void startWifi(void){
-	WIFI_TID = taskSpawn("wifi_task", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
+	WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
-
+void reset(void){
+	resetConnections();
+}
