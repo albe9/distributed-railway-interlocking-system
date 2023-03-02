@@ -42,6 +42,7 @@ TASK_ID WIFI_TID;
 
 extern int SERVER_PORT;
 extern int RASP_ID;
+extern char HOST_IP[20];
 extern char RASP_IP[20];
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */
