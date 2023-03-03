@@ -7,6 +7,9 @@
 
 
 #include "initTask.h"
+#include "my_debug.h"
+
+#include "errors.h"
 
 void setCurrentTime(time_t current_time){
 	
@@ -16,7 +19,8 @@ void setCurrentTime(time_t current_time){
 	
 	
 	if(settimeofday(&current_timeval, NULL) < 0){
-		perror("Errore nel settare il tempo :");
+        perror("Errore nel settare il tempo :"); 
+        //TODO dobbiamo scegliere se usare errors turante la fase di log oppure cambiare da void a exit_error il setCurrentTime
 	}
 	
 	
@@ -28,9 +32,9 @@ void setCurrentTime(time_t current_time){
 	printf ("Current local time and date: %s", asctime(timeinfo));	
 }
 
-static network node_net;
-static time_t current_time = 0;
-static route *node_routes;
+network node_net;
+time_t current_time = 0;
+route *node_routes;
 
 
 exit_number parseConfigString(char* config_string,route **routes, network *net){
@@ -160,53 +164,39 @@ void printConfigInfo(route *routes, network *net){
 
 void initMain(void){
 	
-    
-
-    // starto il logTask
-    LOG_TID = taskSpawn("LogTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
-
 	//apro la connessione con l'host per ricevere i dati di configurazione
-	
-	connection host_s = {.sock=0, .connected_id=0};
+	char HOST_IP[] = "192.168.1.210";
+	// char HOST_IP[] = "172.23.78.0";
+	connection host_s = {.fd=0, .sock=0, .connected_id=0};
 	
 
 	connectToServer(&host_s, HOST_IP, SERVER_PORT);
-	char msg[100];
-	snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
+	char msg[50];
+	snprintf(msg, 50, "RASP_ID : %i", RASP_ID);
 	sendToConn(&host_s, msg);
 	char config_string[1024] = {0};
 	
 	readFromConn(&host_s, config_string, 1024);
 	if(parseConfigString(config_string, &node_routes, &node_net) == E_PARSING){
-        // TODO gestire (E_PARSING);
-        exit(-1);
+        return (E_PARSING);
 	}
-
-    setCurrentTime(current_time);
-
-    // fprintf(debug_file, "[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
-    logMessage("Configurazione ricevuta", taskName(0));
-    //printConfigInfo(node_routes, &node_net);
+    else{
+        fprintf(debug_file, "[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
+        // printf("[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
+        //printConfigInfo(node_routes, &node_net);
+    }
     
-    
-
-
     //Notifico l'host dell'avvenuta configurazione
-    memset(msg, 0, 100);
-    snprintf(msg, 100, "Configurazione eseguita su RASP_ID : %i", RASP_ID);
+    memset(msg, 0, 50);
+    snprintf(msg, 50, "Configurazione eseguita su RASP_ID : %i", RASP_ID);
     sendToConn(&host_s, msg);
     
     //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
-    memset(msg, 0, 100);
-    readFromConn(&host_s, msg, 100);
-    // fprintf(debug_file, "[RASP_ID : %i] %s\n", RASP_ID, msg);
-    logMessage(msg, taskName(0));
+    memset(msg, 0, 50);
+    readFromConn(&host_s, msg, 50);
+    fprintf(debug_file, "[RASP_ID : %i] %s\n", RASP_ID, msg);
+    // printf("[RASP_ID : %i] : %s\n", RASP_ID, msg);
 	
-    //chiudo la connessione con l'host
-    shutdown(host_s.sock, SHUT_RDWR);
-		if (close(host_s.sock) < 0){
-			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
-		}
 
     //qui parte il protocollo per instaurare le connessioni dei nodi a catena
     //prima fase : client
@@ -217,9 +207,6 @@ void initMain(void){
         int conn_status = 0;
         do{
             conn_status = addConnToServer(node_net.prev_ips[node_idx], SERVER_PORT, node_net.prev_ids[node_idx]);
-            if(conn_status != E_CONN_REFUSED){
-                logMessage(errorDescription(conn_status), taskName(0));
-            }
         }while(conn_status == E_CONN_REFUSED);
     }
     
@@ -231,26 +218,23 @@ void initMain(void){
 
     if(node_net.next_node_count == 1 && node_net.next_ids[0] == TAIL_ID){
         // Caso nodo di terminazione
-        memset(msg, 0, 100);
-        snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
+        memset(msg, 0, 50);
+        snprintf(msg, 50, "RASP_ID : %i", RASP_ID);
         for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
             sendToConn(getConn(node_idx), msg);
         }
     }
     else{
-        int conn_status = 0;
-        conn_status = addConnToClient(node_net.next_node_count);
-        logMessage(errorDescription(conn_status), taskName(0));
+        addConnToClient(node_net.next_node_count);
         // Attendo che tutti i nodi collegati notifichino l'avvenuta connessione
         for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
-            memset(msg, 0, 100);
-            readFromConn(getConn(node_net.prev_node_count + node_idx), msg, 100);
-            // fprintf(debug_file, "[RASP_ID : %i] %s ha stabilito tutte le sue connessioni\n", RASP_ID, msg);
-            logMessage(strncat(msg, " ha stabilito tutte le connessioni", 100), taskName(0));
+            memset(msg, 0, 50);
+            readFromConn(getConn(node_net.prev_node_count + node_idx), msg, 50);
+            fprintf(debug_file, "[RASP_ID : %i] %s ha stabilito tutte le sue connessioni\n", RASP_ID, msg);
         }
         // Ricevuta la notifica da tutt i nodi successivi , informo quelli precedenti
-        memset(msg, 0, 100);
-        snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
+        memset(msg, 0, 50);
+        snprintf(msg, 50, "RASP_ID : %i", RASP_ID);
         for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
             sendToConn(getConn(node_idx), msg);
         }
@@ -258,12 +242,8 @@ void initMain(void){
 
 
     //TODO eliminare strutture e memoria allocata per il taskInit una volta concluso
-    // fprintf(debug_file, "[RASP_ID : %i] Finito\n", RASP_ID);
-    logMessage("InitTask completato", taskName(0));
-
-
-
-    WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
+    fprintf(debug_file, "[RASP_ID : %i] Finito\n", RASP_ID);
+    // printf("[RASP_ID : %i] Finito\n", RASP_ID);
 
 }
 

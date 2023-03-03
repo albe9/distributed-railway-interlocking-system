@@ -67,9 +67,7 @@ void logInit(void){
 	    	perror("\nErrore creazione directory di log:");
 	    }
 	}
-	//reset del file di log se esiste
-	remove("/usr/log/log.txt");
-	//Crea/apre il file di log in modalità append
+	//Crea/apre il file di log in modalit� append
 	if ((LOG_FD = open("/usr/log/log.txt",O_RDWR | O_APPEND  | O_CREAT, 00700)) < 0){
 		perror("\nErrore apertura file di log");
 	}
