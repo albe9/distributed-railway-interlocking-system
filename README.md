@@ -1,5 +1,26 @@
-# distributed-railway-interlocking-system
-##  Installazione
-1.  Tasto destro sulla cartella dei progetti->import->Git->project from git
-2.  Inserire i dati del repository, user di github e come psw dovete creare un [token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token#creating-a-personal-access-token-classic).
-3.  Per la connessione ai raspberry usare come kernel symbol file il file caricator su onedrive : Vxworks (non me lo fa caricare qui) 
+## Requisiti:
+
+- Nella cartella connect copiare il file build_example.config e rinominarlo in build.config modificando le voci opportunamente.
+
+- Estrarre l'archivio rpivsb.rar nella root del git.
+
+- copiare il file vxWorks (kernel per connettersi al raspberry) da onedrive nella cartella connect.
+
+<br>
+
+## Opzioni dello script workbench:
+
+<br>
+
+        
+| Option | Description |
+| ------ | ------ |
+| -c  (compile) | Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto |
+| -b  (build)   | Esegue il Build del progetto, in caso di errori salva lo stato in log_files/build_log.txt |
+| -l  (load)    | Esegue il Load del modulo sui raspberry |
+| -o  (output)  | Mostro i log dei raspberry |
+| -d  (delete)  | Effettua il task delete nei raspberry (per ora task_wifi) |
+| -r  (reboot)  | Effettua il reboot dei raspberry |
+| -h  (help)    | Mostra questo messaggio |
+
+    
