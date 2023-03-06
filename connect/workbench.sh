@@ -52,6 +52,12 @@ build(){
     then 
         mkfifo /tmp/fifo_wrtool
     fi
+
+    if [ ! -d "./log_files" ];
+    then 
+        mkdir ./log_files
+    fi
+
     #lancio la shell wrtool definendo il workspace
     $WINDRIVER_PATH/workbench-4/wrtool -data ./../../ < /tmp/fifo_wrtool > ./log_files/build_log.txt &
     echo "cd .." > /tmp/fifo_wrtool
