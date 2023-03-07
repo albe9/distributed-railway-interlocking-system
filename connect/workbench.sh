@@ -7,6 +7,12 @@ while read target;
         TARGETS+=("$target")
     done < target.txt
 
+# Controllo se è presente la directory in cui salvare i log, altrimenti la creo
+if [ ! -d "./log_files" ];
+    then 
+        mkdir ./log_files
+    fi
+
 launch_connect(){
     #verifico che la connessione ai target non sia già attiva (basta controllare la presenza delle pipe)
     for target in ${TARGETS[@]};
@@ -48,22 +54,33 @@ build(){
 
     WINDRIVER_PATH=$(grep -Po '(?<=\[WindRiver_path\] : ")[^"]*' ./build.config)
 
+    # Controllo se è presente la pipe in cui scrivere le istruzioni, altrimenti la creo
     if [ ! -p "/tmp/fifo_wrtool" ];
     then 
         mkfifo /tmp/fifo_wrtool
     fi
     #lancio la shell wrtool definendo il workspace
     $WINDRIVER_PATH/workbench-4/wrtool -data ./../../ < /tmp/fifo_wrtool > ./log_files/build_log.txt &
+    sleep 0.5
     echo "cd .." > /tmp/fifo_wrtool
+    sleep 0.5
     echo "prj import Interlocking_system" > /tmp/fifo_wrtool
+    sleep 0.5
     echo "cd ./Interlocking_system" > /tmp/fifo_wrtool
+    sleep 0.5
     echo "prj build" > /tmp/fifo_wrtool
-
 
     while true
         do  
             sleep 1
             grep 'Nessuna regola per generare' ./log_files/build_log.txt
+            if [ $? -eq 0 ];
+                then
+                    echo "Riprovo il build"
+                    build
+                    break
+                fi
+            grep 'No rule to make target' ./log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Riprovo il build"
