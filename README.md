@@ -1,7 +1,7 @@
 # distributed-railway-interlocking-system
 ## Requisiti:
 
-- Copiare la cartella contenente l'sdk del raspberry nella stessa directory contenente il repository
+- Copiare la cartella contenente l'sdk del raspberry nella stessa directory contenente il repository [allo stesso livello]
 
 - Nella cartella connect copiare il file build_example.config e rinominarlo in build.config modificando le voci opportunamente.
 
@@ -18,7 +18,7 @@
         
 | Option | Description |
 | ------ | ------ |
-| -c  (compile) | Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto |
+| -c  (connect) | Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto |
 | -b  (build)   | Esegue il Build del progetto, in caso di errori salva lo stato in log_files/build_log.txt |
 | -l  (load)    | Esegue il Load del modulo sui raspberry |
 | -o  (output)  | Mostro i log dei raspberry |
