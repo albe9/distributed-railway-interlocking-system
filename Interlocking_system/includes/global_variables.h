@@ -35,6 +35,7 @@ TASK_ID LOG_TID;
 TASK_ID TEST_TID;
 TASK_ID INIT_TID;
 TASK_ID WIFI_TID;
+TASK_ID CONTROL_TID;
 
 
 #define MAX_CONN 50               //numero massimo di connessioni per un nodo
@@ -44,5 +45,6 @@ extern int SERVER_PORT;
 extern int RASP_ID;
 extern char HOST_IP[20];
 extern char RASP_IP[20];
+extern MSG_Q_ID CONTROL_QUEUE;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */
