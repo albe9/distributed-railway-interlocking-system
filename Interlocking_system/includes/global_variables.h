@@ -36,10 +36,13 @@ TASK_ID TEST_TID;
 TASK_ID INIT_TID;
 TASK_ID WIFI_TID;
 
+SEM_ID GLOBAL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da più task
 
 #define MAX_CONN 50               //numero massimo di connessioni per un nodo
 #define TAIL_ID -9999             //Id associato al nodo successivo all'ultimo nodo di una route
 
+
+extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-commit-protocol
 extern int SERVER_PORT;
 extern int RASP_ID;
 extern char HOST_IP[20];
