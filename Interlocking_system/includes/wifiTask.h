@@ -23,7 +23,7 @@ typedef struct{
 	int connected_id;
 }connection;
 
-
+//funzioni per la fase di config (init task)
 extern exit_number addConnToServer(char* server_ip, int server_port, int server_id);
 extern exit_number connectToServer(connection *conn_server, char* server_ip, int server_port);
 extern exit_number addConnToClient(int num_client);
@@ -34,6 +34,7 @@ extern void sendToConn(connection *conn, char *msg);
 extern ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size);
 
 extern void wifiMain(void);
+extern exit_number handle_msg(char* msg);
 extern exit_number resetConnections();
 
 #endif /* INCLUDES_WIFITASK_H_ */

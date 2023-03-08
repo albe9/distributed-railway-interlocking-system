@@ -227,6 +227,68 @@ exit_number resetConnections(){
 	return E_SUCCESS;
 }
 
+extern exit_number handle_msg(char* msg){
+
+	/*	
+		Sintassi messaggi:
+			-relativi a route : "command;msg_host;route_id"
+			-relativi a ping : "TODO definire"
+
+		campo command:
+
+		-PING_REQ
+		-aggiungere messaggi speciali da host
+
+		messaggi gestiti da task di controllo :
+
+		-TRACK_REQUEST
+		-WAIT_ACK
+		-ACK
+		-NACK
+
+		-WAIT_COMMIT
+		-COMMIT
+		-NOT_COMMIT
+
+		-WAIT_AGREE
+		-AGREE
+		-DISAGREE
+	
+	*/
+	//TODO definire lunghezza massima dei comandi
+	char *command_type, *msg_data; 
+	if((command_type = strtok(msg, ";")) == NULL)return(E_PARSING);
+	else{
+	    if((msg_data=strtok(NULL,""))==NULL)return(E_PARSING);
+	    printf("comando : %s resto : %s", command_type, msg_data);
+	}
+
+	//gestisco solo alcuni tipi di messaggi, gli altri li inoltro al task di controllo
+
+	if (strcmp(msg, "PING_REQ") == 0 ) {
+		//TODO gestire ping rispondendo al rasp
+	}
+	// else if (strcmp(msg, "") == 0)	{
+	//  TODO aggiungere altri messagi
+	// }
+	else{
+		int msg_host = -1;
+		int msg_route = -1;
+		if(sscanf(msg_data,"%i;%i",&msg_host, &msg_route) != 2)return(E_PARSING);
+		//acquisisco il semaforo per accedere alla variabile globale (è condivisa con il task di controllo)
+		semTake(GLOBAL_SEM, WAIT_FOREVER);
+		if(CURRENT_HOST != msg_host){
+			//TODO nodo già occupato, gestire invio di not ack ecc
+		}
+		else{
+			//passare i dati al task di controllo
+		}	
+		semGive(GLOBAL_SEM);
+	}
+
+
+	return E_SUCCESS;
+}
 
 void wifiMain(void){
 	
@@ -276,6 +338,12 @@ void wifiMain(void){
 
 
 	}
+
+
+
+
+
+
 
 
 }
