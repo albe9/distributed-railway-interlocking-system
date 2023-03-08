@@ -47,7 +47,7 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
         else {
             packet[packet_idx] = strtok(NULL, ";");
         }
-        if(packet[packet_idx] == NULL)return(-1);
+        if(packet[packet_idx] == NULL)return(E_PARSING);
     }
     
     //analizzo il primo pacchetto
@@ -262,8 +262,11 @@ void initMain(void){
     logMessage("InitTask completato", taskName(0));
 
 
+    GLOBAL_SEM = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+
 
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
+
 
 }
 
