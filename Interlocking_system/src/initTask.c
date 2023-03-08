@@ -7,6 +7,8 @@
 
 
 #include "initTask.h"
+#define MAX_LOG_SIZE 1024
+#define MAX_LOG_BUFF 10
 
 void setCurrentTime(time_t current_time){
 	
@@ -263,9 +265,9 @@ void initMain(void){
 
 
     GLOBAL_SEM = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
-
-
+    CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
+    //TODO: CONTROL_TID = taskSpawn ... ricontrollare l'ordine di spawn
 
 
 }
