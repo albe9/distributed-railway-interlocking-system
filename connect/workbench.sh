@@ -7,6 +7,12 @@ while read target;
         TARGETS+=("$target")
     done < target.txt
 
+# Controllo se è presente la directory in cui salvare i log, altrimenti la creo
+if [ ! -d "./log_files" ];
+    then 
+        mkdir ./log_files
+    fi
+
 launch_connect(){
     #verifico che la connessione ai target non sia già attiva (basta controllare la presenza delle pipe)
     for target in ${TARGETS[@]};
@@ -48,6 +54,7 @@ build(){
 
     WINDRIVER_PATH=$(grep -Po '(?<=\[WindRiver_path\] : ")[^"]*' ./build.config)
 
+    # Controllo se è presente la pipe in cui scrivere le istruzioni, altrimenti la creo
     if [ ! -p "/tmp/fifo_wrtool" ];
     then 
         mkfifo /tmp/fifo_wrtool
@@ -60,16 +67,26 @@ build(){
 
     #lancio la shell wrtool definendo il workspace
     $WINDRIVER_PATH/workbench-4/wrtool -data ./../../ < /tmp/fifo_wrtool > ./log_files/build_log.txt &
+    sleep 0.5
     echo "cd .." > /tmp/fifo_wrtool
+    sleep 0.5
     echo "prj import Interlocking_system" > /tmp/fifo_wrtool
+    sleep 0.5
     echo "cd ./Interlocking_system" > /tmp/fifo_wrtool
+    sleep 0.5
     echo "prj build" > /tmp/fifo_wrtool
-
 
     while true
         do  
             sleep 1
             grep 'Nessuna regola per generare' ./log_files/build_log.txt
+            if [ $? -eq 0 ];
+                then
+                    echo "Riprovo il build"
+                    build
+                    break
+                fi
+            grep 'No rule to make target' ./log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Riprovo il build"
@@ -184,9 +201,10 @@ echo -e "Requisiti:
     -rpivsb            Estrarre l'archivio rpivsb.rar nella root del git
     -vxWorks           Copiare il file vxWorks da onedrive nella cartella /connect/
     -build.config      Copiare il file build_example.config e rinominarlo in build.config modificando le voci opportunamente
+    -SDK               Copiare la cartella contenente l'sdk del raspberry nella stessa directory contenente il repository
     "
 echo -e "Opzioni: 
-        -c  (compile)          Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto
+        -c  (connect)          Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto
         -b  (build)            Esegue il Build del progetto, in caso di errori salva lo stato in log_files/build_log.txt
         -l  (load)             Esegue il Load del modulo sui raspberry
         -o  (output)           Mostro i log dei raspberry

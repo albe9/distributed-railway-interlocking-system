@@ -7,3 +7,4 @@ connect/build.config
 connect/log_files/*.txt
 virtualized_raspberry/debug/debug*.txt
 .DS_Store
+rpivsb
