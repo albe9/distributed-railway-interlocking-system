@@ -13,6 +13,7 @@
 #include "global_variables.h"
 #include "wifiTask.h"
 #include "logTask.h"
+#include "controlTask.h"
 
 #define IP_LEN 20
 
