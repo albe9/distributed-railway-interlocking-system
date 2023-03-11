@@ -1,13 +1,16 @@
 #include "controlTask.h"
-#define MAX_LOG_SIZE 1024
-#define MAX_LOG_BUFF 10
 
-char control_buffer[MAX_LOG_SIZE];
+
 
 void controlMain(void){
-    while(true){
-        int byte_recevied = msgQReceive(LOG_QUEUE, control_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
 
+    char control_buffer[MAX_CTRL_SIZE];
+
+    while(true){
+        ssize_t byte_recevied = msgQReceive(CONTROL_QUEUE, control_buffer, MAX_CTRL_SIZE, WAIT_FOREVER);
+        
+        logMessage(control_buffer, taskName(0));
+        
 
     }
 }
