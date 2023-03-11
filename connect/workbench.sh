@@ -45,6 +45,8 @@ launch_connect(){
                         fi
                 done
         done
+    
+    sleep 1
 }
 
 build(){
@@ -115,6 +117,9 @@ build(){
 }
 
 load_module(){
+
+    echo "Eseguo il reset dei task sui rasp"
+    task_delete > /dev/null 2>&1 &
 
     #verifico che le pipe esistano
     for target in ${TARGETS[@]};
