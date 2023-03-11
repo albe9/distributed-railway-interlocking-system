@@ -3,8 +3,6 @@
 
 #include "logTask.h"
 
-#define MAX_LOG_SIZE 1024
-#define MAX_LOG_BUFF 10
 
 
 int LOG_FD;
