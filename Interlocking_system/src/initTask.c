@@ -264,11 +264,12 @@ void initMain(void){
     logMessage("InitTask completato", taskName(0));
 
 
-    GLOBAL_SEM = semBCreate(SEM_Q_PRIORITY, SEM_FULL);
+    GLOBAL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
     CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+    
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
-    //TODO: CONTROL_TID = taskSpawn ... ricontrollare l'ordine di spawn
-
+    CONTROL_TID = taskSpawn("controlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
+    
 
 }
 
