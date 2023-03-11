@@ -277,11 +277,17 @@ extern exit_number handle_msg(char* msg){
 		if(sscanf(msg_data,"%i;%i",&msg_host, &msg_route) != 2)return(E_PARSING);
 		//acquisisco il semaforo per accedere alla variabile globale (è condivisa con il task di controllo)
 		semTake(GLOBAL_SEM, WAIT_FOREVER);
+		//se non ci sono host correnti lo setto
+		if(CURRENT_HOST == -1){
+			CURRENT_HOST = msg_host;
+		}
+
 		if(CURRENT_HOST != msg_host){
 			//TODO nodo già occupato, gestire invio di not ack ecc
 		}
 		else{
-			//passare i dati al task di controllo
+			//passo i dati al task di controllo
+			msgQSend(CONTROL_QUEUE, msg, 100, WAIT_FOREVER, MSG_PRI_NORMAL);
 		}	
 		semGive(GLOBAL_SEM);
 	}
@@ -326,12 +332,13 @@ void wifiMain(void){
 		// controllo quali fd sono rimasti in readfds (quelli che hanno ricevuto un msg)
 		for(int conn_idx=0; conn_idx<total_conn; conn_idx++){
 			if(FD_ISSET(node_conn[conn_idx].sock, &readfds)){
-				snprintf(msg, 100, "Ricevuto messaggio da Rasp id : %i", node_conn[conn_idx].connected_id);
-				logMessage(msg, taskName(0));
-				memset(msg, 0, 100);
+				// snprintf(msg, 100, "Ricevuto messaggio da Rasp id : %i", node_conn[conn_idx].connected_id);
+				// logMessage(msg, taskName(0));
+				// memset(msg, 0, 100);
 				readFromConn(&node_conn[conn_idx], msg, 100);
-				logMessage(msg, taskName(0));
-				memset(msg, 0, 100);
+				handle_msg(msg);
+				// logMessage(msg, taskName(0));
+				// memset(msg, 0, 100);
 			}
 		}
 
@@ -340,15 +347,13 @@ void wifiMain(void){
 	}
 
 
-
-
-
+	
 
 
 
 }
 
-msgQSend(CONTROL_QUEUE, )
+
 
 
 
