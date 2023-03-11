@@ -1,6 +1,6 @@
 #include "errors.h"
 
-const char *errorDescription(exit_number exit_number) {
+char *errorDescription(exit_number exit_number) {
     switch(exit_number) {
         case E_DEFAUL_ERROR: return strerror(errno); break;
         case E_SUCCESS: return "OK"; break;
