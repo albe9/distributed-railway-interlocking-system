@@ -24,6 +24,6 @@ enum _EXIT_NUMBER {
 
 typedef enum _EXIT_NUMBER exit_number;
 
-extern const char *errorDescription(exit_number exit_number);
+extern char *errorDescription(exit_number exit_number);
 
 #endif
