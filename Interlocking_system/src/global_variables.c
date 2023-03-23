@@ -8,3 +8,4 @@ int CURRENT_HOST = -1;
 route *node_routes;
 int route_count = 0;
 int NODE_TYPE = -1;
+int log_status = LOG_ACTIVE;
