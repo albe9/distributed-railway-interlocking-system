@@ -60,6 +60,24 @@ void logMessage(char* msg, char* task_name){
 	
 }
 
+void logToHost(void){
+	int host_sock;
+	if ((host_sock = socket(AF_INET , SOCK_STREAM , 0)) < 0)
+	{
+		return E_DEFAUL_ERROR;
+	}
+	
+	//Setto le opzioni del socket affinchè possa riutilizzare la stessa porta(e indirizzo)
+	int enable = 1;
+	if (setsockopt(host_sock,SOL_SOCKET,SO_REUSEADDR,&enable,sizeof(int)) < 0)
+	{
+		perror("Setsockopt");
+	}
+	if (setsockopt(host_sock,SOL_SOCKET,SO_REUSEPORT,&enable,sizeof(int)) < 0)
+	{
+		perror("Setsockopt");
+	}
+}
 
 
 void logInit(void){
@@ -86,19 +104,24 @@ void logInit(void){
 	
 	char log_buffer[MAX_LOG_SIZE] = {0}; 
 	//main loop del task, controlla la coda dei messaggi di log e li scrive su file
-	while(TRUE){
-		
-		//mi metto in attesa di un messaggio
-		msgQReceive(LOG_QUEUE, log_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
-		
-		
-		//scrivo il messaggio presente in coda sul file di log
-		if(write(LOG_FD, log_buffer, strlen(log_buffer)) == ERROR){
-			perror("\nErrore nella scrittura di un log:");
-			taskDelete(LOG_TID);
+	while(true){
+		if(log_status == LOG_ACTIVE){
+			//mi metto in attesa di un messaggio
+			msgQReceive(LOG_QUEUE, log_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
+			
+			
+			//scrivo il messaggio presente in coda sul file di log
+			if(write(LOG_FD, log_buffer, strlen(log_buffer)) == ERROR){
+				perror("\nErrore nella scrittura di un log:");
+				taskDelete(LOG_TID);
+			}
+			//resetto il buffer per accettare nuovi messaggi
+			memset(log_buffer, 0, MAX_LOG_SIZE);
 		}
-		//resetto il buffer per accettare nuovi messaggi
-		memset(log_buffer, 0, MAX_LOG_SIZE);
+		else if(log_status == LOG_SUSPENDED){
+			
+		}
+		
 		
 	}
 	

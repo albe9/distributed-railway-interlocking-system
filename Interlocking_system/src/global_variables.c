@@ -7,3 +7,4 @@ int SERVER_PORT = 6543;
 int CURRENT_HOST = -1;
 route *node_routes;
 int route_count = 0;
+int log_status = LOG_ACTIVE;
