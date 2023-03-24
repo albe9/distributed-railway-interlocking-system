@@ -32,7 +32,6 @@ void setCurrentTime(time_t current_time){
 
 static network node_net;
 static time_t current_time = 0;
-static route *node_routes;
 
 
 exit_number parseConfigString(char* config_string,route **routes, network *net){
@@ -72,6 +71,7 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
 
 
     *routes = (route*)malloc(net->route_count * sizeof(route));
+    route_count = net->route_count;
 
     //secondo pacchetto
     char *ip;
@@ -265,11 +265,16 @@ void initMain(void){
 
 
     GLOBAL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
-    CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
-    
+    IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+    OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
     CONTROL_TID = taskSpawn("controlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
     
+    taskDeleteHookAdd((FUNCPTR)hookWifiDelete);
+    // memset(msg, 0, 100);
+	// snprintf(msg, 100, "task_id dell'init task  : %i", INIT_TID);
+	// logMessage(msg,taskName(0));
 
 }
 
