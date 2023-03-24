@@ -19,12 +19,12 @@ launch_connect(){
         do
             if [ -p "/tmp/fifo_$target" ];
             then 
-                echo "Connessione già eseguita"
-                return 0
-            else
-                #crea una named pipe per ogni target su cui potremmo collegarci ed inviare comandi 
-                mkfifo /tmp/fifo_$target
+                rm /tmp/fifo_$target
             fi
+            
+            #crea una named pipe per ogni target su cui potremmo collegarci ed inviare comandi 
+            mkfifo /tmp/fifo_$target
+            
             
         done
 
@@ -50,6 +50,9 @@ launch_connect(){
 }
 
 build(){
+
+    #resetto il build_log
+    > ./log_files/build_log.txt
 
     # Elimino i file generati precedentemente
     rm -R ./../Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/*
@@ -106,8 +109,6 @@ build(){
             if [ $? -eq 0 ];
                 then
                     echo "Build completato correttamente"
-                    #resetto il build_log
-                    > ./log_files/build_log.txt
                     break
                 fi
         done
@@ -118,8 +119,8 @@ build(){
 
 load_module(){
 
-    echo "Eseguo il reset dei task sui rasp"
-    task_delete > /dev/null 2>&1 &
+    # echo "Eseguo il reset dei task sui rasp"
+    # task_delete > /dev/null 2>&1 &
 
     #verifico che le pipe esistano
     for target in ${TARGETS[@]};
@@ -182,7 +183,7 @@ task_delete(){
 
     for target in ${TARGETS[@]};
         do
-            ( echo "reset" ; sleep 3 ; echo "td initTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ; echo "td wifiTask" ; sleep 2 ) | telnet $target &
+            ( echo "td wifiTask" ; sleep 2; echo "td initTask" ; sleep 2 ; echo "td controlTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ) | telnet $target &
         done
 }
 
