@@ -11,6 +11,10 @@ enum _EXIT_NUMBER {
     E_SUCCESS = 0,
     E_INVALID_ID,
     E_MAX_CONNECTION_NUMBER,
+    E_DISCONNECTION,
+    E_NODE_NOTFOUND,
+    //MSG
+    E_CLOSE,
 
     //TIME
     E_SET_TIME,

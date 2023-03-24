@@ -14,6 +14,8 @@ char *errorDescription(exit_number exit_number) {
 
         case E_LOG: return "UNABLE TO LOG"; break;
 
+        case E_NODE_NOTFOUND: return "CONNECTION TO NODE NOT FOUND"; break;
+
         default: return "UNKNOW ERROR"; break;
     }
 }
