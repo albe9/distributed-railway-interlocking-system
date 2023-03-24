@@ -17,11 +17,6 @@
 
 #define IP_LEN 20
 
-typedef struct{
-    int route_id;
-    int rasp_id_prev;
-    int rasp_id_next;
-}route;
 
 typedef struct{
     int prev_node_count;

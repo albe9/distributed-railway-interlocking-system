@@ -38,8 +38,13 @@ TASK_ID WIFI_TID;
 TASK_ID CONTROL_TID;
 
 SEM_ID GLOBAL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da più task
+//____________________________________________________________________________________________________________________________
+extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-commit-protocol
 
-MSG_Q_ID CONTROL_QUEUE;
+//____________________________________________________________________________________________________________________________
+
+MSG_Q_ID IN_CONTROL_QUEUE;        // coda di messaggi da task_wifi->task_controllo
+MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wifi
 
 #define MAX_CONN 50               //numero massimo di connessioni per un nodo
 #define TAIL_ID -9999             //Id associato al nodo successivo all'ultimo nodo di una route
@@ -48,12 +53,25 @@ MSG_Q_ID CONTROL_QUEUE;
 #define MAX_CTRL_SIZE 1024      
 #define MAX_CTRL_BUFF 10
 
+typedef struct{
+    int route_id;
+    int rasp_id_prev;
+    int rasp_id_next;
+}route;
 
-extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-commit-protocol
+typedef struct{
+    char command[50];
+    int sender_id;
+    int recevier_id;
+    int route_id;
+    int host_id;
+}tpcp_msg;
+
 extern int SERVER_PORT;
 extern int RASP_ID;
 extern char HOST_IP[20];
 extern char RASP_IP[20];
-
+extern route *node_routes;
+extern int route_count;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */
