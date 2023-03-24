@@ -31,10 +31,12 @@ extern exit_number addConnToClient(int num_client);
 extern void setBlockingMode(bool blocking_mode);
 extern connection* getConn(int conn_idx);
 extern void sendToConn(connection *conn, char *msg);
-extern ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size);
+extern exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size);
 
 extern void wifiMain(void);
-extern exit_number handle_msg(char* msg);
-extern exit_number resetConnections();
+extern exit_number handle_inMsg(char* msg, int sender_id);
+extern exit_number handle_outMsg(tpcp_msg* out_msg);
+extern void hookWifiDelete(_Vx_TASK_ID tcb);
+extern void resetConnections();
 
 #endif /* INCLUDES_WIFITASK_H_ */

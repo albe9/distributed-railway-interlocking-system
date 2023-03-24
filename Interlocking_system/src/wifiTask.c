@@ -205,76 +205,85 @@ void sendToConn(connection *conn, char *msg){
 	send(conn->sock, msg, strlen(msg), 0);
 }
 
-ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size){
+exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 	
-	ssize_t valread;
-	do{
-		valread = recv(conn->sock, buffer, buf_size, 0);
-	}while(flag_blocking && valread == 0);
-	return(valread);
+	ssize_t byte_read;
+	byte_read = recv(conn->sock, buffer, buf_size, 0);
+	if(byte_read == 0){ return E_DISCONNECTION; }
+	else {return E_SUCCESS;}
 }
 
-exit_number resetConnections(){
+void hookWifiDelete(_Vx_TASK_ID tcb){
+
+	if(tcb == WIFI_TID && total_conn > 0){
+		resetConnections();
+		logMessage("Task wifi eliminato",taskName(0));
+	}
+
+}
+
+void resetConnections(){
 	
+		
 	for(int i=0; i< total_conn; i++){
 		shutdown(node_conn[i].sock, SHUT_RDWR);
 		if (close(node_conn[i].sock) < 0){
-			return E_DEFAUL_ERROR;
+			logMessage( errorDescription(E_DEFAUL_ERROR) ,taskName(0));
 		}
+		node_conn[i] = (const connection){0};
 	}
+	total_conn = 0;
 	
-
-	return E_SUCCESS;
 }
 
-extern exit_number handle_msg(char* msg){
+extern exit_number handle_inMsg(char* msg, int sender_id){
 
 	/*	
 		Sintassi messaggi:
-			-relativi a route : "command;msg_host;route_id"
+			-relativi a route : "command;host_id;route_id"
 			-relativi a ping : "TODO definire"
-
-		campo command:
-
-		-PING_REQ
-		-aggiungere messaggi speciali da host
-
-		messaggi gestiti da task di controllo :
-
-		-TRACK_REQUEST
-		-WAIT_ACK
-		-ACK
-		-NACK
-
-		-WAIT_COMMIT
-		-COMMIT
-		-NOT_COMMIT
-
-		-WAIT_AGREE
-		-AGREE
-		-DISAGREE
+			-host close : "CLOSE;"
 	
 	*/
 	//TODO definire lunghezza massima dei comandi
+
+	
+
 	char *command_type, *msg_data; 
 	if((command_type = strtok(msg, ";")) == NULL)return(E_PARSING);
 	else{
 	    if((msg_data=strtok(NULL,""))==NULL)return(E_PARSING);
-	    printf("comando : %s resto : %s", command_type, msg_data);
 	}
 
 	//gestisco solo alcuni tipi di messaggi, gli altri li inoltro al task di controllo
 
-	if (strcmp(msg, "PING_REQ") == 0 ) {
+	if (strcmp(command_type, "PING_REQ") == 0 ){
 		//TODO gestire ping rispondendo al rasp
 	}
-	// else if (strcmp(msg, "") == 0)	{
-	//  TODO aggiungere altri messagi
-	// }
+	else if (strcmp(msg, "CLOSE") == 0){
+		//inoltro a tutti i nodi connessi di terminare
+		for(int node_idx=0; node_idx<total_conn;node_idx++){
+			if(node_conn[node_idx].connected_id != sender_id){
+				char msg[]="CLOSE;";
+				sendToConn(&node_conn[node_idx], msg);
+			}
+		}
+		return E_CLOSE;
+	}
+	// TODO aggiungere altri messagi
 	else{
+		//gestiamo i messaggi relativi al TPCM
+		tpcp_msg in_msg;
+		in_msg.recevier_id=RASP_ID;
+		in_msg.sender_id=sender_id;
+		strcpy(in_msg.command, command_type);
+
+		//debug
+		// logMessage(in_msg.command, taskName(0));
+
+
 		int msg_host = -1;
-		int msg_route = -1;
-		if(sscanf(msg_data,"%i;%i",&msg_host, &msg_route) != 2)return(E_PARSING);
+		if(sscanf(msg_data,"%i;%i", &msg_host, &in_msg.route_id) != 2)return(E_PARSING);
 		//acquisisco il semaforo per accedere alla variabile globale (è condivisa con il task di controllo)
 		semTake(GLOBAL_SEM, WAIT_FOREVER);
 		//se non ci sono host correnti lo setto
@@ -287,13 +296,35 @@ extern exit_number handle_msg(char* msg){
 		}
 		else{
 			//passo i dati al task di controllo
-			msgQSend(CONTROL_QUEUE, msg, 100, WAIT_FOREVER, MSG_PRI_NORMAL);
+			in_msg.host_id = CURRENT_HOST;
+			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
 		}	
 		semGive(GLOBAL_SEM);
 	}
 
 
 	return E_SUCCESS;
+}
+
+extern exit_number handle_outMsg(tpcp_msg* out_msg){
+
+	//debug
+	// char msg[100];
+	// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_msg->command, out_msg->sender_id, out_msg->recevier_id, out_msg->route_id);
+	// logMessage(msg, taskName(0));
+
+	for(int node_idx=0; node_idx<total_conn; node_idx++){
+		if(node_conn[node_idx].connected_id == out_msg->recevier_id){
+			char msg[100];
+			snprintf(msg, 100,"%s;%i;%i", out_msg->command, out_msg->host_id, out_msg->route_id);
+			sendToConn(&node_conn[node_idx], msg);
+			return E_SUCCESS;
+		}
+	}
+
+	//Se non trovo nessun nodo corrispondente significa che c'è stato un errore
+	return E_NODE_NOTFOUND;
+
 }
 
 void wifiMain(void){
@@ -319,7 +350,9 @@ void wifiMain(void){
 	int n_ready_conn=0;
 	
 
-	while(true){
+	bool flag_running=true;
+
+	while(flag_running){
 		// Da man select .....if using select() within a loop, the
 		// sets must be reinitialized before each call.
 		// Resetto e riaggiungo gli fds dei socket delle connessioni
@@ -327,27 +360,73 @@ void wifiMain(void){
 		for(int conn_idx=0; conn_idx<total_conn; conn_idx++){
 			FD_SET(node_conn[conn_idx].sock, &readfds);
 		}
-		// blocca finchè almeno un socket non riceve un msg
-		n_ready_conn = select(nfds, &readfds, NULL, NULL, NULL);
-		// controllo quali fd sono rimasti in readfds (quelli che hanno ricevuto un msg)
-		for(int conn_idx=0; conn_idx<total_conn; conn_idx++){
-			if(FD_ISSET(node_conn[conn_idx].sock, &readfds)){
-				// snprintf(msg, 100, "Ricevuto messaggio da Rasp id : %i", node_conn[conn_idx].connected_id);
-				// logMessage(msg, taskName(0));
-				// memset(msg, 0, 100);
-				readFromConn(&node_conn[conn_idx], msg, 100);
-				handle_msg(msg);
-				// logMessage(msg, taskName(0));
-				// memset(msg, 0, 100);
+		// resetto il timeout(viene modificato da select)
+		struct timeval select_timeout={.tv_sec=0, .tv_usec=1000};
+		// controlla senza bloccare se un socket riceve un msg
+		n_ready_conn = select(nfds, &readfds, NULL, NULL, &select_timeout);
+		if(n_ready_conn > 0){
+			// controllo quali fd sono rimasti in readfds (quelli che hanno ricevuto un msg)
+			for(int conn_idx=0; conn_idx<total_conn; conn_idx++){
+				if(FD_ISSET(node_conn[conn_idx].sock, &readfds)){
+					//debug
+					// snprintf(msg, 100, "Ricevuto messaggio da Rasp id : %i", node_conn[conn_idx].connected_id);
+					// logMessage(msg, taskName(0));
+					// memset(msg, 0, 100);
+					exit_number status;
+					if((status = readFromConn(&node_conn[conn_idx], msg, 100)) == E_SUCCESS){
+						if((status = handle_inMsg(msg, node_conn[conn_idx].connected_id)) == E_CLOSE){
+							//se ho ricevuto un messaggio CLOSE dall'host termino il task
+							flag_running=false;
+						}
+						else if(status == E_SUCCESS){
+							continue;
+						}
+						else{
+							logMessage(errorDescription(status), taskName(0));
+						}
+					}
+					else if(status == E_DISCONNECTION){
+						//Se un nodo interrompe la connessione loggo
+						memset(msg, 0, 100);
+						snprintf(msg, 100, "Disconnesso Rasp id : %i", node_conn[conn_idx].connected_id);
+						logMessage(msg, taskName(0));
+						// chiudo il socket relativo e rimuovo la sua connesione dall'array delle connessioni attive
+						shutdown(node_conn[conn_idx].sock, SHUT_RDWR);
+						if (close(node_conn[conn_idx].sock) < 0){
+							logMessage("Impossibile chiudere il socket",taskName(0));
+						}
+						node_conn[conn_idx] = (const connection){0};
+						total_conn -= 1;
+						for(int j=conn_idx; j<total_conn;j++){
+							node_conn[j] = node_conn[j+1];
+						}
+					}
+				}
 			}
 		}
+		else if(n_ready_conn == -1){
+			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+		}
 
-
-
+		//gestisco i messaggi in uscita
+		tpcp_msg out_msg;
+		ssize_t byte_recevied = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_msg, sizeof(tpcp_msg), 1);
+		if(byte_recevied > 0){
+			//debug
+			// char msg[100];
+			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_msg.command, out_msg.sender_id, out_msg.recevier_id, out_msg.route_id);
+			// logMessage(msg, taskName(0));
+			exit_number status;
+			if( (status = handle_outMsg(&out_msg)) != E_SUCCESS){
+				logMessage(errorDescription(status), taskName(0));
+			}
+		}
+        
 	}
 
 
-	
+	resetConnections();
+	logMessage("Terminato", taskName(0));
 
 
 
