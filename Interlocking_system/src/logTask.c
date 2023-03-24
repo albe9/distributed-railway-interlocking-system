@@ -22,7 +22,7 @@ void mytest(void){
 
 void logMessage(char* msg, char* task_name){
 	
-	char final_msg[MAX_LOG_SIZE] = "task : ";
+	char final_msg[MAX_LOG_SIZE] = "";
 		
 	//TODO inserire controllo su lunghezza messaggio
 	
@@ -31,15 +31,22 @@ void logMessage(char* msg, char* task_name){
 	time_t rawtime;
 	struct tm * timeinfo;
 	
-	char timestamp[80];
+	char timestamp[100];
 	
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	
-	strftime(timestamp,80,"%H:%M (%F)%t",timeinfo);
-	
+	strftime(timestamp,100,"(%F) %Hh:%Mm:%Ss:",timeinfo);
+
+	//Aggiungo i secondi ed i millisecondi 
+	struct timespec log_time;
+	clock_gettime(CLOCK_REALTIME, &log_time);
+	char log_ms[100];
+	snprintf(log_ms, 100, "%ims ", (int)(log_time.tv_nsec * 0.000001));
+
 	//appendo timestamp e taskname
-	strcpy(final_msg, timestamp);
+	strcat(final_msg, timestamp);
+	strcat(final_msg, log_ms);
 	strcat(final_msg, task_name);
 	strcat(final_msg, "\t");	
 	strcat(final_msg, msg);	
