@@ -60,23 +60,50 @@ void logMessage(char* msg, char* task_name){
 	
 }
 
-void logToHost(void){
-	int host_sock;
-	if ((host_sock = socket(AF_INET , SOCK_STREAM , 0)) < 0)
-	{
+exit_number getSizeofLog(char *position_of_file){
+	// Apriamo il file
+	FILE *file;
+	char *source = NULL;
+	if(file = fopen(position_of_file, "r") < 0){
 		return E_DEFAUL_ERROR;
 	}
+	if (file != NULL) {
+    	/* Go to the end of the file. */
+		if (fseek(file, 0L, SEEK_END) == 0) {
+			/* Get the size of the file. */
+			long bufsize = ftell(file);
+			if (bufsize == -1) { /* Error */ }
+
+			/* Allocate our buffer to that size. */
+			source = malloc(sizeof(char) * (bufsize + 1));
+
+			/* Go back to the start of the file. */
+			if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
+
+			/* Read the entire file into memory. */
+			size_t newLen = fread(source, sizeof(char), bufsize, file);
+			if ( ferror(file) != 0 ) {
+				fputs("Error reading file", stderr);
+			} else {
+				source[newLen++] = '\0'; /* Just to be safe. */
+			}
+		}
+		fclose(file);
+	}
+}
+
+exit_number logToHost(void){
+	// Si sospende il task che esegue il logInit
+	if(taskSuspend(LOG_TID) < 0){
+		return E_DEFAUL_ERROR;
+	}
+	readLog("/usr/log/log.txt");
+
+	// Si crea un socket verso l'host
+	connection host_conn;
+	connectToServer(&host_conn, HOST_IP, SERVER_PORT);
+
 	
-	//Setto le opzioni del socket affinchè possa riutilizzare la stessa porta(e indirizzo)
-	int enable = 1;
-	if (setsockopt(host_sock,SOL_SOCKET,SO_REUSEADDR,&enable,sizeof(int)) < 0)
-	{
-		perror("Setsockopt");
-	}
-	if (setsockopt(host_sock,SOL_SOCKET,SO_REUSEPORT,&enable,sizeof(int)) < 0)
-	{
-		perror("Setsockopt");
-	}
 }
 
 
