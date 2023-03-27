@@ -5,6 +5,11 @@
 #include <string.h>
 
 enum _EXIT_NUMBER {
+    //LOG
+    E_LOG_EMPTY = -5,
+    E_LOG = -4,
+    E_LOG_OPEN = -3,
+    
     //SOCKET
     E_CONN_REFUSED = -2,
     E_DEFAUL_ERROR = -1,
@@ -20,10 +25,7 @@ enum _EXIT_NUMBER {
     E_SET_TIME,
 
     //PARSING
-    E_PARSING,
-
-    //LOG
-    E_LOG
+    E_PARSING    
 };
 
 typedef enum _EXIT_NUMBER exit_number;

@@ -60,35 +60,30 @@ void logMessage(char* msg, char* task_name){
 	
 }
 
-exit_number getSizeofLog(char *position_of_file){
+int getSizeofLog(char *path_to_file){
 	// Apriamo il file
 	FILE *file;
-	char *source = NULL;
-	if(file = fopen(position_of_file, "r") < 0){
-		return E_DEFAUL_ERROR;
+	if(file = fopen(path_to_file, "r") < 0){
+		logMessage("Problema nell'apertura del file", taskName(0));
+		return E_LOG_OPEN;
 	}
 	if (file != NULL) {
     	/* Go to the end of the file. */
 		if (fseek(file, 0L, SEEK_END) == 0) {
 			/* Get the size of the file. */
-			long bufsize = ftell(file);
-			if (bufsize == -1) { /* Error */ }
-
-			/* Allocate our buffer to that size. */
-			source = malloc(sizeof(char) * (bufsize + 1));
-
-			/* Go back to the start of the file. */
-			if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
-
-			/* Read the entire file into memory. */
-			size_t newLen = fread(source, sizeof(char), bufsize, file);
-			if ( ferror(file) != 0 ) {
-				fputs("Error reading file", stderr);
-			} else {
-				source[newLen++] = '\0'; /* Just to be safe. */
+			int bufsize = ftell(file);
+			if (bufsize == -1) {
+				logMessage("File di dimensioni nulla", taskName(0));
+				return E_LOG_EMPTY;
 			}
-		}
+			printf("bufsize %i", bufsize);
 		fclose(file);
+		return bufsize;
+		}
+	}
+	else{
+		logMessage("Puntatore nullo", taskName(0));
+		return E_LOG_EMPTY;
 	}
 }
 
@@ -97,13 +92,34 @@ exit_number logToHost(void){
 	if(taskSuspend(LOG_TID) < 0){
 		return E_DEFAUL_ERROR;
 	}
-	readLog("/usr/log/log.txt");
-
 	// Si crea un socket verso l'host
 	connection host_conn;
-	connectToServer(&host_conn, HOST_IP, SERVER_PORT);
-
-	
+	connectToServer(&host_conn, HOST_IP, LOG_PORT);
+	// Si legge quanto è lungo il file 
+	int logSize = 0;
+	if(logSize = getSizeofLog("/usr/log/log.txt") < 0){
+		// E si copia il contenuto in un buffer
+		char *logMsg = malloc(sizeof(char) * (logSize + 1));
+		FILE *file = fopen("/usr/log/log.txt", "r");
+		/* Go back to the start of the file. */
+        if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
+        /* Read the entire file into memory. */
+        size_t newLen = fread(logMsg, sizeof(char), logSize, file);
+        if ( ferror(file) != 0 ) {
+            fputs("Error reading file", stderr);
+        } else {
+            logMsg[newLen++] = '\0'; /* Just to be safe. */
+        }
+		prinf("%s", logMsg);
+		fclose(file);
+		// Si invia il messaggio
+		sendToConn(&host_conn, logMsg);
+		shutdown(host_conn.sock, SHUT_RDWR);
+		if (close(host_conn.sock) < 0){
+			return E_DEFAUL_ERROR;
+		}
+		return E_SUCCESS;
+	}	
 }
 
 
@@ -132,24 +148,16 @@ void logInit(void){
 	char log_buffer[MAX_LOG_SIZE] = {0}; 
 	//main loop del task, controlla la coda dei messaggi di log e li scrive su file
 	while(true){
-		if(log_status == LOG_ACTIVE){
-			//mi metto in attesa di un messaggio
-			msgQReceive(LOG_QUEUE, log_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
-			
-			
-			//scrivo il messaggio presente in coda sul file di log
-			if(write(LOG_FD, log_buffer, strlen(log_buffer)) == ERROR){
-				perror("\nErrore nella scrittura di un log:");
-				taskDelete(LOG_TID);
-			}
-			//resetto il buffer per accettare nuovi messaggi
-			memset(log_buffer, 0, MAX_LOG_SIZE);
+		//mi metto in attesa di un messaggio
+		msgQReceive(LOG_QUEUE, log_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
+				
+		//scrivo il messaggio presente in coda sul file di log
+		if(write(LOG_FD, log_buffer, strlen(log_buffer)) == ERROR){
+			perror("\nErrore nella scrittura di un log:");
+			taskDelete(LOG_TID);
 		}
-		else if(log_status == LOG_SUSPENDED){
-			
-		}
-		
-		
+		//resetto il buffer per accettare nuovi messaggi
+		memset(log_buffer, 0, MAX_LOG_SIZE);			
 	}
 	
 }	
