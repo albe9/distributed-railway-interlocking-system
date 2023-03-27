@@ -198,7 +198,9 @@ reboot_rasp(){
 }
 
 see_log(){
-    gnome-terminal --tab -- bash -c "./see_log.sh; bash"
+    # gnome-terminal --tab -- bash -c "./see_log.sh; bash"
+    host_ip=$( grep -Po '(?<=\[Host_ip\] : ")[^"]*' ./build.config )
+    python3 ./../host_script/log.py 5 $host_ip
 }
 
 help_workbench(){
