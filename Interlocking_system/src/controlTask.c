@@ -142,7 +142,7 @@ void controlMain(void){
                     }
                     else{
                         NODE_STATUS = WAIT_AGREE;
-                        forwardMsg(&in_msg, current_route->rasp_id_next, );
+                        // forwardMsg(&in_msg, current_route->rasp_id_next, );
                         // memset(in_msg.command , 0, sizeof(in_msg.command));
                         // strcpy(in_msg.command, "COMMIT");
                         // in_msg.recevier_id = current_route->rasp_id_next;

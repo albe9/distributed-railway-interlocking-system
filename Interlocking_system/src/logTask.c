@@ -60,69 +60,6 @@ void logMessage(char* msg, char* task_name){
 	
 }
 
-int getSizeofLog(char *path_to_file){
-	// Apriamo il file
-	FILE *file;
-	if(file = fopen(path_to_file, "r") < 0){
-		logMessage("Problema nell'apertura del file", taskName(0));
-		return E_LOG_OPEN;
-	}
-	if (file != NULL) {
-    	/* Go to the end of the file. */
-		if (fseek(file, 0L, SEEK_END) == 0) {
-			/* Get the size of the file. */
-			int bufsize = ftell(file);
-			if (bufsize == -1) {
-				logMessage("File di dimensioni nulla", taskName(0));
-				return E_LOG_EMPTY;
-			}
-			printf("bufsize %i", bufsize);
-		fclose(file);
-		return bufsize;
-		}
-	}
-	else{
-		logMessage("Puntatore nullo", taskName(0));
-		return E_LOG_EMPTY;
-	}
-}
-
-exit_number logToHost(void){
-	// Si sospende il task che esegue il logInit
-	if(taskSuspend(LOG_TID) < 0){
-		return E_DEFAUL_ERROR;
-	}
-	// Si crea un socket verso l'host
-	connection host_conn;
-	connectToServer(&host_conn, HOST_IP, LOG_PORT);
-	// Si legge quanto è lungo il file 
-	int logSize = 0;
-	if(logSize = getSizeofLog("/usr/log/log.txt") < 0){
-		// E si copia il contenuto in un buffer
-		char *logMsg = malloc(sizeof(char) * (logSize + 1));
-		FILE *file = fopen("/usr/log/log.txt", "r");
-		/* Go back to the start of the file. */
-        if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
-        /* Read the entire file into memory. */
-        size_t newLen = fread(logMsg, sizeof(char), logSize, file);
-        if ( ferror(file) != 0 ) {
-            fputs("Error reading file", stderr);
-        } else {
-            logMsg[newLen++] = '\0'; /* Just to be safe. */
-        }
-		prinf("%s", logMsg);
-		fclose(file);
-		// Si invia il messaggio
-		sendToConn(&host_conn, logMsg);
-		shutdown(host_conn.sock, SHUT_RDWR);
-		if (close(host_conn.sock) < 0){
-			return E_DEFAUL_ERROR;
-		}
-		return E_SUCCESS;
-	}	
-}
-
-
 void logInit(void){
 	//Crea la directory e il file di log se non sono gi� esistenti
 	

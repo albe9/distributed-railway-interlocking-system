@@ -11,7 +11,6 @@
 
 #include "global_variables.h" 
 #include <clockLib.h>
-#include "wifiTask.h"
 
 
 extern void logMessage(char* msg, char* task_name);
