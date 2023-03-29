@@ -13,15 +13,21 @@ def log_loop(n_nodes:int):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         s.bind((HOST_IP, LOG_PORT))       #accetta connessioni sull'indirizzo HOST_IP e porta PORT
-        # s.bind(("0.0.0.0", PORT))
         s.listen()
-        log_conn, log_addr = s.accept()
-        while True:
-            # ricevi e printa tutto il messaggio
-            log_data = log_conn.recv(1024).decode()
-            print(log_data)
-            if not log_data:
-                break
+        # Creiamo una lista e aggiungiamo tutti i nodi che devono loggare
+        log_connected_nodes = []
+        for node_index in range(n_nodes):           
+            log_conn, log_addr = s.accept()
+            log_connected_nodes.append(log_conn)
+        while True:    
+            for node_index in range(n_nodes):
+                # ricevi e printa tutto il messaggio di un nodo
+                while True:                     
+                        log_data = log_conn.recv(1024).decode()
+                        print(log_data)
+                        if not log_data:
+                            print("\n")
+                            break
 
 
 log_loop(int(sys.argv[1]))

@@ -242,7 +242,7 @@ int getSizeofLog(char *path_to_file){
 	if((file = fopen(path_to_file, "r")) < 0){
 		logMessage("Problema nell'apertura del file", taskName(0));
 		return E_LOG_OPEN;
-	}
+	}	
 	if (file != NULL) {
     	/* Go to the end of the file. */
 		if (fseek(file, 0L, SEEK_END) == 0) {
@@ -296,13 +296,16 @@ exit_number logToHost(void){
 		if (close(host_conn.sock) < 0){
 			return E_DEFAUL_ERROR;
 		}
+		taskResume(LOG_TID);
 		return E_SUCCESS;
 	}
 	else{
 		// Errore da gestire
+		taskResume(LOG_TID);
 		logMessage("Size del log nulla o negativa [errore]", taskName(0));
 		return E_LOG_EMPTY;
 	}
+
 }
 
 extern exit_number handle_inMsg(char* msg, int sender_id){
