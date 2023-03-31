@@ -1,7 +1,8 @@
 import socket
 import time
 import sys
-
+from threading import Thread
+import select
 
 
 PORT = 6543  # Port to listen on (non-privileged ports are > 1023)
@@ -104,7 +105,22 @@ class Graph:
         
         return first_nodes
 
+def reading_from_nodes(fds):
 
+    print("reading thread avviato")
+    poll_obj = select.poll()
+
+    for fd in fds:
+        poll_obj.register(fd, select.POLLIN)
+    
+    while True:
+        poll_result = poll_obj.poll()
+        for fd_number, _ in poll_result:
+            for fd in fds:
+                if fd_number == fd.fileno():
+                    msg = fd.recv(50)
+                    print(f"Messaggio da {fd.getpeername()} : {msg.decode()}")
+    
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
 # rasp_id 0 è stato assegnato all'host che ha ip 172.23.78.0
@@ -229,6 +245,10 @@ def server_loop(node_num, net_graph):
 
 
         print("Tutte le connessioni sono state stabilite")
+        #genero un thread che fa il polling e stampa i messaggi ricevuti dai nodi
+        reading_thread = Thread(target=reading_from_nodes, args=(connected_nodes,))
+        reading_thread.start()
+
         while True:
             msg = input()
             for conn in connected_nodes: 
