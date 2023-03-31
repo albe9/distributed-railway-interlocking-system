@@ -48,7 +48,7 @@ void logMessage(char* msg, char* task_name){
 	strcat(final_msg, timestamp);
 	strcat(final_msg, log_ms);
 	strcat(final_msg, task_name);
-	strcat(final_msg, "\t");	
+	strcat(final_msg, "    ");	
 	strcat(final_msg, msg);	
 	strcat(final_msg, "\n");
 	
