@@ -189,7 +189,7 @@ void controlMain(void){
 }
 
 void hookControlDelete(_Vx_TASK_ID tid){
-    if(tid == CONTROL_TID){
+    if(strcmp(taskName(tid), "controlTask") == 0){
         resetNodeStatus();
     }
 }

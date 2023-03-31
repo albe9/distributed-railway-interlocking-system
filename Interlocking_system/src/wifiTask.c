@@ -198,9 +198,9 @@ exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 	else {return E_SUCCESS;}
 }
 
-void hookWifiDelete(_Vx_TASK_ID tcb){
+void hookWifiDelete(_Vx_TASK_ID tid){
 
-	if(strcmp(taskName(tcb), "wifiTask") == 0){
+	if(strcmp(taskName(tid), "wifiTask") == 0){
 		if(total_conn > 0){
 			resetConnections();
 			logMessage("Task wifi eliminato",taskName(0));
