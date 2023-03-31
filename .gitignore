@@ -5,6 +5,7 @@ wrsdk-vxworks7-raspberrypi4b
 connect/vxWorks
 connect/build.config
 connect/log_files/*.txt
+connect/execution_log_files/*.txt
 virtualized_raspberry/debug/debug*.txt
 .DS_Store
 rpivsb

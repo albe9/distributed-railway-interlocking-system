@@ -159,9 +159,9 @@ load_module(){
             while [ true ];
                 do
                     duration=$(( SECONDS - start ))
-                    if [ $duration -gt 60 ];
+                    if [ $duration -gt 120 ];
                         then
-                            echo "Problema, attesa per il load maggiore di 60 secondi, controlla i log"
+                            echo "Problema, attesa per il load maggiore di 120 secondi, controlla i log"
                             exit
                         fi
                     sleep 1
@@ -198,9 +198,24 @@ reboot_rasp(){
 }
 
 see_log(){
-    # gnome-terminal --tab -- bash -c "./see_log.sh; bash"
+    # outdated:     gnome-terminal --tab -- bash -c "./see_log.sh; bash"
+    # Controlla se esiste la cartella dove loggare
+    if [ ! -d "./execution_log_files" ];
+    then 
+        mkdir ./execution_log_files
+    fi
+
+    # Lancia il file che mette l'host in ascolto
     host_ip=$( grep -Po '(?<=\[Host_ip\] : ")[^"]*' ./build.config )
-    python3 ./../host_script/log.py 5 $host_ip
+    python3 ./../host_script/log.py 5 $host_ip $PWD &
+    sleep 1
+
+    # Esegui il comando ai nodi per inviare il log verso l'host 
+    for target in ${TARGETS[@]};
+        do
+            ( echo "sendLogToHost"; sleep 1) | telnet $target  & 
+        done
+    
 }
 
 help_workbench(){
@@ -239,7 +254,7 @@ while getopts "cblodrh" options;
                 load_module
                 ;;
             o)
-                echo "Mostro i log"
+                echo "Mostro i log [parte di output rediretto a /dev/null]"
                 see_log
                 ;;
             d)

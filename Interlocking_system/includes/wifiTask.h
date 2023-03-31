@@ -33,7 +33,7 @@ extern connection* getConn(int conn_idx);
 extern void sendToConn(connection *conn, char *msg);
 extern exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size);
 extern int getSizeofLog(char *path_to_file);
-extern exit_number logToHost(void);
+extern exit_number sendLogToHost(void);
 
 
 

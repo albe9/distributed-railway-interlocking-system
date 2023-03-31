@@ -263,7 +263,7 @@ int getSizeofLog(char *path_to_file){
 	}
 }
 
-exit_number logToHost(void){
+exit_number sendLogToHost(void){
 	// Si sospende il task che esegue il logInit
 	if(taskSuspend(LOG_TID) < 0){
 		return E_DEFAUL_ERROR;
@@ -292,11 +292,18 @@ exit_number logToHost(void){
 		fclose(file);
 		// Si invia il messaggio
 		sendToConn(&host_conn, logMsg);
+		// Liberiamo la memoria allocata
+		free(logMsg);
+		// TODO: capire meglio shutdown e close https://stackoverflow.com/questions/4160347/close-vs-shutdown-socket
 		shutdown(host_conn.sock, SHUT_RDWR);
 		if (close(host_conn.sock) < 0){
+			logMessage("Errore nella chiusura del socket di log", taskName(0));
 			return E_DEFAUL_ERROR;
 		}
+		// Riavviamo il task di log e loggiamo il completamento dell'invio
+		printf("Socket di log chiuso, riavvio task di log \n");
 		taskResume(LOG_TID);
+		logMessage("Inviato con successo il log all'host", taskName(0));
 		return E_SUCCESS;
 	}
 	else{
