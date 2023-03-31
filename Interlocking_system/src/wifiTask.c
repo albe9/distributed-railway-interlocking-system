@@ -14,26 +14,12 @@ static int total_conn = 0;
 static bool flag_blocking = true;
 
 exit_number connectToServer(connection *conn_server, char* server_ip, int server_port){
-	//TODO gestire errori ed assegnare codici da ritornare per tutti i casi
 	
 	struct sockaddr_in serv_addr;
 	
 	if ((conn_server->sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 		return E_DEFAUL_ERROR;
 	}
-	
-	//linux
-	// struct sockaddr_in local_addr;
-	// local_addr.sin_family = AF_INET;
-	// local_addr.sin_addr.s_addr = inet_addr(RASP_IP);
-	// local_addr.sin_port = 0;
-		
-	//Bind
-	// if( bind(conn_server->sock ,(struct sockaddr *)&local_addr , sizeof(local_addr)) < 0)
-	// {
-	// 	close(conn_server->sock);
-	// 	return E_DEFAUL_ERROR;
-	// }
 
 	serv_addr.sin_addr.s_addr = inet_addr(server_ip);
 	serv_addr.sin_family = AF_INET;
@@ -59,10 +45,12 @@ exit_number addConnToServer(char* server_ip, int server_port, int server_id){
 			return conn_status;
 		}
 		char msg[100];
-		// fprintf(debug_file, "[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
-		// printf("[RASP_ID : %i] connesso al server %s\n", RASP_ID, server_ip);
-		snprintf(msg, 100, "Connesso al server %s", server_ip);
-		logMessage(msg, taskName(0));
+		char log_msg[100];
+
+		// debug
+		// memset(log_msg, 0, 100);
+		// snprintf(log_msg, 100, "Connesso al server %s", server_ip);
+		// logMessage(log_msg, taskName(0));
 
 		memset(msg, 0, 100);
 		snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
@@ -73,32 +61,28 @@ exit_number addConnToServer(char* server_ip, int server_port, int server_id){
 		readFromConn(&node_conn[total_conn], msg, 100);
 		sscanf(msg, "RASP_ID : %i", &returned_id);
 		if(returned_id != server_id){
-			//printf("Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i\n", server_id, returned_id);
-			memset(msg, 0, 100);
-			snprintf(msg, 100, "Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i", server_id, returned_id);
-			logMessage(msg, taskName(0));
-			//TODO gestire errore
+			memset(log_msg, 0, 100);
+			snprintf(log_msg, 100, "Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i", server_id, returned_id);
+			logMessage(log_msg, taskName(0));
 			return E_INVALID_ID;
 		}
 		else{
-			// fprintf(debug_file, "[RASP_ID : %i] Server id : %i aggiunto correttamente\n", RASP_ID, returned_id);
-			memset(msg, 0, 100);
-			snprintf(msg, 100, "Server id : %i aggiunto correttamente", server_id);
-			logMessage(msg, taskName(0));
+			memset(log_msg, 0, 100);
+			snprintf(log_msg, 100, "Server id : %i aggiunto correttamente", server_id);
+			logMessage(log_msg, taskName(0));
 			node_conn[total_conn].connected_id = server_id;
 			total_conn++;
 			return E_SUCCESS;
 		}
 	}
 	else{
-		printf("Errore raggiunto numero massimo di socket per questo nodo\n");
-		//TODO gestire errore
+		logMessage("Errore raggiunto numero massimo di socket per questo nodo", taskName(0));
 		return E_MAX_CONNECTION_NUMBER;
 	}
 	
 }
 
-extern exit_number addConnToClient(int num_client){
+exit_number addConnToClient(int num_client){
 
 	int server_sock, addrlen;
 	struct sockaddr_in server, client;
@@ -131,9 +115,8 @@ extern exit_number addConnToClient(int num_client){
 		return E_DEFAUL_ERROR;
 	}
 	
-	//TODO definire il numero massimo di connessioni in coda
+	// Effettuo il listen sul socket server con un buffer di 10 connessioni
 	listen(server_sock , 10);
-	// fprintf(debug_file, "[RASP_ID : %i] sto aspettando connessioni\n", RASP_ID);
 	logMessage("Sto aspettando connessioni", taskName(0));
 
 
@@ -153,10 +136,13 @@ extern exit_number addConnToClient(int num_client){
 			
 			char host_addr[INET_ADDRSTRLEN];
 			inet_ntop(AF_INET, &(client.sin_addr), host_addr, INET_ADDRSTRLEN);
-			// fprintf(debug_file, "[RASP_ID : %i] ricevuta connessione da : %s\n", RASP_ID, host_addr);
 			char msg[100];
-			snprintf(msg, 100, "Ricevuta connessione da : %s", host_addr);
-			logMessage(msg, taskName(0));
+			char log_msg[100];
+
+			// debug
+			// memset(log_msg, 0, 100);
+			// snprintf(log_msg, 100, "Ricevuta connessione da : %s", host_addr);
+			// logMessage(log_msg, taskName(0));
 
 
 			
@@ -169,17 +155,16 @@ extern exit_number addConnToClient(int num_client){
 			memset(msg, 0, 100);
 			snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
 			sendToConn(&node_conn[total_conn], msg);
-			// fprintf(debug_file, "[RASP_ID : %i] Client id : %i aggiunto correttamente\n", RASP_ID, client_id);
-			memset(msg, 0, 100);
-			snprintf(msg, 100, "Client id : %i aggiunto correttamente", client_id);
-			logMessage(msg, taskName(0));
+
+			memset(log_msg, 0, 100);
+			snprintf(log_msg, 100, "Client id : %i aggiunto correttamente", client_id);
+			logMessage(log_msg, taskName(0));
 			node_conn[total_conn].connected_id = client_id;
 			total_conn++;
 			
 		}
 		else{
 			return E_MAX_CONNECTION_NUMBER;
-			//TODO gestire errore
 		}
 	}
 	
@@ -215,9 +200,11 @@ exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 
 void hookWifiDelete(_Vx_TASK_ID tcb){
 
-	if(tcb == WIFI_TID && total_conn > 0){
-		resetConnections();
-		logMessage("Task wifi eliminato",taskName(0));
+	if(strcmp(taskName(tcb), "wifiTask") == 0){
+		if(total_conn > 0){
+			resetConnections();
+			logMessage("Task wifi eliminato",taskName(0));
+		}
 	}
 
 }
@@ -236,16 +223,15 @@ void resetConnections(){
 	
 }
 
-extern exit_number handle_inMsg(char* msg, int sender_id){
+exit_number handle_inMsg(char* msg, int sender_id){
 
 	/*	
 		Sintassi messaggi:
 			-relativi a route : "command;host_id;route_id"
-			-relativi a ping : "TODO definire"
+			-relativi a ping : "PING_REQ;"
 			-host close : "CLOSE;"
 	
 	*/
-	//TODO definire lunghezza massima dei comandi
 
 	
 
@@ -270,14 +256,10 @@ extern exit_number handle_inMsg(char* msg, int sender_id){
 		}
 		return E_CLOSE;
 	}
-	// TODO aggiungere altri messagi
 	else{
 		//gestiamo i messaggi relativi al TPCM
 		tpcp_msg in_msg;
-		in_msg.recevier_id=RASP_ID;
-		in_msg.sender_id=sender_id;
-		strcpy(in_msg.command, command_type);
-
+		
 		//debug
 		// logMessage(in_msg.command, taskName(0));
 
@@ -292,12 +274,22 @@ extern exit_number handle_inMsg(char* msg, int sender_id){
 		}
 
 		if(CURRENT_HOST != msg_host){
-			//TODO nodo già occupato, gestire invio di not ack ecc
+			in_msg.recevier_id = sender_id;
+			in_msg.sender_id = RASP_ID;
+			strcpy(in_msg.command, "NOT_OK");
+			in_msg.host_id = msg_host;
+			handle_outMsg(&in_msg);
 		}
 		else{
 			//passo i dati al task di controllo
+			in_msg.recevier_id=RASP_ID;
+			in_msg.sender_id=sender_id;
+			strcpy(in_msg.command, command_type);
 			in_msg.host_id = CURRENT_HOST;
+			logMessage("[t8] filtraggio messaggio concluso", taskName(0));
+			logMessage("[t6] acquisisco il semaforo per la coda", taskName(0));
 			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
+			logMessage("[t23] sposto messaggio dalla coda locale a quella globale", taskName(0));
 		}	
 		semGive(GLOBAL_SEM);
 	}
@@ -306,18 +298,19 @@ extern exit_number handle_inMsg(char* msg, int sender_id){
 	return E_SUCCESS;
 }
 
-extern exit_number handle_outMsg(tpcp_msg* out_msg){
+exit_number handle_outMsg(tpcp_msg* out_msg){
 
 	//debug
-	// char msg[100];
-	// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_msg->command, out_msg->sender_id, out_msg->recevier_id, out_msg->route_id);
-	// logMessage(msg, taskName(0));
+	char log_msg[100];
+	snprintf(log_msg, 100, "Prima di inoltrare il msg, command :%s sender :%i recivier:%i route:%i", out_msg->command, out_msg->sender_id, out_msg->recevier_id, out_msg->route_id);
+	logMessage(log_msg, taskName(0));
 
 	for(int node_idx=0; node_idx<total_conn; node_idx++){
 		if(node_conn[node_idx].connected_id == out_msg->recevier_id){
 			char msg[100];
 			snprintf(msg, 100,"%s;%i;%i", out_msg->command, out_msg->host_id, out_msg->route_id);
 			sendToConn(&node_conn[node_idx], msg);
+			logMessage("[t10] invio messaggio", taskName(0));
 			return E_SUCCESS;
 		}
 	}
@@ -332,7 +325,8 @@ void wifiMain(void){
 
 	//tento monitoraggio dei socket con select
 
-	char msg[100];
+	char msg[100] = {'\0'};;
+	char log_msg[100] = {'\0'};
 
 	// Determino il fd con numero maggiore
 	int nfds=0;
@@ -368,12 +362,14 @@ void wifiMain(void){
 			// controllo quali fd sono rimasti in readfds (quelli che hanno ricevuto un msg)
 			for(int conn_idx=0; conn_idx<total_conn; conn_idx++){
 				if(FD_ISSET(node_conn[conn_idx].sock, &readfds)){
-					//debug
-					// snprintf(msg, 100, "Ricevuto messaggio da Rasp id : %i", node_conn[conn_idx].connected_id);
-					// logMessage(msg, taskName(0));
-					// memset(msg, 0, 100);
 					exit_number status;
+					memset(msg, 0, 100);
 					if((status = readFromConn(&node_conn[conn_idx], msg, 100)) == E_SUCCESS){
+						//debug
+						snprintf(log_msg, 100, "Ricevuto messaggio da Rasp id : %i, %s", node_conn[conn_idx].connected_id, msg);
+						logMessage(log_msg, taskName(0));
+						memset(log_msg, 0, 100);
+
 						if((status = handle_inMsg(msg, node_conn[conn_idx].connected_id)) == E_CLOSE){
 							//se ho ricevuto un messaggio CLOSE dall'host termino il task
 							flag_running=false;
@@ -387,9 +383,9 @@ void wifiMain(void){
 					}
 					else if(status == E_DISCONNECTION){
 						//Se un nodo interrompe la connessione loggo
-						memset(msg, 0, 100);
-						snprintf(msg, 100, "Disconnesso Rasp id : %i", node_conn[conn_idx].connected_id);
-						logMessage(msg, taskName(0));
+						memset(log_msg, 0, 100);
+						snprintf(log_msg, 100, "Disconnesso Rasp id : %i", node_conn[conn_idx].connected_id);
+						logMessage(log_msg, taskName(0));
 						// chiudo il socket relativo e rimuovo la sua connesione dall'array delle connessioni attive
 						shutdown(node_conn[conn_idx].sock, SHUT_RDWR);
 						if (close(node_conn[conn_idx].sock) < 0){
@@ -410,14 +406,17 @@ void wifiMain(void){
 
 		//gestisco i messaggi in uscita
 		tpcp_msg out_msg;
+		
 		ssize_t byte_recevied = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_msg, sizeof(tpcp_msg), 1);
 		if(byte_recevied > 0){
-			//debug
+			logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
+			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));
+			// debug
 			// char msg[100];
 			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_msg.command, out_msg.sender_id, out_msg.recevier_id, out_msg.route_id);
 			// logMessage(msg, taskName(0));
 			exit_number status;
-			if( (status = handle_outMsg(&out_msg)) != E_SUCCESS){
+			if((status = handle_outMsg(&out_msg)) != E_SUCCESS){
 				logMessage(errorDescription(status), taskName(0));
 			}
 		}
