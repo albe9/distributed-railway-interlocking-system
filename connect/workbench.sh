@@ -185,6 +185,9 @@ task_delete(){
         do
             ( echo "td wifiTask" ; sleep 2; echo "td initTask" ; sleep 2 ; echo "td controlTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ) | telnet $target &
         done
+    # aspetto che tutti i comandi telnet siano terminati
+    wait
+
 }
 
 reboot_rasp(){
