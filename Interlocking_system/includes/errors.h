@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <string.h>
 
-enum _EXIT_NUMBER {
+typedef enum {
     //SOCKET
     E_CONN_REFUSED = -2,
     E_DEFAUL_ERROR = -1,
@@ -24,9 +24,8 @@ enum _EXIT_NUMBER {
 
     //LOG
     E_LOG
-};
+}exit_number;
 
-typedef enum _EXIT_NUMBER exit_number;
 
 extern char *errorDescription(exit_number exit_number);
 

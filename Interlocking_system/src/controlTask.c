@@ -4,7 +4,9 @@ static tpcp_status NODE_STATUS=NOT_RESERVED;
 static int HOST_ID = 0;    //per adesso gestiamo un solo host
 static route* current_route = NULL;
 
-void forwardMsg(tpcp_msg* msg, int receiver_id, char* command){
+// TODO cercare api per capire cosa ritorna semtake e semgive
+
+exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command){
 
     // debug
     // char log_msg[100];
@@ -23,15 +25,19 @@ void forwardMsg(tpcp_msg* msg, int receiver_id, char* command){
     logMessage("[t5] acquisisco semaforo per la coda", taskName(0));
     msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
     logMessage("[t28] sposto messaggio dalla coda locale a quella globale", taskName(0));
+
+    return E_SUCCESS;
 }
 
-void handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatus, tpcp_status new_edgeStatus, char* new_command){
+exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatus, tpcp_status new_edgeStatus, char* new_command){
 
     // direction=true indica che i messaggi in questa fase del tpcp si stanno propagando dalla testa verso la coda della route
     // direction=false il contrario
     // new_command è il nuovo comando che dovrà inoltrare il nodo all'edge di una route (o il primo o l'ultimo in base alla fase del tpcp)
     // i nodi intermedi inoltrano semplicemente il comando precedente
     logMessage("[t0] processo il messaggio", taskName(0));
+
+    exit_number status;
 
     if(direction){
         if(current_route->rasp_id_next != TAIL_ID){
@@ -66,6 +72,8 @@ void handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatus, tpcp
             }
         }
     }
+
+    return E_SUCCESS;
 
 }
 
@@ -190,11 +198,13 @@ void controlMain(void){
 
 void hookControlDelete(_Vx_TASK_ID tid){
     if(strcmp(taskName(tid), "controlTask") == 0){
-        resetNodeStatus();
+        if(resetNodeStatus() != E_SUCCESS){
+            logMessage("Errore nella chiusura del control Task", taskName(0));
+        }
     }
 }
 
-void resetNodeStatus(){
+exit_number resetNodeStatus(){
     //resetto lo stato del nodo
     logMessage("[t0] processo il messaggio", taskName(0));
     NODE_STATUS=NOT_RESERVED;
@@ -202,4 +212,5 @@ void resetNodeStatus(){
     CURRENT_HOST = -1;
     semGive(GLOBAL_SEM);
     logMessage("[t1] setto lo stato", taskName(0));
+    return E_SUCCESS;
 }
