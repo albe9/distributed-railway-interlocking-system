@@ -53,7 +53,7 @@ void start3(void){
 
 
 void startLog(void){
-	LOG_TID = taskSpawn("LogTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskSpawn("logTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void test(void){

@@ -219,6 +219,7 @@ see_log(){
             ( echo "sendLogToHost"; sleep 1) | telnet $target  & 
         done
     
+    wait
 }
 
 help_workbench(){
