@@ -23,7 +23,9 @@ exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command){
 
     logMessage("[t4] inoltro il messaggio al next o prev", taskName(0));
     logMessage("[t5] acquisisco semaforo per la coda", taskName(0));
-    msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
+    if(msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
+        return E_DEFAUL_ERROR;
+    }
     logMessage("[t28] sposto messaggio dalla coda locale a quella globale", taskName(0));
 
     return E_SUCCESS;
@@ -47,33 +49,33 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
             // logMessage(log_msg, taskName(0));
             NODE_STATUS = new_middleStatus;
             logMessage("[t1] setto lo stato", taskName(0));
-            forwardMsg(msg, current_route->rasp_id_next, NULL);
+            status = forwardMsg(msg, current_route->rasp_id_next, NULL);
         }
         else{
             NODE_STATUS = new_edgeStatus;
             logMessage("[t1] setto lo stato", taskName(0));
-            forwardMsg(msg, current_route->rasp_id_prev, new_command);
+            status = forwardMsg(msg, current_route->rasp_id_prev, new_command);
         }
     }
     else{
         if(current_route->rasp_id_prev != HOST_ID){
             NODE_STATUS = new_middleStatus;
             logMessage("[t1] setto lo stato", taskName(0));
-            forwardMsg(msg, current_route->rasp_id_prev, NULL);
+            status = forwardMsg(msg, current_route->rasp_id_prev, NULL);
         }
         else{
             NODE_STATUS = new_edgeStatus;
             logMessage("[t1] setto lo stato", taskName(0));
             if(NODE_STATUS == TRAIN_IN_TRANSITION){
-                forwardMsg(msg, current_route->rasp_id_prev, new_command);
+                status = forwardMsg(msg, current_route->rasp_id_prev, new_command);
             }
             else{
-                forwardMsg(msg, current_route->rasp_id_next, new_command);
+                status = forwardMsg(msg, current_route->rasp_id_next, new_command);
             }
         }
     }
 
-    return E_SUCCESS;
+    return status;
 
 }
 
@@ -84,7 +86,9 @@ void controlMain(void){
 
     while(true){
         logMessage("[t27] acquisisco semaforo per la coda", taskName(0));
-        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER);
+        if(msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER) == ERROR){
+            logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+        }
         logMessage("[t7] sposto semaforo dalla coda globale a quella locale", taskName(0));
 
 
@@ -102,11 +106,17 @@ void controlMain(void){
                 break;
             }
         }
+        
 
         if( current_route == NULL){
             // TODO gestire risposta quando la route non è presente
-            forwardMsg(&in_msg, in_msg.sender_id, "NOT_OK");
-            resetNodeStatus();
+            exit_number status;
+            if((status = forwardMsg(&in_msg, in_msg.sender_id, "NOT_OK")) != E_SUCCESS){
+                logMessage(errorDescription(status), taskName(0));
+            }
+            if((status = resetNodeStatus()) != E_SUCCESS){
+                logMessage(errorDescription(status), taskName(0));
+            }
         }
         else{
 
@@ -130,12 +140,12 @@ void controlMain(void){
 
             
             //TODO gestire tutti i msg ricevuti in uno stato che non li supporta
-
+            exit_number status, reset_status;
             switch (NODE_STATUS)
             {
             case NOT_RESERVED:
                 if (strcmp(in_msg.command, "REQ") == 0){
-                    handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
+                    status = handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
                 }
                 else{
                     // TODO gestire messaggi sbagliati
@@ -143,11 +153,11 @@ void controlMain(void){
                 break;
             case WAIT_ACK:
                 if (strcmp(in_msg.command, "ACK") == 0){
-                    handleMsg(&in_msg, false, WAIT_COMMIT, WAIT_AGREE, "COMMIT");
+                    status = handleMsg(&in_msg, false, WAIT_COMMIT, WAIT_AGREE, "COMMIT");
                 }
                 else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    resetNodeStatus();
-                    forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
+                    reset_status = resetNodeStatus();
+                    status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
                     
                 }
                 else{
@@ -156,15 +166,15 @@ void controlMain(void){
                 break;
             case WAIT_COMMIT:
                 if (strcmp(in_msg.command, "COMMIT") == 0){
-                    handleMsg(&in_msg, true, WAIT_AGREE, RESERVED, "AGREE");
+                    status = handleMsg(&in_msg, true, WAIT_AGREE, RESERVED, "AGREE");
                 }
                 else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    resetNodeStatus();
+                    reset_status = resetNodeStatus();
                     if(current_route->rasp_id_next != TAIL_ID){
-                        forwardMsg(&in_msg, current_route->rasp_id_next, NULL);
+                        status = forwardMsg(&in_msg, current_route->rasp_id_next, NULL);
                     }
                     else{
-                        forwardMsg(&in_msg, HOST_ID, NULL);
+                        status = forwardMsg(&in_msg, HOST_ID, NULL);
                     }
                 }
                 else{
@@ -176,11 +186,11 @@ void controlMain(void){
                     if(NODE_TYPE == TYPE_SWITCH){
                         // TODO verificare il positioning
                     }
-                    handleMsg(&in_msg, false, RESERVED, TRAIN_IN_TRANSITION, "TRAIN_OK");
+                    status = handleMsg(&in_msg, false, RESERVED, TRAIN_IN_TRANSITION, "TRAIN_OK");
                 }
                 else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    resetNodeStatus();
-                    forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
+                    reset_status = resetNodeStatus();
+                    status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
                 }
                 else{
                     // TODO gestire messaggi sbagliati
@@ -191,6 +201,12 @@ void controlMain(void){
                 break;
             default:
                 break;
+            }
+            if(status != E_SUCCESS){
+                logMessage(errorDescription(status), taskName(0));
+            }
+            if(reset_status != E_SUCCESS){
+                logMessage(errorDescription(reset_status), taskName(0));
             }
         }
     }
@@ -208,9 +224,9 @@ exit_number resetNodeStatus(){
     //resetto lo stato del nodo
     logMessage("[t0] processo il messaggio", taskName(0));
     NODE_STATUS=NOT_RESERVED;
-    semTake(GLOBAL_SEM, WAIT_FOREVER);
+    if(semTake(GLOBAL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
     CURRENT_HOST = -1;
-    semGive(GLOBAL_SEM);
+    if(semGive(GLOBAL_SEM) < 0)return E_DEFAUL_ERROR;
     logMessage("[t1] setto lo stato", taskName(0));
     return E_SUCCESS;
 }
