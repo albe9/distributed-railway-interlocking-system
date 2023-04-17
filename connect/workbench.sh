@@ -19,12 +19,12 @@ launch_connect(){
         do
             if [ -p "/tmp/fifo_$target" ];
             then 
-                echo "Connessione già eseguita"
-                return 0
-            else
-                #crea una named pipe per ogni target su cui potremmo collegarci ed inviare comandi 
-                mkfifo /tmp/fifo_$target
+                rm /tmp/fifo_$target
             fi
+            
+            #crea una named pipe per ogni target su cui potremmo collegarci ed inviare comandi 
+            mkfifo /tmp/fifo_$target
+            
             
         done
 
@@ -45,9 +45,14 @@ launch_connect(){
                         fi
                 done
         done
+    
+    sleep 1
 }
 
 build(){
+
+    #resetto il build_log
+    > ./log_files/build_log.txt
 
     # Elimino i file generati precedentemente
     rm -R ./../Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/*
@@ -59,6 +64,12 @@ build(){
     then 
         mkfifo /tmp/fifo_wrtool
     fi
+
+    if [ ! -d "./log_files" ];
+    then 
+        mkdir ./log_files
+    fi
+
     #lancio la shell wrtool definendo il workspace
     $WINDRIVER_PATH/workbench-4/wrtool -data ./../../ < /tmp/fifo_wrtool > ./log_files/build_log.txt &
     sleep 0.5
@@ -98,8 +109,6 @@ build(){
             if [ $? -eq 0 ];
                 then
                     echo "Build completato correttamente"
-                    #resetto il build_log
-                    > ./log_files/build_log.txt
                     break
                 fi
         done
@@ -109,6 +118,9 @@ build(){
 }
 
 load_module(){
+
+    # echo "Eseguo il reset dei task sui rasp"
+    # task_delete > /dev/null 2>&1 &
 
     #verifico che le pipe esistano
     for target in ${TARGETS[@]};
@@ -147,9 +159,9 @@ load_module(){
             while [ true ];
                 do
                     duration=$(( SECONDS - start ))
-                    if [ $duration -gt 60 ];
+                    if [ $duration -gt 120 ];
                         then
-                            echo "Problema, attesa per il load maggiore di 60 secondi, controlla i log"
+                            echo "Problema, attesa per il load maggiore di 120 secondi, controlla i log"
                             exit
                         fi
                     sleep 1
@@ -171,8 +183,11 @@ task_delete(){
 
     for target in ${TARGETS[@]};
         do
-            ( echo "reset" ; sleep 3 ; echo "td initTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ; echo "td wifiTask" ; sleep 2 ) | telnet $target &
+            ( echo "td wifiTask" ; sleep 2; echo "td initTask" ; sleep 2 ; echo "td controlTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ) | telnet $target &
         done
+    # aspetto che tutti i comandi telnet siano terminati
+    wait
+
 }
 
 reboot_rasp(){
@@ -186,7 +201,25 @@ reboot_rasp(){
 }
 
 see_log(){
-    gnome-terminal --tab -- bash -c "./see_log.sh; bash"
+    # outdated:     gnome-terminal --tab -- bash -c "./see_log.sh; bash"
+    # Controlla se esiste la cartella dove loggare
+    if [ ! -d "./execution_log_files" ];
+    then 
+        mkdir ./execution_log_files
+    fi
+
+    # Lancia il file che mette l'host in ascolto
+    host_ip=$( grep -Po '(?<=\[Host_ip\] : ")[^"]*' ./build.config )
+    python3 ./../host_script/log.py 5 $host_ip $PWD &
+    sleep 1
+
+    # Esegui il comando ai nodi per inviare il log verso l'host 
+    for target in ${TARGETS[@]};
+        do
+            ( echo "sendLogToHost"; sleep 1) | telnet $target  & 
+        done
+    
+    wait
 }
 
 help_workbench(){
@@ -225,7 +258,7 @@ while getopts "cblodrh" options;
                 load_module
                 ;;
             o)
-                echo "Mostro i log"
+                echo "Mostro i log [parte di output rediretto a /dev/null]"
                 see_log
                 ;;
             d)

@@ -3,8 +3,6 @@
 
 #include "logTask.h"
 
-#define MAX_LOG_SIZE 1024
-#define MAX_LOG_BUFF 10
 
 
 int LOG_FD;
@@ -24,7 +22,7 @@ void mytest(void){
 
 void logMessage(char* msg, char* task_name){
 	
-	char final_msg[MAX_LOG_SIZE] = "task : ";
+	char final_msg[MAX_LOG_SIZE] = "";
 		
 	//TODO inserire controllo su lunghezza messaggio
 	
@@ -33,17 +31,24 @@ void logMessage(char* msg, char* task_name){
 	time_t rawtime;
 	struct tm * timeinfo;
 	
-	char timestamp[80];
+	char timestamp[100];
 	
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
 	
-	strftime(timestamp,80,"%H:%M (%F)%t",timeinfo);
-	
+	strftime(timestamp,100,"(%F) %Hh:%Mm:%Ss:",timeinfo);
+
+	//Aggiungo i secondi ed i millisecondi 
+	struct timespec log_time;
+	clock_gettime(CLOCK_REALTIME, &log_time);
+	char log_ms[100];
+	snprintf(log_ms, 100, "%ims ", (int)(log_time.tv_nsec * 0.000001));
+
 	//appendo timestamp e taskname
-	strcpy(final_msg, timestamp);
+	strcat(final_msg, timestamp);
+	strcat(final_msg, log_ms);
 	strcat(final_msg, task_name);
-	strcat(final_msg, "\t");	
+	strcat(final_msg, "    ");	
 	strcat(final_msg, msg);	
 	strcat(final_msg, "\n");
 	
@@ -54,8 +59,6 @@ void logMessage(char* msg, char* task_name){
 	
 	
 }
-
-
 
 void logInit(void){
 	//Crea la directory e il file di log se non sono gi� esistenti
@@ -81,20 +84,17 @@ void logInit(void){
 	
 	char log_buffer[MAX_LOG_SIZE] = {0}; 
 	//main loop del task, controlla la coda dei messaggi di log e li scrive su file
-	while(TRUE){
-		
+	while(true){
 		//mi metto in attesa di un messaggio
 		msgQReceive(LOG_QUEUE, log_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
-		
-		
+				
 		//scrivo il messaggio presente in coda sul file di log
 		if(write(LOG_FD, log_buffer, strlen(log_buffer)) == ERROR){
 			perror("\nErrore nella scrittura di un log:");
 			taskDelete(LOG_TID);
 		}
 		//resetto il buffer per accettare nuovi messaggi
-		memset(log_buffer, 0, MAX_LOG_SIZE);
-		
+		memset(log_buffer, 0, MAX_LOG_SIZE);			
 	}
 	
 }	

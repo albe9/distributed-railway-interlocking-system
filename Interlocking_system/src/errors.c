@@ -1,6 +1,6 @@
 #include "errors.h"
 
-const char *errorDescription(exit_number exit_number) {
+char *errorDescription(exit_number exit_number) {
     switch(exit_number) {
         case E_DEFAUL_ERROR: return strerror(errno); break;
         case E_SUCCESS: return "OK"; break;
@@ -13,6 +13,8 @@ const char *errorDescription(exit_number exit_number) {
         case E_PARSING: return "PARSING ERROR"; break;
 
         case E_LOG: return "UNABLE TO LOG"; break;
+
+        case E_NODE_NOTFOUND: return "CONNECTION TO NODE NOT FOUND"; break;
 
         default: return "UNKNOW ERROR"; break;
     }

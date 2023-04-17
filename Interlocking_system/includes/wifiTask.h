@@ -23,7 +23,7 @@ typedef struct{
 	int connected_id;
 }connection;
 
-
+//funzioni per la fase di config (init task)
 extern exit_number addConnToServer(char* server_ip, int server_port, int server_id);
 extern exit_number connectToServer(connection *conn_server, char* server_ip, int server_port);
 extern exit_number addConnToClient(int num_client);
@@ -31,9 +31,16 @@ extern exit_number addConnToClient(int num_client);
 extern void setBlockingMode(bool blocking_mode);
 extern connection* getConn(int conn_idx);
 extern void sendToConn(connection *conn, char *msg);
-extern ssize_t readFromConn(connection *conn, char* buffer, ssize_t buf_size);
+extern exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size);
+extern int getSizeofLog(char *path_to_file);
+extern exit_number sendLogToHost(void);
+
+
 
 extern void wifiMain(void);
-extern exit_number resetConnections();
+extern exit_number handle_inMsg(char* msg, int sender_id);
+extern exit_number handle_outMsg(tpcp_msg* out_msg);
+extern void hookWifiDelete(_Vx_TASK_ID tid);
+extern void resetConnections();
 
 #endif /* INCLUDES_WIFITASK_H_ */

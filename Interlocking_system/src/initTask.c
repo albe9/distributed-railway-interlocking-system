@@ -7,6 +7,8 @@
 
 
 #include "initTask.h"
+#define MAX_LOG_SIZE 1024
+#define MAX_LOG_BUFF 10
 
 void setCurrentTime(time_t current_time){
 	
@@ -30,11 +32,9 @@ void setCurrentTime(time_t current_time){
 
 static network node_net;
 static time_t current_time = 0;
-static route *node_routes;
 
 
 exit_number parseConfigString(char* config_string,route **routes, network *net){
-    //TODO: gestire gli errori durante il parsing
 
     char *packet[4];
 
@@ -47,12 +47,12 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
         else {
             packet[packet_idx] = strtok(NULL, ";");
         }
-        if(packet[packet_idx] == NULL)return(-1);
+        if(packet[packet_idx] == NULL)return(E_PARSING);
     }
     
     //analizzo il primo pacchetto
     
-    sscanf(packet[0],"%li,%i,%i,%i", &current_time, &net->prev_node_count, &net->next_node_count, &net->route_count);
+    if(sscanf(packet[0],"%li,%i,%i,%i", &current_time, &net->prev_node_count, &net->next_node_count, &net->route_count) != 4)return E_PARSING;
 
     //alloco lo spazio per le stringhe degli ip precedenti e successivi e per le routes
     net->prev_ips = malloc(net->prev_node_count * sizeof(char *));
@@ -70,6 +70,7 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
 
 
     *routes = (route*)malloc(net->route_count * sizeof(route));
+    route_count = net->route_count;
 
     //secondo pacchetto
     char *ip;
@@ -131,8 +132,8 @@ exit_number parseConfigString(char* config_string,route **routes, network *net){
         if(route_data == NULL)return(E_PARSING);
 
 
-        sscanf(route_data,"%i,%i,%i", &(*routes)[route_idx].route_id,
-                                &(*routes)[route_idx].rasp_id_prev, &(*routes)[route_idx].rasp_id_next);
+        if(sscanf(route_data,"%i,%i,%i", &(*routes)[route_idx].route_id,
+                                &(*routes)[route_idx].rasp_id_prev, &(*routes)[route_idx].rasp_id_next) != 3)return E_PARSING;
     }
 
 
@@ -177,14 +178,14 @@ void initMain(void){
 	char config_string[1024] = {0};
 	
 	readFromConn(&host_s, config_string, 1024);
-	if(parseConfigString(config_string, &node_routes, &node_net) == E_PARSING){
-        // TODO gestire (E_PARSING);
+    exit_number parsing_status;
+	if((parsing_status = parseConfigString(config_string, &node_routes, &node_net)) != E_SUCCESS){
+        logMessage(errorDescription(parsing_status), taskName(0));
         exit(-1);
 	}
 
     setCurrentTime(current_time);
 
-    // fprintf(debug_file, "[RASP_ID : %i] Configurazione ricevuta\n", RASP_ID);
     logMessage("Configurazione ricevuta", taskName(0));
     //printConfigInfo(node_routes, &node_net);
     
@@ -199,7 +200,6 @@ void initMain(void){
     //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
     memset(msg, 0, 100);
     readFromConn(&host_s, msg, 100);
-    // fprintf(debug_file, "[RASP_ID : %i] %s\n", RASP_ID, msg);
     logMessage(msg, taskName(0));
 	
     //chiudo la connessione con l'host
@@ -214,10 +214,10 @@ void initMain(void){
     
     for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
         //tento di connettermi al nodo precedente ripetutamente finchè non apre la connessione
-        int conn_status = 0;
+        exit_number conn_status = 0;
         do{
             conn_status = addConnToServer(node_net.prev_ips[node_idx], SERVER_PORT, node_net.prev_ids[node_idx]);
-            if(conn_status != E_CONN_REFUSED){
+            if(conn_status != E_CONN_REFUSED && conn_status != E_SUCCESS){
                 logMessage(errorDescription(conn_status), taskName(0));
             }
         }while(conn_status == E_CONN_REFUSED);
@@ -238,14 +238,14 @@ void initMain(void){
         }
     }
     else{
-        int conn_status = 0;
-        conn_status = addConnToClient(node_net.next_node_count);
-        logMessage(errorDescription(conn_status), taskName(0));
+        exit_number conn_status = 0;
+        if((conn_status = addConnToClient(node_net.next_node_count)) != E_SUCCESS){
+            logMessage(errorDescription(conn_status), taskName(0));
+        }
         // Attendo che tutti i nodi collegati notifichino l'avvenuta connessione
         for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
             memset(msg, 0, 100);
             readFromConn(getConn(node_net.prev_node_count + node_idx), msg, 100);
-            // fprintf(debug_file, "[RASP_ID : %i] %s ha stabilito tutte le sue connessioni\n", RASP_ID, msg);
             logMessage(strncat(msg, " ha stabilito tutte le connessioni", 100), taskName(0));
         }
         // Ricevuta la notifica da tutt i nodi successivi , informo quelli precedenti
@@ -258,12 +258,35 @@ void initMain(void){
 
 
     //TODO eliminare strutture e memoria allocata per il taskInit una volta concluso
-    // fprintf(debug_file, "[RASP_ID : %i] Finito\n", RASP_ID);
+
+    //Setto il raspberry come nodo di scambio o lineare in base alla config ricevuta
+    if(node_net.next_node_count > 1 || node_net.prev_node_count > 1){
+        NODE_TYPE = TYPE_SWITCH;
+    }
+    else{
+        NODE_TYPE = TYPE_LINEAR;
+    }
+
     logMessage("InitTask completato", taskName(0));
+    // debug
+    // memset(msg, 0, 100);
+	// snprintf(msg, 100, "nodo di tipo : %i", NODE_TYPE);
+	// logMessage(msg,taskName(0));
 
 
+    GLOBAL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
+    IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+    OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
+    CONTROL_TID = taskSpawn("controlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
+    
+    taskDeleteHookAdd((FUNCPTR)hookWifiDelete);
+    taskDeleteHookAdd((FUNCPTR)hookControlDelete);
+    // debug
+    // memset(msg, 0, 100);
+	// snprintf(msg, 100, "task_id dell'init task  : %i", INIT_TID);
+	// logMessage(msg,taskName(0));
 
 }
 

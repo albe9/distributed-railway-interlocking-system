@@ -9,7 +9,8 @@
 #include "global_variables.h"
 #include "initTask.h"
 #include "wifiTask.h"
-
+#include <clockLib.h>
+#include <sysLib.h>
 
 TASK_ID taskId;
 
@@ -52,11 +53,20 @@ void start3(void){
 
 
 void startLog(void){
-	LOG_TID = taskSpawn("LogTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskSpawn("logTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void test(void){
-	TEST_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
+	// TEST_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
+	// struct timespec res; 
+	// clock_getres(CLOCK_REALTIME, &res);
+	// printf("resolution real_time sec: %li ns: %li \n", res.tv_sec, res.tv_nsec);
+	// clock_getres(CLOCK_MONOTONIC, &res);
+	// printf("resolution monotonic sec: %li ns: %li \n", res.tv_sec, res.tv_nsec);
+	// clock_getres(CLOCK_PROCESS_CPUTIME_ID, &res);
+	// printf("resolution process_cpu_time sec: %li ns: %li \n", res.tv_sec, res.tv_nsec);
+	int tick_rate = sysClkRateGet();
+	printf("clock rate : %i\n", tick_rate);
 }
 
 void startInit(int rasp_id, char* host_ip){
@@ -73,6 +83,6 @@ void startWifi(void){
 	WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
-void reset(void){
-	resetConnections();
-}
+// void reset(void){
+// 	resetConnections();
+// }
