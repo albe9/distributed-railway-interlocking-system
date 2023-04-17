@@ -29,6 +29,7 @@
 #include <taskLib.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 
 TASK_ID LOG_TID;
