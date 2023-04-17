@@ -23,7 +23,10 @@ typedef enum {
     E_PARSING,
 
     //LOG
-    E_LOG
+    E_LOG,
+
+    //POSITIONING
+    E_POSITIONING
 }exit_number;
 
 
