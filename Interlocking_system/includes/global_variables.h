@@ -29,7 +29,7 @@
 #include <taskLib.h>
 #include <time.h>
 #include <unistd.h>
-#include <socket.h>
+#include <stdbool.h>
 #include <socket.h>
 
 
@@ -38,6 +38,7 @@ TASK_ID TEST_TID;
 TASK_ID INIT_TID;
 TASK_ID WIFI_TID;
 TASK_ID CONTROL_TID;
+TASK_ID POSITIONING_TID;
 
 SEM_ID GLOBAL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da più task
 //____________________________________________________________________________________________________________________________
@@ -82,5 +83,6 @@ extern int log_status;
 extern route *node_routes;
 extern int route_count;
 extern int NODE_TYPE;
+extern bool IN_POSITION;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */

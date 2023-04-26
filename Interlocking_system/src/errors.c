@@ -16,6 +16,8 @@ char *errorDescription(exit_number exit_number) {
 
         case E_NODE_NOTFOUND: return "CONNECTION TO NODE NOT FOUND"; break;
 
+        case E_POSITIONING: return "POSITIONING ERROR"; break;
+
         default: return "UNKNOW ERROR"; break;
     }
 }
