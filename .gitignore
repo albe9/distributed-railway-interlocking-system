@@ -9,3 +9,4 @@ connect/execution_log_files/*.txt
 virtualized_raspberry/debug/debug*.txt
 .DS_Store
 rpivsb
+host_script/log_test/*
