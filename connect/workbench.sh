@@ -201,7 +201,6 @@ reboot_rasp(){
 }
 
 see_log(){
-    # outdated:     gnome-terminal --tab -- bash -c "./see_log.sh; bash"
     # Controlla se esiste la cartella dove loggare
     if [ ! -d "./execution_log_files" ];
     then 
