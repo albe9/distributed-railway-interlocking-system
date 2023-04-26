@@ -157,7 +157,8 @@ def make_config_string(rasp_id, node_data):
 
     config_string = ""
     #primo pacchetto 
-    config_string += f"{int(time.mktime(time.localtime())) + 3600 },"
+    #TODO controllare ora legale
+    config_string += f"{int(time.mktime(time.localtime()))},"
     config_string += f"{len(node_data['prev_node'])},"
     config_string += f"{len(node_data['next_node'])},"
     config_string += f"{len(node_data['routes'])};"
