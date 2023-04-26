@@ -12,6 +12,7 @@
 #include "global_variables.h" 
 #include <clockLib.h>
 
+
 extern void logMessage(char* msg, char* task_name);
 extern void logInit(void);
 extern void mytest(void);

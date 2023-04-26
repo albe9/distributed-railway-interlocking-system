@@ -4,7 +4,13 @@
 #include <errno.h>
 #include <string.h>
 
+
 typedef enum {
+    //LOG
+    E_LOG_EMPTY = -5,
+    E_LOG = -4,
+    E_LOG_OPEN = -3,
+    
     //SOCKET
     E_CONN_REFUSED = -2,
     E_DEFAUL_ERROR = -1,
@@ -13,23 +19,20 @@ typedef enum {
     E_MAX_CONNECTION_NUMBER,
     E_DISCONNECTION,
     E_NODE_NOTFOUND,
+    
     //MSG
     E_CLOSE,
-
     //TIME
     E_SET_TIME,
 
     //PARSING
     E_PARSING,
 
-    //LOG
-    E_LOG,
-
     //POSITIONING
     E_POSITIONING
+    
 }exit_number;
-
-
+ 
 extern char *errorDescription(exit_number exit_number);
 
 #endif

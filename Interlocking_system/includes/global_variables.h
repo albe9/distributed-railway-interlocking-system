@@ -30,6 +30,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdbool.h>
+#include <socket.h>
 
 
 TASK_ID LOG_TID;
@@ -56,6 +57,8 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define MAX_CTRL_BUFF 10
 #define TYPE_SWITCH   2
 #define TYPE_LINEAR   3  
+#define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
+#define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
 
 typedef struct{
     int route_id;
@@ -72,9 +75,11 @@ typedef struct{
 }tpcp_msg;
 
 extern int SERVER_PORT;
+extern int LOG_PORT;
 extern int RASP_ID;
 extern char HOST_IP[20];
 extern char RASP_IP[20];
+extern int log_status;
 extern route *node_routes;
 extern int route_count;
 extern int NODE_TYPE;

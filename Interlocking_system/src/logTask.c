@@ -60,8 +60,6 @@ void logMessage(char* msg, char* task_name){
 	
 }
 
-
-
 void logInit(void){
 	//Crea la directory e il file di log se non sono gi� esistenti
 	
@@ -86,20 +84,17 @@ void logInit(void){
 	
 	char log_buffer[MAX_LOG_SIZE] = {0}; 
 	//main loop del task, controlla la coda dei messaggi di log e li scrive su file
-	while(TRUE){
-		
+	while(true){
 		//mi metto in attesa di un messaggio
 		msgQReceive(LOG_QUEUE, log_buffer, MAX_LOG_SIZE, WAIT_FOREVER);
-		
-		
+				
 		//scrivo il messaggio presente in coda sul file di log
 		if(write(LOG_FD, log_buffer, strlen(log_buffer)) == ERROR){
 			perror("\nErrore nella scrittura di un log:");
 			taskDelete(LOG_TID);
 		}
 		//resetto il buffer per accettare nuovi messaggi
-		memset(log_buffer, 0, MAX_LOG_SIZE);
-		
+		memset(log_buffer, 0, MAX_LOG_SIZE);			
 	}
 	
 }	

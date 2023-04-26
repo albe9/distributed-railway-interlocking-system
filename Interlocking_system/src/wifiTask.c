@@ -12,6 +12,7 @@
 static connection node_conn[MAX_CONN];
 static int total_conn = 0;
 static bool flag_blocking = true;
+bool log_debug_mode = false;
 
 exit_number connectToServer(connection *conn_server, char* server_ip, int server_port){
 	
@@ -221,6 +222,98 @@ void resetConnections(){
 	}
 	total_conn = 0;
 	
+}
+
+int getSizeofLog(char *path_to_file){
+	// Apriamo il file
+	FILE *file;
+	if((file = fopen(path_to_file, "r")) < 0){
+		logMessage("Problema nell'apertura del file", taskName(0));
+		return E_LOG_OPEN;
+	}	
+	if (file != NULL) {
+    	/* Go to the end of the file. */
+		if (fseek(file, 0L, SEEK_END) == 0) {
+			/* Get the size of the file. */
+			int bufsize = (int) ftell(file);
+			if (bufsize == -1) {
+				logMessage("File di dimensioni nulla", taskName(0));
+				return E_LOG_EMPTY;
+			}
+			if (log_debug_mode)
+				printf("bufsize %i \n", bufsize);
+		fclose(file);
+		return bufsize;
+		}
+		else{
+			return E_DEFAUL_ERROR;
+		}
+	}
+	else{
+		logMessage("Puntatore nullo", taskName(0));
+		return E_LOG_EMPTY;
+	}
+}
+
+exit_number sendLogToHost(void){
+	// Si sospende il task che esegue il logInit
+	if(taskSuspend(LOG_TID) < 0){
+		return E_DEFAUL_ERROR;
+	}
+	// Si crea un socket verso l'host
+	connection host_conn;
+	connectToServer(&host_conn, HOST_IP, LOG_PORT);
+	// Si legge quanto è lungo il file 
+	int logSize = 0;
+	if((logSize = getSizeofLog("/usr/log/log.txt")) > 0){
+		// E si copia il contenuto in un buffer
+		char *logMsg = malloc(sizeof(char) * (logSize + 1));
+		if (log_debug_mode)
+			printf("Allocazione eseguita \n");
+		FILE *file = fopen("/usr/log/log.txt", "r");
+		/* Go back to the start of the file. */
+        if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
+        /* Read the entire file into memory. */
+        size_t newLen = fread(logMsg, sizeof(char), logSize, file);
+		if (log_debug_mode)
+			printf("newLen %i \n", newLen);
+        if ( ferror(file) != 0 ) {
+            fputs("Error reading file", stderr);
+        } else {
+            logMsg[newLen++] = '\0'; /* Just to be safe. */
+        }
+		if (log_debug_mode)
+			printf("%s", logMsg);
+		fclose(file);
+		// Si invia il messaggio
+		sendToConn(&host_conn, logMsg);
+		// Liberiamo la memoria allocata
+		free(logMsg);
+		// TODO: capire meglio shutdown e close
+		shutdown(host_conn.sock, SHUT_RDWR);
+		if (close(host_conn.sock) < 0){
+			logMessage("Errore nella chiusura del socket di log", taskName(0));
+			return E_DEFAUL_ERROR;
+		}
+		// Riavviamo il task di log e loggiamo il completamento dell'invio
+		printf("Socket di log chiuso, riavvio task di log \n");
+		if((taskResume(LOG_TID) < 0)){
+			logMessage("Problemi nel fare il resume del log", taskName(0));
+			return E_LOG;
+		}
+		logMessage("Inviato con successo il log all'host", taskName(LOG_TID));
+		return E_SUCCESS;
+	}
+	else{
+		// Errore da gestire
+		if((taskResume(LOG_TID) < 0)){
+			logMessage("Problemi nel fare il resume del log", taskName(0));
+			return E_LOG;
+		}
+		logMessage("Size del log nulla o negativa [errore]", taskName(0));
+		return E_LOG_EMPTY;
+	}
+
 }
 
 exit_number handle_inMsg(char* msg, int sender_id){
