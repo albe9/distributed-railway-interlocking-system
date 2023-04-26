@@ -3,6 +3,7 @@
 
 #include "global_variables.h"
 #include "logTask.h"
+#include "positioningTask.h"
 
 typedef enum{
     NOT_RESERVED,
@@ -17,6 +18,7 @@ typedef enum{
 }tpcp_status;
 
 extern void controlMain(void);
+extern exit_number forwardNotOk(tpcp_msg* msg, int sender_id);
 extern exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command);       //inoltra il msg al nodo indicato, se command=NULL il comando non viene modificato
 extern exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatus, tpcp_status new_edgeStatus, char* new_command);
 extern void hookControlDelete(_Vx_TASK_ID tid);
