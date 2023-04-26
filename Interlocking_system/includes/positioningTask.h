@@ -7,7 +7,7 @@
 #define MAX_POSITIONING 100
 #define MIN_POSITIONING 0
 
-#define PROB_ERROR 90 //%
+#define PROB_ERROR 10 //%
 
 extern void positioningMain();
 extern exit_number positioning();
