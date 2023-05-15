@@ -30,7 +30,7 @@ exit_number positioning(){
 
 bool error_generator(){
 
-    srand(time(0));
+    srand((int)time(0));
     int generate_error = rand() % 100;
     if (generate_error <= PROB_ERROR) {
         return true;
