@@ -61,22 +61,21 @@ exit_number forwardNotOk(tpcp_msg* msg, int sender_id){
             if(current_route->rasp_id_next != TAIL_ID){
                 msg->recevier_id = current_route->rasp_id_next;
                 msg->sender_id = RASP_ID;
+                if(msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
+                    return E_DEFAUL_ERROR;
+                }
             }
         }
-
-        if(msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
-            return E_DEFAUL_ERROR;
-        }
-
+        
         if(current_route->rasp_id_prev != sender_id){
             msg->recevier_id = current_route->rasp_id_prev;
             msg->sender_id = RASP_ID;
+
+            if(msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
+                return E_DEFAUL_ERROR;
+            }
         }
 
-        if(msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
-            return E_DEFAUL_ERROR;
-        }
-        
     }
 
     return E_SUCCESS;
@@ -116,7 +115,7 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
         }
         else{
             NODE_STATUS = new_edgeStatus;
-            if(NODE_STATUS == TRAIN_IN_TRANSITION){
+            if(NODE_STATUS == RESERVED || NODE_STATUS == NOT_RESERVED){
                 logMessage("[t4] inoltro il messaggio al next o prev", taskName(0));
                 status = forwardMsg(msg, current_route->rasp_id_prev, new_command);
             }
@@ -131,6 +130,14 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
 
 }
 
+exit_number handleErrorMsg(tpcp_msg* msg, char* current_status){
+    char log_msg[100];
+    snprintf(log_msg, 100, "Messaggio Errato per lo stato : %s, command :%s sender :%i recivier:%i route:%i", current_status, msg->command, msg->sender_id, msg->recevier_id, msg->route_id);
+    logMessage(log_msg, taskName(0));
+
+    // TODO oltre al log si potrebbero gestire alcuni casi di errore
+    return E_SUCCESS;
+}
 
 void controlMain(void){
 
@@ -195,6 +202,7 @@ void controlMain(void){
             
             //TODO gestire tutti i msg ricevuti in uno stato che non li supporta
             exit_number status = E_SUCCESS,reset_status = E_SUCCESS;
+            char log_msg[100];
             switch (NODE_STATUS)
             {
             case NOT_RESERVED:
@@ -202,8 +210,11 @@ void controlMain(void){
                     logMessage("[t1] setto lo stato", taskName(0));
                     status = handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
                 }
+                else if (strcmp(in_msg.command, "SENSOR_OFF") == 0){
+                    status = handleMsg(&in_msg, false, NOT_RESERVED, NOT_RESERVED, "TRAIN_PASSED");
+                }
                 else{
-                    // TODO gestire messaggi sbagliati
+                    status = handleErrorMsg(&in_msg, "NOT_RESERVED");
                 }
                 break;
             case WAIT_ACK:
@@ -218,7 +229,7 @@ void controlMain(void){
                     
                 }
                 else{
-                    // TODO gestire messaggi sbagliati
+                    status = handleErrorMsg(&in_msg, "WAIT_ACK");
                 }
                 break;
             case WAIT_COMMIT:
@@ -232,7 +243,7 @@ void controlMain(void){
                     status = forwardNotOk(&in_msg, in_msg.sender_id);
                 }
                 else{
-                    // TODO gestire messaggi sbagliati
+                    status = handleErrorMsg(&in_msg, "WAIT_COMMIT");
                 }
                 break;
             case WAIT_AGREE:
@@ -256,7 +267,7 @@ void controlMain(void){
                         }
                     }
                     else{
-                        status = handleMsg(&in_msg, false, RESERVED, TRAIN_IN_TRANSITION, "TRAIN_OK");
+                        status = handleMsg(&in_msg, false, RESERVED, RESERVED, "TRAIN_OK");
                     }
                 }
                 else if (strcmp(in_msg.command, "NOT_OK") == 0){
@@ -265,13 +276,29 @@ void controlMain(void){
                     status = forwardNotOk(&in_msg, in_msg.sender_id);
                 }
                 else{
-                    // TODO gestire messaggi sbagliati
+                    status = handleErrorMsg(&in_msg, "WAIT_AGREE");
                 }
                 break;
             case RESERVED:
-                
+                // if (strcmp(in_msg.command, "SENSOR_ON") == 0){
+                //     if(current_route->rasp_id_next != TAIL_ID){
+                //         status = forwardMsg(&in_msg, current_route->rasp_id_next, NULL);
+                //         reset_status = resetNodeStatus();
+                //     }
+                //     else{
+                //         status = forwardMsg(&in_msg, HOST_ID, "TRAIN_PASSED");
+                //     }
+                if (strcmp(in_msg.command, "SENSOR_ON") == 0){
+                    // logMessage("[t1] setto lo stato", taskName(0));
+                    status = handleMsg(&in_msg, true, NOT_RESERVED, NOT_RESERVED, "SENSOR_OFF");
+                }else{
+                    status = handleErrorMsg(&in_msg, "RESERVED");
+                }
                 break;
             default:
+                memset(log_msg, 0, 100);
+                snprintf(log_msg, 100, "Stato del nodo non riconosciuto : %i", NODE_STATUS);
+                logMessage(log_msg, taskName(0));
                 break;
             }
             if(status != E_SUCCESS){
