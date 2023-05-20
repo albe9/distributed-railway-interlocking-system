@@ -39,6 +39,7 @@ TASK_ID INIT_TID;
 TASK_ID WIFI_TID;
 TASK_ID CONTROL_TID;
 TASK_ID POSITIONING_TID;
+TASK_ID DIAGNOSTICS_TID;
 
 SEM_ID GLOBAL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da più task
 //____________________________________________________________________________________________________________________________
@@ -48,6 +49,8 @@ extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-co
 
 MSG_Q_ID IN_CONTROL_QUEUE;        // coda di messaggi da task_wifi->task_controllo
 MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wifi
+MSG_Q_ID IN_DIAGNOSTICS_QUEUE;    // coda di messaggi da task_wifi->task_diagnostica  
+MSG_Q_ID OUT_DIAGNOSTICS_QUEUE;   // coda di messaggi da task_diagnostica->task_wifi
 
 #define MAX_CONN      50          //numero massimo di connessioni per un nodo
 #define TAIL_ID      -9999        //Id associato al nodo successivo all'ultimo nodo di una route
@@ -59,6 +62,7 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define TYPE_LINEAR   3  
 #define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
 #define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
+#define TICKS_TO_SECOND 60        // Testando il codice si ha che 60 tick sono equivalenti ad 1 sec
 
 typedef struct{
     int route_id;
