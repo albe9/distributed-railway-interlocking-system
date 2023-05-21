@@ -234,7 +234,7 @@ void initMain(void){
         memset(msg, 0, 100);
         snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
         for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
-            sendToConn(getConn(node_idx), msg);
+            sendToConn(getConnByIndex(node_idx), msg);
         }
     }
     else{
@@ -245,14 +245,14 @@ void initMain(void){
         // Attendo che tutti i nodi collegati notifichino l'avvenuta connessione
         for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
             memset(msg, 0, 100);
-            readFromConn(getConn(node_net.prev_node_count + node_idx), msg, 100);
+            readFromConn(getConnByIndex(node_net.prev_node_count + node_idx), msg, 100);
             logMessage(strncat(msg, " ha stabilito tutte le connessioni", 100), taskName(0));
         }
         // Ricevuta la notifica da tutt i nodi successivi , informo quelli precedenti
         memset(msg, 0, 100);
         snprintf(msg, 100, "RASP_ID : %i", RASP_ID);
         for(int node_idx=0; node_idx<node_net.prev_node_count; node_idx++){
-            sendToConn(getConn(node_idx), msg);
+            sendToConn(getConnByIndex(node_idx), msg);
         }
     }
 
@@ -277,6 +277,8 @@ void initMain(void){
     GLOBAL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
     IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
     OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+    IN_DIAGNOSTICS_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+    OUT_DIAGNOSTICS_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
     CONTROL_TID = taskSpawn("controlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);

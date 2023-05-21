@@ -63,6 +63,10 @@ MSG_Q_ID OUT_DIAGNOSTICS_QUEUE;   // coda di messaggi da task_diagnostica->task_
 #define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
 #define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
 #define TICKS_TO_SECOND 60        // Testando il codice si ha che 60 tick sono equivalenti ad 1 sec
+#define FAIL FALSE                // FAIL è lo stato in cui la procedura di ping non è andata a buon fine
+#define SUCCESS TRUE              // SUCCESS è lo stato in cui la procedura di ping è andata a buon fine
+#define ROUTE_ID_PING 8888        //  Const int used in diagnostics task
+#define HOST_ID_PING 7777         //  Const int used in diagnostics task
 
 typedef struct{
     int route_id;
@@ -88,5 +92,9 @@ extern route *node_routes;
 extern int route_count;
 extern int NODE_TYPE;
 extern bool IN_POSITION;
+extern bool ping_in_progress;
+extern bool ping_result;
+extern bool in_fail_safe;
+extern int ping_answers;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */

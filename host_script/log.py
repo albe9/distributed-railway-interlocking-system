@@ -2,6 +2,9 @@ import socket
 import time
 import sys
 import threading
+import subprocess
+import os
+import signal
 
 LOG_PORT = 6544  # Port to listen on (non-privileged ports are > 1023)
 HOST_IP = sys.argv[2]
@@ -21,7 +24,33 @@ def receiveAndSaveLog(conn : socket.socket, addr : tuple[str, int]):
                 print(f"Salvato log_{addr[0]}.txt")    
                 break
 
+# Controlliamo se esiste un processo log.py attivo e nel caso terminiamolo 
+def check_if_log_active():
+    # Esegui il comando ps -fA [ps mostra i processi in esecuzione -f info complete e A di tutti gli utenti]
+    # e l'ouput viene reinderizzato al grep grazie alla pipe [ | ]
+    command = 'ps -fA | grep host_script/log.py'
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+    # Controlla se il processo è attivo
+    if "log.py" in result.stdout:
+        # Estrai l'ID del processo
+        lines = result.stdout.strip().split('\n')
+        process_line = [line for line in lines if "log.py" in line][0]
+        print(f"process line:\n {process_line}")
+        process_id = process_line.split()[1]
+        print(f"process id:\n {process_id}")
+
+        # Killa il processo
+        os.kill(int(process_id), signal.SIGTERM)
+        print("Processo log.py terminato con successo.")
+    else:
+        print("Il processo log.py non è attivo.")
+
 def log_loop(n_nodes:int):
+    # TODO: trovare un modo per controllare se è già attivo un processo precedente di log che utilizza le porte
+    # check_if_log_active()
+    print("Avvio log")
+
     # Usando with si ha che alla fine dell'esecuzione NON dobbiamo chiamare s.close()
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
