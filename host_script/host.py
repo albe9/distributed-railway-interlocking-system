@@ -108,7 +108,7 @@ class Graph:
 
 def reading_and_answer_ping(fds):
 
-    print("Reading and answer thread avviato")
+    print("[T1] Reading and answer thread avviato")
     poll_obj = select.poll()
 
     for fd in fds:
@@ -121,22 +121,22 @@ def reading_and_answer_ping(fds):
                 if fd_number == fd.fileno():
                     msg = fd.recv(50)
                     if (msg.decode() == "PING_REQ;"):
-                        ack_msg = "PING_ACK;".decode()
-                        fd.send(ack_msg)
-                        print(f"Inviato a {fd.getpeername()} : {ack_msg}")
+                        ack_msg = "PING_ACK;"
+                        fd.send(ack_msg.encode())
+                        print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
                     else:                      
-                        print(f"Messaggio da {fd.getpeername()} : {msg.decode()}")
+                        print(f"[T1] Messaggio da {fd.getpeername()} : {msg.decode()}")
 
 def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
-    print("Send msg from keyboard thread avviato")
+    print("[T2] Send msg from keyboard thread avviato")
     while True:
-        msg = input("Messaggio da inviare a tutti i nodi:")
+        msg = input("[T2] Messaggio da inviare a tutti i nodi:\n")
         # Controlliamo che la sintassi del messaggio che vogliamo inviare sia corretta
         if check_syntax(msg):
             for conn in connected_nodes:
                 # Inviamo il messaggio a tutti i nodi connessi 
                 conn.send(msg.encode())
-                print("Messaggio inviato")
+                print("[T2] Messaggio inviato")
         else:
             print("Errore nella sintassi del messaggio, messaggio non inviato")
         # Attendi 5 secondi prima di poter inviare un altro messaggio [senza lo sleep 

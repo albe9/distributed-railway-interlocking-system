@@ -281,7 +281,7 @@ void initMain(void){
     OUT_DIAGNOSTICS_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
-    CONTROL_TID = taskSpawn("controlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
+    CONTROL_TID = taskSpawn("cntrTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
     
     taskDeleteHookAdd((FUNCPTR)hookWifiDelete);
     taskDeleteHookAdd((FUNCPTR)hookControlDelete);

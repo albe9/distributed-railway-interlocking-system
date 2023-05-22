@@ -4,8 +4,7 @@
 static tpcp_status NODE_STATUS=NOT_RESERVED;
 static int HOST_ID = 0;    //per adesso gestiamo un solo host
 static route* current_route = NULL;
-static bool enable_diagnostics = false; // variabile usata in fase di testing per abilitare e disabilitare la diagnostica
-
+static bool diagnostics_enabled = false; // variabile usata in fase di testing per abilitare e disabilitare la diagnostica
 // TODO cercare api per capire cosa ritorna semtake e semgive
 
 exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command){
@@ -143,38 +142,30 @@ exit_number handleErrorMsg(tpcp_msg* msg, char* current_status){
 }
 
 bool getEnDiagn(){
-    return enable_diagnostics;
+    return diagnostics_enabled;
 }
 
 void setEnDiagn(bool new_state){
-    enable_diagnostics = new_state;
+    diagnostics_enabled = new_state;
 }
 
 void controlMain(void){
-
     tpcp_msg in_msg;
-
     while(true){
-        // Funzionalità per abilitare e disabilitare il task di diagnostica in fase di testing
-        unsigned int timeout = WAIT_FOREVER;
-        if (enable_diagnostics){
-            unsigned int timeout = TICKS_TO_SECOND * 5;
-        }
-
         // Aspetto 5 secondi un eventuale messaggio nella coda altrimenti procedo ad eseguire il task di controllo normale
         // TODO: controllare affidabilità della conversione tra tick e secondi effettivi        
-        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), timeout);
+        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), TICKS_TO_SECOND * 15);
         if(byte_recevied < 0){
             // Se non è presente avvio il task di diagnostica e sospendo il task di controllo
             if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){              
                 logMessage("[t17] Avvio task di diagnostica", taskName(0));
-                DIAGNOSTICS_TID = taskSpawn("diagnosticsTask", 50, 0, 20000,(FUNCPTR) diagnosticsMain, 0,0,0,0,0,0,0,0,0,0);
-                logMessage("Task di diagnostica avviato", taskName(0));
+                DIAGNOSTICS_TID = taskSpawn("diagTask", 50, 0, 20000,(FUNCPTR) diagnosticsMain, 0,0,0,0,0,0,0,0,0,0);
+                logMessage("-----Task di diagnostica avviato", taskName(0));
                 taskSuspend(0);
                 //
                 // In questa parte eseguirà task di diagnostica, al termine il task di diagnostica farà ripartire da qui il flusso del task di controllo
                 //
-                logMessage("Task di controllo ripreso", taskName(0));
+                logMessage("-----Task di controllo ripreso", taskName(0));
                 // TODO: in seguito al resume del task  eseguire implementazione per processare la risposta del successo/insuccesso ping
             }
             else{
@@ -348,7 +339,7 @@ void controlMain(void){
 }
 
 void hookControlDelete(_Vx_TASK_ID tid){
-    if(strcmp(taskName(tid), "controlTask") == 0){
+    if(strcmp(taskName(tid), "cntrTask") == 0){
         if(resetNodeStatus() != E_SUCCESS){
             logMessage("Errore nella chiusura del control Task", taskName(0));
         }

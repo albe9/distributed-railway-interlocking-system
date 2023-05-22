@@ -468,7 +468,7 @@ exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg){
 
 	//debug
 	char log_msg[100];
-	snprintf(log_msg, 100, "Prima di inoltrare il msg, command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg->command, out_diagnostics_msg->sender_id, out_diagnostics_msg->recevier_id, out_diagnostics_msg->route_id);
+	snprintf(log_msg, 100, "-----Prima di inoltrare il msg, command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg->command, out_diagnostics_msg->sender_id, out_diagnostics_msg->recevier_id, out_diagnostics_msg->route_id);
 	logMessage(log_msg, taskName(0));
 
 	// Nel caso si sia ricevuto un "PING_START;"
@@ -482,9 +482,9 @@ exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg){
 			char msg[100];
 			snprintf(msg, 100,"%s;%i;%i", out_diagnostics_msg->command, out_diagnostics_msg->host_id, out_diagnostics_msg->route_id);
 			sendToConn(&node_conn[node_idx], "PING_REQ;");
-			logMessage("[t10] invio messaggio", taskName(0));
+			logMessage("-----[t10] invio messaggio", taskName(0));
 		}
-		logMessage("PING_REQ inviate a tutti i vicini", taskName(0));
+		logMessage("-----PING_REQ inviate a tutti i vicini", taskName(0));
 		// Ritorniamo
 		return E_SUCCESS;
 	}
@@ -492,19 +492,19 @@ exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg){
 	// Nel caso si sia ricevuto un "PING_FAIL;"
 	else if (strcmp(out_diagnostics_msg->command, "PING_FAIL;") == 0 ){
 		ping_in_progress = FALSE;
-		logMessage("WiFi è stato notificato del PING_FAIL", taskName(0));
+		logMessage("-----WiFi è stato notificato del PING_FAIL", taskName(0));
 		return E_SUCCESS;
 	}
 
 	// Nel caso si sia ricevuto un "PING_FINISHED;"
 	else if (strcmp(out_diagnostics_msg->command, "PING_FINISHED;") == 0 ){
 		ping_in_progress = FALSE;
-		logMessage("WiFi è stato notificato del PING_FINISHED", taskName(0));
+		logMessage("-----WiFi è stato notificato del PING_FINISHED", taskName(0));
 		return E_SUCCESS;
 	}
 
 	else{
-		logMessage("Ricevuto messaggio anomalo da diagnostica", taskName(0));
+		logMessage("-----Ricevuto messaggio anomalo da diagnostica", taskName(0));
 		return E_PING;
 	}
 
@@ -647,11 +647,11 @@ void wifiMain(void){
 		tpcp_msg out_diagnostics_msg;		
 		ssize_t byte_recevied_diag = msgQReceive(OUT_DIAGNOSTICS_QUEUE, (char*)&out_diagnostics_msg, sizeof(tpcp_msg), 1);
 		if(byte_recevied_diag > 0){
-			logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
-			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));
+			logMessage("-----[t30] acquisisco semaforo per la coda", taskName(0));
+			logMessage("-----[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));
 			// debug
 			char msg[100];
-			snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg.command, out_diagnostics_msg.sender_id, out_diagnostics_msg.recevier_id, out_diagnostics_msg.route_id);
+			snprintf(msg, 100, "-----command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg.command, out_diagnostics_msg.sender_id, out_diagnostics_msg.recevier_id, out_diagnostics_msg.route_id);
 			logMessage(msg, taskName(0));
 			exit_number status_diag;
 			if((status_diag = handle_diagOutMsg(&out_diagnostics_msg)) != E_SUCCESS){
