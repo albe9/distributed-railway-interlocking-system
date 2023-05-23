@@ -62,6 +62,7 @@ MSG_Q_ID OUT_DIAGNOSTICS_QUEUE;   // coda di messaggi da task_diagnostica->task_
 #define TYPE_LINEAR   3  
 #define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
 #define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
+// TODO: controllare affidabilità della conversione tra tick e secondi effettivi  
 #define TICKS_TO_SECOND 60        // Testando il codice si ha che 60 tick sono equivalenti ad 1 sec
 #define FAIL FALSE                // FAIL è lo stato in cui la procedura di ping non è andata a buon fine
 #define SUCCESS TRUE              // SUCCESS è lo stato in cui la procedura di ping è andata a buon fine
@@ -94,7 +95,7 @@ extern int NODE_TYPE;
 extern bool IN_POSITION;
 extern bool ping_in_progress;
 extern bool ping_result;
-extern bool in_fail_safe;
+extern bool in_ping_fail_safe;
 extern int ping_answers;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */

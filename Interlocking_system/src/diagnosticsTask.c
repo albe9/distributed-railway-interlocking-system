@@ -25,9 +25,14 @@ void diagnosticsMain(){
             if(msgQSend(OUT_DIAGNOSTICS_QUEUE, (char*)&ping_fail_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
                 logMessage("-----Problema invio verso la coda", taskName(0));
             }
+            logMessage("-----Fallimento del task di ping", taskName(0));
             // Notichiamo l'host
+            //
+            //
             // TODO: notificare l'host
-            logMessage("-----Fallimento del task di ping", taskName(0));    
+            //
+            //
+            logMessage("-----[da implementare] Host notificato", taskName(0));              
         }
         // Non abbiamo ricevuto nessun messaggio da WiFi e abbiamo un errore diverso da timeout, da gestire 
         else{
@@ -55,16 +60,16 @@ void diagnosticsMain(){
 
     // In base a come è andata la procedura [SUCCESS (1) o FAIL (0)] di diagnostica eseguiamo diverse azioni
     if(ping_result == FAIL){
-        // Se è la procedura ha terminanto con un FAIL impostiamo la variabile globale di fail safe, che viene monitorata dal ControlTask in attesa
-        in_fail_safe = TRUE;
+        // Se è la procedura ha terminanto con un FAIL impostiamo la variabile globale di ping fail safe, che viene monitorata dal ControlTask in attesa
+        in_ping_fail_safe = TRUE;
     }
     else{
-        in_fail_safe = FALSE;
+        in_ping_fail_safe = FALSE;
     }
 
     // Logghiamo la fine della diagnostica e facciamo il resume del task di controllo
     char log_msg[100];
-	snprintf(log_msg, 100, "-----Diagnostica finita: risultato del ping %d  -  in_fail_safe %d", ping_result, in_fail_safe);
+	snprintf(log_msg, 100, "-----Diagnostica finita: risultato del ping %d  -  in_ping_fail_safe %d", ping_result, in_ping_fail_safe);
     logMessage(log_msg, taskName(0));
     taskResume(CONTROL_TID);
 }

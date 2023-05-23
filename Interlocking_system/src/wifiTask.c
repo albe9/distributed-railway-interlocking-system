@@ -571,24 +571,26 @@ void wifiMain(void){
 							// Trovo la connesione che mi ha inviato il ping
 							connection* conn_ping = getConnByID(sender_id);
 							char tmp_ping_msg[100];
-							sprintf(tmp_ping_msg, "Ricevuto comando PING_REQ da nodo %i", sender_id);
+							sprintf(tmp_ping_msg, "-----Ricevuto comando PING_REQ da nodo %i", sender_id);
 							logMessage(tmp_ping_msg, taskName(0));
 							memset(tmp_ping_msg, 0, 100);		
 							//Rispondo al ping segnalando di essere un nodo attivo
 							sendToConn(conn_ping, "PING_ACK;");
-							sprintf(tmp_ping_msg, "Inviato comando PING_ACK al nodo %i", sender_id);
+							sprintf(tmp_ping_msg, "-----Inviato comando PING_ACK al nodo %i", sender_id);
 							logMessage(tmp_ping_msg, taskName(0));
 							memset(tmp_ping_msg, 0, 100);
 						}
 						else if (status == E_PING_ACK){
 							char tmp_ping_msg_2[100];
-							sprintf(tmp_ping_msg_2, "Ricevuto comando PING_ACK da nodo %i", sender_id);
+							sprintf(tmp_ping_msg_2, "-----Ricevuto comando PING_ACK da nodo %i", sender_id);
 							logMessage(tmp_ping_msg_2, taskName(0));
 							memset(tmp_ping_msg_2, 0, 100);
 							// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
 							if(ping_in_progress){
 								ping_answers += 1;
-								logMessage("Aumento di ping_answers", taskName(0));
+								char tmp_ping_msg_3[100];
+								sprintf(tmp_ping_msg_3, "-----Aumento di ping_answers: valore attuale %i", ping_answers);
+								logMessage(tmp_ping_msg_3, taskName(0));
 								// Se raggiungiamo il numero di PING_ACK giusto indichiamo il successo della procedura di ping al task di diagnostica
 								if (ping_answers == total_conn){
 									tpcp_msg answer_msg = {"PING_SUCCESS;", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
@@ -597,7 +599,7 @@ void wifiMain(void){
 							}
 							// Abbiamo ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress
 							else{
-								logMessage("Problema di ping_answers", taskName(0));
+								logMessage("-----Ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress", taskName(0));
 							}
 						}
 						else{

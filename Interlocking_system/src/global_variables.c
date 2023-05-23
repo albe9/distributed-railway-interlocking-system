@@ -13,5 +13,5 @@ bool IN_POSITION = false;
 int log_status = LOG_ACTIVE;
 bool ping_result = SUCCESS;     // Risultato di una procedura di ping, può essere FAIL (0) o SUCCESS (1)
 bool ping_in_progress = TRUE;   // Indica se la procedura di ping è in corso (TRUE) oppure no (FALSE)
-bool in_fail_safe = FALSE;      // Indica se il nodo stesso è in fail safe (TRUE) oppure no (FALSE)
+bool in_ping_fail_safe = FALSE;      // Indica se il nodo stesso è in fail safe (TRUE) oppure no (FALSE)
 int ping_answers = 0;           // Numero di ack ricevuto in risposta ad una richiesta di ping

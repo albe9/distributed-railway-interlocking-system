@@ -42,7 +42,7 @@ void logMessage(char* msg, char* task_name){
 	struct timespec log_time;
 	clock_gettime(CLOCK_REALTIME, &log_time);
 	char log_ms[100];
-	snprintf(log_ms, 100, "%ims ", (int)(log_time.tv_nsec * 0.000001));
+	snprintf(log_ms, 100, "%03dms ", (int)(log_time.tv_nsec * 0.000001));
 
 	//appendo timestamp e taskname
 	strcat(final_msg, timestamp);
