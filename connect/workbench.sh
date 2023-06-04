@@ -31,22 +31,35 @@ launch_connect(){
     gnome-terminal --tab -- bash -c "./connect.sh; bash"
 
     #itero i raspberry per verificare che le connessioni siano tutte effettuate
-    for target in ${TARGETS[@]};
+
+    start=$SECONDS
+    rasp_counter=0
+
+    while [ true ];
+    do
+        duration=$(( SECONDS - start ))
+        if [ $duration -gt 120 ];
+        then
+            echo "Problema, attesa per la connessione di 120 secondi, controlla i log"
+            exit
+        fi
+        for target in ${TARGETS[@]};
         do
-            while true
-                do  
-                    sleep 0.5
-                    grep 'Connected to' ./log_files/log_$target.txt
-                    if [ $? -eq 0 ];
-                        then
-                            #resetto il log e passo al prossimo raspberry
-                            > ./log_files/log_$target.txt
-                            break
-                        fi
-                done
+            if grep -Pzoq 'Connected to' ./log_files/log_$target.txt > /dev/null 2>&1;  
+            then
+                echo "log_$target.txt connesso" 
+                ((rasp_counter++))
+                #resetto il log
+                > ./log_files/log_$target.txt
+            fi
+
+            if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
+            then
+                break 2
+            fi
         done
-    
-    sleep 1
+        sleep 1 
+    done
 }
 
 build(){
@@ -119,8 +132,15 @@ build(){
 
 load_module(){
 
-    # echo "Eseguo il reset dei task sui rasp"
-    # task_delete > /dev/null 2>&1 &
+
+    # TODO aggiungere chiamata al task delete (che avvia il task distruttore)
+
+    # Eseguo l'unload prima di ricaricare i moduli
+    echo "Tento di rimuovere i moduli precedenti"
+    unload_module
+
+    echo "Procedo con il load dei moduli"
+
 
     #verifico che le pipe esistano
     for target in ${TARGETS[@]};
@@ -154,29 +174,104 @@ load_module(){
     #itero  i log finchè tutti non hanno caricato i moduli
 
     start=$SECONDS
+    rasp_counter=0
+
+    while [ true ];
+    do
+        duration=$(( SECONDS - start ))
+        if [ $duration -gt 120 ];
+        then
+            echo "Problema, attesa per il load maggiore di 120 secondi, controlla i log"
+            exit
+        fi
+        for target in ${TARGETS[@]};
+        do
+            if grep -Pzoq 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            then
+                echo "log_$target.txt ha eseguito il load correttamente"
+                ((rasp_counter++))
+                #resetto il log
+                > ./log_files/log_$target.txt
+            fi
+
+            if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
+            then
+                break 2
+            fi
+        done
+        sleep 1 
+    done
+
+}
+
+unload_module(){
+    #verifico che le pipe esistano
     for target in ${TARGETS[@]};
         do
-            while [ true ];
-                do
-                    duration=$(( SECONDS - start ))
-                    if [ $duration -gt 120 ];
-                        then
-                            echo "Problema, attesa per il load maggiore di 120 secondi, controlla i log"
-                            exit
-                        fi
-                    sleep 1
-
-                    grep -Pzo 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/log_$target.txt > /dev/null 2>&1 
-                    if [ $? -eq 0 ]; 
-                        then
-                            echo "log_$target.txt" ha caricato
-                            #resetto il log
-                            > ./log_files/log_$target.txt
-                            break
-                        fi
-                done
-            
+            if [ ! -p "/tmp/fifo_$target" ];
+            then 
+                launch_connect
+                break
+            fi
         done
+    
+
+    cd ./../
+    module_path=$PWD/Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/Interlocking_system_partialImage/Debug/Interlocking_system_partialImage.o
+    cd ./connect
+
+
+    for target in ${TARGETS[@]};
+        do
+            ping -c2 $target > /dev/null 2>&1 &
+            if [ $? -eq 0 ]; 
+            then
+                #invio il comando per caricare i moduli
+                echo "module unload $module_path" > /tmp/fifo_$target
+            else 
+                "Host $target not connected"
+            fi
+        done
+
+    #itero  i log finchè tutti non hanno caricato i moduli
+
+    start=$SECONDS
+    rasp_counter=0
+   
+    while [ true ];
+    do
+        duration=$(( SECONDS - start ))
+        if [ $duration -gt 120 ];
+        then
+            echo "Problema, attesa per l'unload maggiore di 120 secondi, controlla i log"
+            exit
+        fi
+        for target in ${TARGETS[@]};
+        do
+            if grep -Pzoq 'Unloading module .*done' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            then
+                echo "log_$target.txt ha eseguito l'unload correttamente"
+                ((rasp_counter++))
+                #resetto il log
+                > ./log_files/log_$target.txt
+            
+            elif grep -Pzoq 'error: bad module ID or name' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            then
+                echo "Impossibile eseguire l'unload, modulo già rimosso o non ancora caricato log_$target.txt"
+                ((rasp_counter++))
+                #resetto il log
+                > ./log_files/log_$target.txt
+            fi
+            
+            if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
+            then
+                break 2
+            fi
+        done
+        sleep 1
+            
+    done
+
 }
 
 task_delete(){
@@ -241,7 +336,7 @@ echo -e "Opzioni:
 
 }
 
-while getopts "cblodrh" options;
+while getopts "cbluodrh" options;
     do                                  
         case "${options}" in      
             c)
@@ -253,8 +348,12 @@ while getopts "cblodrh" options;
                 build
                 ;;
             l)
-                echo "Eseguo il load del modulo"
+                # Messaggio di echo già presente nella funzione load_module
                 load_module
+                ;;
+            u)
+                echo "Eseguo l'unload del modulo"
+                unload_module
                 ;;
             o)
                 echo "Mostro i log [parte di output rediretto a /dev/null]"
