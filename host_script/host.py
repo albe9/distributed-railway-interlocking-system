@@ -109,17 +109,28 @@ def reading_from_nodes(fds):
 
     print("reading thread avviato")
     poll_obj = select.poll()
-
+    total_conn = 0
     for fd in fds:
         poll_obj.register(fd, select.POLLIN)
-    
+        total_conn +=1
+
     while True:
+        if total_conn == 0:
+            break
         poll_result = poll_obj.poll()
         for fd_number, _ in poll_result:
             for fd in fds:
                 if fd_number == fd.fileno():
                     msg = fd.recv(50)
-                    print(f"Messaggio da {fd.getpeername()} : {msg.decode()}")
+                    if msg.decode() == "":
+                        print(f"Ip {fd.getpeername()} Disconnesso")
+                        poll_obj.unregister(fd)
+                        fd.close()
+                        total_conn -= 1
+                    else:
+                        print(f"Messaggio da {fd.getpeername()} : {msg.decode()}")
+                        
+    print("Tutti i nodi disconnessi, reading thread terminato")
     
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
