@@ -131,10 +131,9 @@ build(){
 }
 
 load_module(){
-
-
-    # TODO aggiungere chiamata al task delete (che avvia il task distruttore)
-
+    # Eseguo il delete dei task (a prescindere tanto non genera errori)
+    echo "Eseguo il delete dei task (a prescindere tanto non genera errori)"
+    task_delete
     # Eseguo l'unload prima di ricaricare i moduli
     echo "Tento di rimuovere i moduli precedenti"
     unload_module
@@ -261,6 +260,12 @@ unload_module(){
                 ((rasp_counter++))
                 #resetto il log
                 > ./log_files/log_$target.txt
+            elif grep -Pzoq 'error' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            then
+                echo "Impossibile eseguire l'unload, il modulo ha risorse aperte log_$target.txt"
+                ((rasp_counter++))
+                #resetto il log
+                > ./log_files/log_$target.txt
             fi
             
             if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
@@ -278,7 +283,7 @@ task_delete(){
 
     for target in ${TARGETS[@]};
         do
-            ( echo "td wifiTask" ; sleep 2; echo "td initTask" ; sleep 2 ; echo "td controlTask" ; sleep 2 ; echo "td LogTask" ; sleep 2 ) | telnet $target &
+            ( echo "startDestructor" ; sleep 2; ) | telnet $target &
         done
     # aspetto che tutti i comandi telnet siano terminati
     wait
