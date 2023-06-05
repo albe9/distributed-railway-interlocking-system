@@ -40,7 +40,7 @@ extern exit_number sendLogToHost(void);
 extern void wifiMain(void);
 extern exit_number handle_inMsg(char* msg, int sender_id);
 extern exit_number handle_outMsg(tpcp_msg* out_msg);
-extern void hookWifiDelete(_Vx_TASK_ID tid);
+extern void wifiDestructor(int sig);
 extern void resetConnections();
 
 #endif /* INCLUDES_WIFITASK_H_ */

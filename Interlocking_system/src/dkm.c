@@ -4,13 +4,15 @@
 #include <stdio.h>
 #include <errno.h>
 #include <taskLib.h>
+#include <clockLib.h>
+#include <sysLib.h>
 
 
 #include "global_variables.h"
 #include "initTask.h"
 #include "wifiTask.h"
-#include <clockLib.h>
-#include <sysLib.h>
+#include "destructorTask.h"
+
 
 TASK_ID taskId;
 
@@ -49,8 +51,9 @@ void start3(void){
 }
 
 */
-
-
+void startDestructor(void){
+	DESTRUCTOR_TID = taskSpawn("destructorTask", 100, 0, 20000,(FUNCPTR) destructorMain, 0,0,0,0,0,0,0,0,0,0);
+}
 
 void startLog(void){
 	LOG_TID = taskSpawn("logTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);

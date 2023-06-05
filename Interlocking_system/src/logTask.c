@@ -83,6 +83,8 @@ void logInit(void){
 	
 	
 	char log_buffer[MAX_LOG_SIZE] = {0}; 
+	//aggiungo l'handler per il signal SIGUSR1
+	signal(SIGUSR1, logDestructor);
 	//main loop del task, controlla la coda dei messaggi di log e li scrive su file
 	while(true){
 		//mi metto in attesa di un messaggio
@@ -100,7 +102,14 @@ void logInit(void){
 }	
 
 
+void logDestructor(int sig){
 
+	if(close(LOG_FD) < 0 ){
+		perror("\nErrore durante la chiusura del LOG_FD");
+	}
+	taskDelete(0);
+
+}
 
 
 
