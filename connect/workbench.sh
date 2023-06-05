@@ -328,6 +328,7 @@ echo -e "Opzioni:
         -c  (connect)          Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto
         -b  (build)            Esegue il Build del progetto, in caso di errori salva lo stato in log_files/build_log.txt
         -l  (load)             Esegue il Load del modulo sui raspberry
+        -u  (unload)           Esegue l'unload del modulo sui raspberry
         -o  (output)           Mostro i log dei raspberry
         -d  (delete)           Effettua il task delete nei raspberry (per ora task_wifi)
         -r  (reboot)           Effettua il reboot dei raspberry
