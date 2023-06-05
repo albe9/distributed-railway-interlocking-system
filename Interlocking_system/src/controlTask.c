@@ -140,6 +140,8 @@ exit_number handleErrorMsg(tpcp_msg* msg, char* current_status){
 }
 
 void controlMain(void){
+    //aggiungo l'handler per il signal SIGUSR1
+	signal(SIGUSR1, controlDestructor);
 
     tpcp_msg in_msg;
 
@@ -195,6 +197,8 @@ void controlMain(void){
 
                 // -WAIT_AGREE
                 // -AGREE
+
+                //-SENSOR_ON
 
                 // i messaggi negativi potrebbero essere tutti raccolti in unico comando per semplificare la gestione
                 // -NOT_OK
@@ -311,13 +315,14 @@ void controlMain(void){
     }
 }
 
-void hookControlDelete(_Vx_TASK_ID tid){
-    if(strcmp(taskName(tid), "controlTask") == 0){
-        if(resetNodeStatus() != E_SUCCESS){
-            logMessage("Errore nella chiusura del control Task", taskName(0));
-        }
+extern void controlDestructor(int sig){
+    if(resetNodeStatus() != E_SUCCESS){
+        logMessage("Errore nella chiusura del control Task", taskName(0));
     }
+    taskDelete(0);
 }
+
+
 
 exit_number resetNodeStatus(){
     //resetto lo stato del nodo

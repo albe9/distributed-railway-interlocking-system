@@ -16,5 +16,6 @@
 extern void logMessage(char* msg, char* task_name);
 extern void logInit(void);
 extern void mytest(void);
+extern void logDestructor(int sig);
 
 #endif /* INCLUDES_LOGTASK_H_ */

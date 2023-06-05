@@ -199,16 +199,13 @@ exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 	else {return E_SUCCESS;}
 }
 
-void hookWifiDelete(_Vx_TASK_ID tid){
+void wifiDestructor(int sig){
 
-	if(strcmp(taskName(tid), "wifiTask") == 0){
-		if(total_conn > 0){
-			resetConnections();
-			logMessage("Task wifi eliminato",taskName(0));
-		}
-	}
-
+	resetConnections();
+	logMessage("Task wifi eliminato",taskName(0));
+	taskDelete(0);
 }
+
 
 void resetConnections(){
 	
@@ -415,8 +412,10 @@ exit_number handle_outMsg(tpcp_msg* out_msg){
 
 void wifiMain(void){
 	
+	//aggiungo l'handler per il signal SIGUSR1
+	signal(SIGUSR1, wifiDestructor);
 
-	//tento monitoraggio dei socket con select
+	//monitoraggio dei socket con select
 
 	char msg[100] = {'\0'};;
 	char log_msg[100] = {'\0'};
@@ -519,8 +518,6 @@ void wifiMain(void){
 
 	resetConnections();
 	logMessage("Terminato", taskName(0));
-
-
 
 }
 

@@ -23,7 +23,8 @@
 			"stdio.h": "c",
 			"vxworks.h": "c",
 			"syscall.h": "c",
-			"vxworkscommon.h": "c"
+			"vxworkscommon.h": "c",
+			"syslib.h": "c"
 		}
 	},
 

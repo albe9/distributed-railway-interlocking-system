@@ -281,8 +281,13 @@ void initMain(void){
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
     CONTROL_TID = taskSpawn("controlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
     
-    taskDeleteHookAdd((FUNCPTR)hookWifiDelete);
-    taskDeleteHookAdd((FUNCPTR)hookControlDelete);
+    //rimuovo tutte le risorse allocate prima di terminare il task
+    free(node_net.prev_ids);
+    free(node_net.prev_ips);
+    free(node_net.next_ids);
+    free(node_net.next_ips);
+
+
     // debug
     // memset(msg, 0, 100);
 	// snprintf(msg, 100, "task_id dell'init task  : %i", INIT_TID);
