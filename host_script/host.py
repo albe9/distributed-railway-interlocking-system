@@ -132,7 +132,7 @@ def reading_and_answer_ping(fds):
                         if (msg.decode() == "PING_REQ;."):
                             ack_msg = "PING_ACK;."
                             fd.send(ack_msg.encode())
-                            print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
+                            # print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
                         else:                      
                             print(f"[T1] Messaggio da {fd.getpeername()} : {msg.decode()}")
     print("Tutti i nodi disconnessi, reading thread terminato")
