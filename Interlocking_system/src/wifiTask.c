@@ -394,32 +394,57 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		NOTA: nel caso di PING_REQ, PING_ACK e CLOSE non serve il campo dati*/
 	else{
 	    if((msg_data=strtok(NULL,"")) == NULL){
-	        printf("%i,   %i,   %i \n", strcmp(command_type, "PING_REQ"), strcmp(command_type, "PING_ACK"), strcmp(command_type, "CLOSE"));
-			if (!((strcmp(command_type, "PING_REQ") == 0) || (strcmp(command_type, "PING_ACK") == 0) || (strcmp(command_type, "CLOSE") == 0))){
+	        printf("%i,   %i\n", strcmp(command_type, "PING_REQ"), strcmp(command_type, "PING_ACK"));
+			if (!((strcmp(command_type, "PING_REQ") == 0) || (strcmp(command_type, "PING_ACK") == 0))){
 				return(E_PARSING_DATA_EMPTY);
 			}
-
 		}
 
     }
 
 	//Parsing eseguito, continuo gestendo solo alcuni tipi di messaggi, gli altri li inoltro al task di controllo
 
+	
 	if (strcmp(command_type, "PING_REQ") == 0 ){
-		return E_PING_REQ;
+		// Trovo la connesione che mi ha inviato il ping
+		connection* conn_ping = getConnByID(sender_id);
+		char tmp_ping_msg[100];
+		sprintf(tmp_ping_msg, "-----Ricevuto comando PING_REQ da nodo %i", sender_id);
+		logMessage(tmp_ping_msg, taskName(0));
+		memset(tmp_ping_msg, 0, 100);		
+		//Rispondo al ping segnalando di essere un nodo attivo
+		sendToConn(conn_ping, "PING_ACK;.");
+		sprintf(tmp_ping_msg, "-----Inviato comando PING_ACK al nodo %i", sender_id);
+		logMessage(tmp_ping_msg, taskName(0));
+		memset(tmp_ping_msg, 0, 100);
 	}
 	else if (strcmp(command_type, "PING_ACK") == 0){
-		return E_PING_ACK;
+		char tmp_ping_msg_2[100];
+		sprintf(tmp_ping_msg_2, "-----Ricevuto comando PING_ACK da nodo %i", sender_id);
+		logMessage(tmp_ping_msg_2, taskName(0));
+		memset(tmp_ping_msg_2, 0, 100);
+		// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
+		if(ping_in_progress){
+			ping_answers += 1;
+			char tmp_ping_msg_3[100];
+			sprintf(tmp_ping_msg_3, "-----Aumento di ping_answers: valore attuale %i", ping_answers);
+			logMessage(tmp_ping_msg_3, taskName(0));
+			// Se raggiungiamo il numero di PING_ACK giusto indichiamo il successo della procedura di ping al task di diagnostica
+			if (ping_answers == total_conn){
+				tpcp_msg answer_msg = {"PING_SUCCESS", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
+				msgQSend(IN_DIAGNOSTICS_QUEUE, (char*)&answer_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
+			}
+		}
+		// Abbiamo ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress
+		else{
+			logMessage("-----Ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress", taskName(0));
+		}
 	}
-
-	if (strcmp(command_type, "PING_REQ") == 0 ){
-		//TODO gestire ping rispondendo al rasp
-	}
-	else if (strcmp(msg, "CLOSE") == 0){
+	else if (strcmp(command_type, "CLOSE") == 0){
 		//inoltro a tutti i nodi connessi di terminare
 		for(int node_idx=0; node_idx<total_conn;node_idx++){
 			if(node_conn[node_idx].connected_id != sender_id){
-				char msg[]="CLOSE;";
+				char msg[]="CLOSE;.";
 				sendToConn(&node_conn[node_idx], msg);
 			}
 		}
@@ -447,7 +472,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			in_msg.sender_id = RASP_ID;
 			strcpy(in_msg.command, "NOT_OK");
 			in_msg.host_id = msg_host;
-			handle_controlOutMsg(&in_msg);
+			handleOutControlMsg(&in_msg);
 		}
 		else{
 			//passo i dati al task di controllo
@@ -467,7 +492,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 	return E_SUCCESS;
 }
 
-exit_number handle_controlOutMsg(tpcp_msg* out_control_msg){
+exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 
 	//debug
 	char log_msg[100];
@@ -490,24 +515,24 @@ exit_number handle_controlOutMsg(tpcp_msg* out_control_msg){
 
 }
 
-exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg){
+exit_number handleOutDiagMsg(tpcp_msg* out_diagnostics_msg){
 
 	//debug
 	char log_msg[100];
 	snprintf(log_msg, 100, "-----Prima di inoltrare il msg, command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg->command, out_diagnostics_msg->sender_id, out_diagnostics_msg->recevier_id, out_diagnostics_msg->route_id);
 	logMessage(log_msg, taskName(0));
 
-	// Nel caso si sia ricevuto un "PING_START;"
-	if (strcmp(out_diagnostics_msg->command, "PING_START;") == 0 ){
+	// Nel caso si sia ricevuto un "PING_START"
+	if (strcmp(out_diagnostics_msg->command, "PING_START") == 0 ){
 		// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è in corso
 		ping_answers = 0;
 		ping_in_progress = TRUE;
 
 		// Inviamo un messaggio PING_REQ a tutti i nodi vicini
 		for(int node_idx=0; node_idx<total_conn; node_idx++){
-			char msg[100];
-			snprintf(msg, 100,"%s;%i;%i", out_diagnostics_msg->command, out_diagnostics_msg->host_id, out_diagnostics_msg->route_id);
-			sendToConn(&node_conn[node_idx], "PING_REQ;");
+			// char msg[100];
+			// snprintf(msg, 100,"%s;%i;%i", out_diagnostics_msg->command, out_diagnostics_msg->host_id, out_diagnostics_msg->route_id);
+			sendToConn(&node_conn[node_idx], "PING_REQ;.");
 			logMessage("-----[t10] invio messaggio", taskName(0));
 		}
 		logMessage("-----PING_REQ inviate a tutti i vicini", taskName(0));
@@ -515,15 +540,15 @@ exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg){
 		return E_SUCCESS;
 	}
 
-	// Nel caso si sia ricevuto un "PING_FAIL;"
-	else if (strcmp(out_diagnostics_msg->command, "PING_FAIL;") == 0 ){
+	// Nel caso si sia ricevuto un "PING_FAIL"
+	else if (strcmp(out_diagnostics_msg->command, "PING_FAIL") == 0 ){
 		ping_in_progress = FALSE;
 		logMessage("-----WiFi è stato notificato del PING_FAIL", taskName(0));
 		return E_SUCCESS;
 	}
 
-	// Nel caso si sia ricevuto un "PING_FINISHED;"
-	else if (strcmp(out_diagnostics_msg->command, "PING_FINISHED;") == 0 ){
+	// Nel caso si sia ricevuto un "PING_FINISHED"
+	else if (strcmp(out_diagnostics_msg->command, "PING_FINISHED") == 0 ){
 		ping_in_progress = FALSE;
 		logMessage("-----WiFi è stato notificato del PING_FINISHED", taskName(0));
 		return E_SUCCESS;
@@ -587,50 +612,13 @@ void wifiMain(void){
 						snprintf(log_msg, 100, "Ricevuto messaggio da Rasp id : %i, %s", node_conn[conn_idx].connected_id, msg);
 						logMessage(log_msg, taskName(0));
 						memset(log_msg, 0, 100);
-
-						if((status = handleInMsgs(msg, node_conn[conn_idx].connected_id)) == E_CLOSE){
+						int sender_id = node_conn[conn_idx].connected_id;
+						if((status = handleInMsgs(msg, sender_id)) == E_CLOSE){
 							//se ho ricevuto un messaggio CLOSE dall'host termino il task
 							flag_running=false;
 						}
-						else if(status == E_SUCCESS){
-							continue;
-						}
-						else if (status == E_PING_REQ){
-							// Trovo la connesione che mi ha inviato il ping
-							connection* conn_ping = getConnByID(sender_id);
-							char tmp_ping_msg[100];
-							sprintf(tmp_ping_msg, "-----Ricevuto comando PING_REQ da nodo %i", sender_id);
-							logMessage(tmp_ping_msg, taskName(0));
-							memset(tmp_ping_msg, 0, 100);		
-							//Rispondo al ping segnalando di essere un nodo attivo
-							sendToConn(conn_ping, "PING_ACK;");
-							sprintf(tmp_ping_msg, "-----Inviato comando PING_ACK al nodo %i", sender_id);
-							logMessage(tmp_ping_msg, taskName(0));
-							memset(tmp_ping_msg, 0, 100);
-						}
-						else if (status == E_PING_ACK){
-							char tmp_ping_msg_2[100];
-							sprintf(tmp_ping_msg_2, "-----Ricevuto comando PING_ACK da nodo %i", sender_id);
-							logMessage(tmp_ping_msg_2, taskName(0));
-							memset(tmp_ping_msg_2, 0, 100);
-							// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
-							if(ping_in_progress){
-								ping_answers += 1;
-								char tmp_ping_msg_3[100];
-								sprintf(tmp_ping_msg_3, "-----Aumento di ping_answers: valore attuale %i", ping_answers);
-								logMessage(tmp_ping_msg_3, taskName(0));
-								// Se raggiungiamo il numero di PING_ACK giusto indichiamo il successo della procedura di ping al task di diagnostica
-								if (ping_answers == total_conn){
-									tpcp_msg answer_msg = {"PING_SUCCESS;", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
-									msgQSend(IN_DIAGNOSTICS_QUEUE, (char*)&answer_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
-								}
-							}
-							// Abbiamo ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress
-							else{
-								logMessage("-----Ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress", taskName(0));
-							}
-						}
-						else{
+						else if(status != E_SUCCESS){
+							// Faccio il log dell'errore
 							logMessage(errorDescription(status), taskName(0));
 						}
 					}
@@ -668,7 +656,7 @@ void wifiMain(void){
 			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_control_msg.command, out_control_msg.sender_id, out_control_msg.recevier_id, out_control_msg.route_id);
 			// logMessage(msg, taskName(0));
 			exit_number status_control;
-			if((status_control = handle_controlOutMsg(&out_control_msg)) != E_SUCCESS){
+			if((status_control = handleOutControlMsg(&out_control_msg)) != E_SUCCESS){
 				logMessage(errorDescription(status_control), taskName(0));
 			}
 		}
@@ -684,7 +672,7 @@ void wifiMain(void){
 			snprintf(msg, 100, "-----command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg.command, out_diagnostics_msg.sender_id, out_diagnostics_msg.recevier_id, out_diagnostics_msg.route_id);
 			logMessage(msg, taskName(0));
 			exit_number status_diag;
-			if((status_diag = handle_diagOutMsg(&out_diagnostics_msg)) != E_SUCCESS){
+			if((status_diag = handleOutDiagMsg(&out_diagnostics_msg)) != E_SUCCESS){
 				logMessage(errorDescription(status_diag), taskName(0));
 			}
 		}
