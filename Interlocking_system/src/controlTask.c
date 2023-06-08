@@ -261,7 +261,7 @@ void controlMain(void){
                         //  Controllo se il positioning è avvenuto correttamente
                         if(!IN_POSITION){
                             logMessage("[t15] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0));
-                            reset_status = resetNodeStatus();
+                            NODE_STATUS = MALFUNCTION;
                             status = forwardNotOk(&in_msg, RASP_ID);
                         }
                         else{
@@ -283,6 +283,10 @@ void controlMain(void){
                     status = handleErrorMsg(&in_msg, "WAIT_AGREE");
                 }
                 break;
+            case MALFUNCTION:
+                // Se sono nello stato malfunction rispondo con not_ok a qualsiasi messaggio
+                status = forwardNotOk(&in_msg, RASP_ID);
+                break;
             case RESERVED:
                 // if (strcmp(in_msg.command, "SENSOR_ON") == 0){
                 //     if(current_route->rasp_id_next != TAIL_ID){
@@ -295,7 +299,13 @@ void controlMain(void){
                 if (strcmp(in_msg.command, "SENSOR_ON") == 0){
                     // logMessage("[t1] setto lo stato", taskName(0));
                     status = handleMsg(&in_msg, true, NOT_RESERVED, NOT_RESERVED, "SENSOR_OFF");
-                }else{
+                }
+                else if (strcmp(in_msg.command, "NOT_OK") == 0){
+                    reset_status = resetNodeStatus();
+                    logMessage("[t1] setto lo stato", taskName(0));
+                    status = forwardNotOk(&in_msg, in_msg.sender_id);
+                }
+                else{
                     status = handleErrorMsg(&in_msg, "RESERVED");
                 }
                 break;
