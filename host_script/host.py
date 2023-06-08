@@ -129,7 +129,7 @@ def reading_and_answer_ping(fds):
                         fd.close()
                         total_conn -= 1
                     else:
-                        if (msg.decode() == "PING_REQ;"):
+                        if (msg.decode() == "PING_REQ;."):
                             ack_msg = "PING_ACK;."
                             fd.send(ack_msg.encode())
                             print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
