@@ -1,11 +1,12 @@
 #include "diagnosticsTask.h"
 
 void diagnosticsMain(){
-
+    //aggiungo l'handler per il signal SIGUSR1
+	signal(SIGUSR1, diagnosticsDestructor);
     logMessage("-----Inizio diagnostica", taskName(0));
 
     // Creiamo il messaggio da passare al task WiFi per avviare la procedura di ping
-    tpcp_msg ping_start_msg = {"PING_START;", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
+    tpcp_msg ping_start_msg = {"PING_START", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
 
     // Inviamo il messaggio di PING_START utilizzando la coda
     if(msgQSend(OUT_DIAGNOSTICS_QUEUE, (char*)&ping_start_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
@@ -21,7 +22,7 @@ void diagnosticsMain(){
             // Scriviamo una variabile globale
             ping_result = FAIL;
             // Notifichiamo del fallimento il task WiFi
-            tpcp_msg ping_fail_msg = {"PING_FAIL;", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
+            tpcp_msg ping_fail_msg = {"PING_FAIL", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
             if(msgQSend(OUT_DIAGNOSTICS_QUEUE, (char*)&ping_fail_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
                 logMessage("-----Problema invio verso la coda", taskName(0));
             }
@@ -42,14 +43,14 @@ void diagnosticsMain(){
     // Se riceviamo una risposta dal task WiFi
     else{
         // Controlliamo che la risposta sia stata "PING_SUCCESS"
-        if(strcmp(in_msg.command, "PING_SUCCESS;") != 0){
+        if(strcmp(in_msg.command, "PING_SUCCESS") != 0){
             logMessage("-----Qualcosa è andato storto, non si è ricevuto PING_SUCCESS", taskName(0));
         }
         else{
             // La diagnostica non ha incontrato problemi
             ping_result = SUCCESS;
             // Notifichiamo del successo il task WiFi
-            tpcp_msg ping_finished_msg = {"PING_FINISHED;", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
+            tpcp_msg ping_finished_msg = {"PING_FINISHED", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
             if(msgQSend(OUT_DIAGNOSTICS_QUEUE, (char*)&ping_finished_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
                 logMessage("-----Problema invio verso la coda", taskName(0));
             }
@@ -72,4 +73,9 @@ void diagnosticsMain(){
 	snprintf(log_msg, 100, "-----Diagnostica finita: risultato del ping %d  -  in_ping_fail_safe %d", ping_result, in_ping_fail_safe);
     logMessage(log_msg, taskName(0));
     taskResume(CONTROL_TID);
+}
+
+void diagnosticsDestructor(int sig){
+    // Aggiungere elementi da rimuovere prima di un reload
+    taskDelete(0);
 }

@@ -4,5 +4,6 @@
 #include "global_variables.h"
 #include "logTask.h"
 extern void diagnosticsMain();
+extern void diagnosticsDestructor(int sig);
 
 #endif /* INCLUDES_DIAGNOSTICSTASK_H_ */
