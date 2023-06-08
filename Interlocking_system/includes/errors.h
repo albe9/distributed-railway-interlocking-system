@@ -3,12 +3,13 @@
 
 #include <errno.h>
 #include <string.h>
+#include <stdio.h>
 
 
 typedef enum {
     //LOG
     E_LOG_EMPTY = -5,
-    E_LOG = -4,
+    E_RESUME_LOG = -4,
     E_LOG_OPEN = -3,
     
     //SOCKET
