@@ -166,7 +166,7 @@ void controlMain(void){
                 // TODO: in seguito al resume del task  eseguire implementazione per processare la risposta del successo/insuccesso ping
                 //
                 // Se la diagnostica ha rilevato un problema di connessione impostare lo stato su PING_FAIL_SAFE
-                if (in_ping_fail_safe == FAIL){
+                if (in_ping_fail_safe == true){
                     NODE_STATUS = PING_FAIL_SAFE;
                     logMessage("Stato impostato a PING_FAIL_SAFE", taskName(0));
                 }
@@ -235,128 +235,129 @@ void controlMain(void){
                 // -NOT_OK
 
             
-            //TODO gestire tutti i msg ricevuti in uno stato che non li supporta
-            exit_number status = E_SUCCESS,reset_status = E_SUCCESS;
-            char log_msg[100];
-            switch (NODE_STATUS)
-            {
-            case NOT_RESERVED:
-                if (strcmp(in_msg.command, "REQ") == 0){
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
-                }
-                else if (strcmp(in_msg.command, "SENSOR_OFF") == 0){
-                    status = handleMsg(&in_msg, false, NOT_RESERVED, NOT_RESERVED, "TRAIN_PASSED");
-                }
-                else{
-                    status = handleErrorMsg(&in_msg, "NOT_RESERVED");
-                }
-                break;
-            case WAIT_ACK:
-                if (strcmp(in_msg.command, "ACK") == 0){
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = handleMsg(&in_msg, false, WAIT_COMMIT, WAIT_AGREE, "COMMIT");
-                }
-                else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    reset_status = resetNodeStatus();
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = forwardNotOk(&in_msg, in_msg.sender_id);
-                    
-                }
-                else{
-                    status = handleErrorMsg(&in_msg, "WAIT_ACK");
-                }
-                break;
-            case WAIT_COMMIT:
-                if (strcmp(in_msg.command, "COMMIT") == 0){
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = handleMsg(&in_msg, true, WAIT_AGREE, RESERVED, "AGREE");
-                }
-                else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    reset_status = resetNodeStatus();
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = forwardNotOk(&in_msg, in_msg.sender_id);
-                }
-                else{
-                    status = handleErrorMsg(&in_msg, "WAIT_COMMIT");
-                }
-                break;
-            case WAIT_AGREE:
-                if (strcmp(in_msg.command, "AGREE") == 0){
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    if(NODE_TYPE == TYPE_SWITCH && !IN_POSITION ){
-                        //se il nodo è di scambio e non è in posizione avvio il positioning task
-                        logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0));
-                        POSITIONING_TID = taskSpawn("positioningTask", 50, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
-                        taskSuspend(0);
-                        //  Controllo se il positioning è avvenuto correttamente
-                        if(!IN_POSITION){
-                            logMessage("[t15] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0));
-                            NODE_STATUS = MALFUNCTION;
-                            status = forwardNotOk(&in_msg, RASP_ID);
-                        }
-                        else{
-                            logMessage("[t13] Positioning avvenuto, setto lo stato RESERVED", taskName(0));
-                            NODE_STATUS = RESERVED;
-                            status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
-                        }
+                //TODO gestire tutti i msg ricevuti in uno stato che non li supporta
+                exit_number status = E_SUCCESS,reset_status = E_SUCCESS;
+                char log_msg[100];
+                switch (NODE_STATUS)
+                {
+                case NOT_RESERVED:
+                    if (strcmp(in_msg.command, "REQ") == 0){
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
+                    }
+                    else if (strcmp(in_msg.command, "SENSOR_OFF") == 0){
+                        status = handleMsg(&in_msg, false, NOT_RESERVED, NOT_RESERVED, "TRAIN_PASSED");
                     }
                     else{
-                        status = handleMsg(&in_msg, false, RESERVED, RESERVED, "TRAIN_OK");
+                        status = handleErrorMsg(&in_msg, "NOT_RESERVED");
                     }
+                    break;
+                case WAIT_ACK:
+                    if (strcmp(in_msg.command, "ACK") == 0){
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = handleMsg(&in_msg, false, WAIT_COMMIT, WAIT_AGREE, "COMMIT");
+                    }
+                    else if (strcmp(in_msg.command, "NOT_OK") == 0){
+                        reset_status = resetNodeStatus();
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = forwardNotOk(&in_msg, in_msg.sender_id);
+                        
+                    }
+                    else{
+                        status = handleErrorMsg(&in_msg, "WAIT_ACK");
+                    }
+                    break;
+                case WAIT_COMMIT:
+                    if (strcmp(in_msg.command, "COMMIT") == 0){
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = handleMsg(&in_msg, true, WAIT_AGREE, RESERVED, "AGREE");
+                    }
+                    else if (strcmp(in_msg.command, "NOT_OK") == 0){
+                        reset_status = resetNodeStatus();
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = forwardNotOk(&in_msg, in_msg.sender_id);
+                    }
+                    else{
+                        status = handleErrorMsg(&in_msg, "WAIT_COMMIT");
+                    }
+                    break;
+                case WAIT_AGREE:
+                    if (strcmp(in_msg.command, "AGREE") == 0){
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        if(NODE_TYPE == TYPE_SWITCH && !IN_POSITION ){
+                            //se il nodo è di scambio e non è in posizione avvio il positioning task
+                            logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0));
+                            POSITIONING_TID = taskSpawn("positioningTask", 50, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
+                            taskSuspend(0);
+                            //  Controllo se il positioning è avvenuto correttamente
+                            if(!IN_POSITION){
+                                logMessage("[t15] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0));
+                                NODE_STATUS = MALFUNCTION;
+                                status = forwardNotOk(&in_msg, RASP_ID);
+                            }
+                            else{
+                                logMessage("[t13] Positioning avvenuto, setto lo stato RESERVED", taskName(0));
+                                NODE_STATUS = RESERVED;
+                                status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
+                            }
+                        }
+                        else{
+                            status = handleMsg(&in_msg, false, RESERVED, RESERVED, "TRAIN_OK");
+                        }
+                    }
+                    else if (strcmp(in_msg.command, "NOT_OK") == 0){
+                        reset_status = resetNodeStatus();
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = forwardNotOk(&in_msg, in_msg.sender_id);
+                    }
+                    else{
+                        status = handleErrorMsg(&in_msg, "WAIT_AGREE");
+                    }
+                    break;
+                case MALFUNCTION:
+                    // Se sono nello stato malfunction rispondo con not_ok a qualsiasi messaggio
+                    status = forwardNotOk(&in_msg, RASP_ID);
+                    break;
+                case RESERVED:
+                    // if (strcmp(in_msg.command, "SENSOR_ON") == 0){
+                    //     if(current_route->rasp_id_next != TAIL_ID){
+                    //         status = forwardMsg(&in_msg, current_route->rasp_id_next, NULL);
+                    //         reset_status = resetNodeStatus();
+                    //     }
+                    //     else{
+                    //         status = forwardMsg(&in_msg, HOST_ID, "TRAIN_PASSED");
+                    //     }
+                    if (strcmp(in_msg.command, "SENSOR_ON") == 0){
+                        // logMessage("[t1] setto lo stato", taskName(0));
+                        status = handleMsg(&in_msg, true, NOT_RESERVED, NOT_RESERVED, "SENSOR_OFF");
+                    }
+                    else if (strcmp(in_msg.command, "NOT_OK") == 0){
+                        reset_status = resetNodeStatus();
+                        logMessage("[t1] setto lo stato", taskName(0));
+                        status = forwardNotOk(&in_msg, in_msg.sender_id);
+                    }
+                    else{
+                        status = handleErrorMsg(&in_msg, "RESERVED");
+                    }
+                    break;
+                default:
+                    memset(log_msg, 0, 100);
+                    snprintf(log_msg, 100, "Stato del nodo non riconosciuto : %i", NODE_STATUS);
+                    logMessage(log_msg, taskName(0));
+                    break;
                 }
-                else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    reset_status = resetNodeStatus();
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = forwardNotOk(&in_msg, in_msg.sender_id);
+                if(status != E_SUCCESS){
+                    logMessage(errorDescription(status), taskName(0));
                 }
-                else{
-                    status = handleErrorMsg(&in_msg, "WAIT_AGREE");
+                if(reset_status != E_SUCCESS){
+                    logMessage(errorDescription(reset_status), taskName(0));
                 }
-                break;
-            case MALFUNCTION:
-                // Se sono nello stato malfunction rispondo con not_ok a qualsiasi messaggio
-                status = forwardNotOk(&in_msg, RASP_ID);
-                break;
-            case RESERVED:
-                // if (strcmp(in_msg.command, "SENSOR_ON") == 0){
-                //     if(current_route->rasp_id_next != TAIL_ID){
-                //         status = forwardMsg(&in_msg, current_route->rasp_id_next, NULL);
-                //         reset_status = resetNodeStatus();
-                //     }
-                //     else{
-                //         status = forwardMsg(&in_msg, HOST_ID, "TRAIN_PASSED");
-                //     }
-                if (strcmp(in_msg.command, "SENSOR_ON") == 0){
-                    // logMessage("[t1] setto lo stato", taskName(0));
-                    status = handleMsg(&in_msg, true, NOT_RESERVED, NOT_RESERVED, "SENSOR_OFF");
-                }
-                else if (strcmp(in_msg.command, "NOT_OK") == 0){
-                    reset_status = resetNodeStatus();
-                    logMessage("[t1] setto lo stato", taskName(0));
-                    status = forwardNotOk(&in_msg, in_msg.sender_id);
-                }
-                else{
-                    status = handleErrorMsg(&in_msg, "RESERVED");
-                }
-                break;
-            default:
-                memset(log_msg, 0, 100);
-                snprintf(log_msg, 100, "Stato del nodo non riconosciuto : %i", NODE_STATUS);
-                logMessage(log_msg, taskName(0));
-                break;
-            }
-            if(status != E_SUCCESS){
-                logMessage(errorDescription(status), taskName(0));
-            }
-            if(reset_status != E_SUCCESS){
-                logMessage(errorDescription(reset_status), taskName(0));
             }
         }
     }
 }
 
-extern void controlDestructor(int sig){
+void controlDestructor(int sig){
     if(resetNodeStatus() != E_SUCCESS){
         logMessage("Errore nella chiusura del control Task", taskName(0));
     }
