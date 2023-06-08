@@ -39,6 +39,7 @@ TASK_ID INIT_TID;
 TASK_ID WIFI_TID;
 TASK_ID CONTROL_TID;
 TASK_ID POSITIONING_TID;
+TASK_ID DESTRUCTOR_TID;
 TASK_ID DIAGNOSTICS_TID;
 
 SEM_ID GLOBAL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da più task

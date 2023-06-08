@@ -221,16 +221,13 @@ exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 	else {return E_SUCCESS;}
 }
 
-void hookWifiDelete(_Vx_TASK_ID tid){
+void wifiDestructor(int sig){
 
-	if(strcmp(taskName(tid), "wifiTask") == 0){
-		if(total_conn > 0){
-			resetConnections();
-			logMessage("Task wifi eliminato",taskName(0));
-		}
-	}
-
+	resetConnections();
+	logMessage("Task wifi eliminato",taskName(0));
+	taskDelete(0);
 }
+
 
 void resetConnections(){
 	
@@ -246,16 +243,10 @@ void resetConnections(){
 	
 }
 
-int getS(){
-	int val = getSizeofLog("/usr/log/log.txt");
-	return val;
-}
-
-int getSizeofLog(char *path_to_file){
+exit_number getSizeofLog(char *path_to_file, int* size){
 	// Apriamo il file
 	FILE *file;
 	if((file = fopen(path_to_file, "r")) < 0){
-		logMessage("Problema nell'apertura del file", taskName(0));
 		return E_LOG_OPEN;
 	}	
 	if (file != NULL) {
@@ -264,29 +255,24 @@ int getSizeofLog(char *path_to_file){
 			/* Get the size of the file. */
 			int bufsize = (int) ftell(file);
 			if (bufsize == -1) {
-				logMessage("File di dimensioni nulla", taskName(0));
 				return E_LOG_EMPTY;
 			}
 			if (log_debug_mode)
 				printf("bufsize %i \n", bufsize);
-		fclose(file);
-		return bufsize;
+			fclose(file);
+			*size = bufsize;
+			return E_SUCCESS;
 		}
 		else{
 			return E_DEFAUL_ERROR;
 		}
 	}
 	else{
-		logMessage("Puntatore nullo", taskName(0));
 		return E_LOG_EMPTY;
 	}
 }
 
-exit_number sendL(void){
-	exit_number ex = sendLogToHost();
-}
-
-exit_number sendLogToHost(void){
+exit_number processLogToSend(void){
 	// Si sospende il task che esegue il logInit
 	if(taskSuspend(LOG_TID) < 0){
 		return E_DEFAUL_ERROR;
@@ -296,58 +282,97 @@ exit_number sendLogToHost(void){
 	connectToServer(&host_conn, HOST_IP, LOG_PORT);
 	// Si legge quanto è lungo il file 
 	int logSize = 0;
-	if((logSize = getSizeofLog("/usr/log/log.txt")) > 0){
-		// E si copia il contenuto in un buffer
-		char *logMsg = malloc(sizeof(char) * (logSize + 1));
-		if (log_debug_mode)
-			printf("Allocazione eseguita \n");
-		FILE *file = fopen("/usr/log/log.txt", "r");
-		/* Go back to the start of the file. */
-        if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
-        /* Read the entire file into memory. */
-        size_t newLen = fread(logMsg, sizeof(char), logSize, file);
-		if (log_debug_mode)
-			printf("newLen %i \n", newLen);
-        if ( ferror(file) != 0 ) {
-            fputs("Error reading file", stderr);
-        } else {
-            logMsg[newLen++] = '\0'; /* Just to be safe. */
-        }
-		if (log_debug_mode)
-			printf("%s", logMsg);
-		fclose(file);
-		// Si invia il messaggio
-		sendToConn(&host_conn, logMsg);
-		// Liberiamo la memoria allocata
-		free(logMsg);
-		// TODO: capire meglio shutdown e close
-		shutdown(host_conn.sock, SHUT_RDWR);
-		if (close(host_conn.sock) < 0){
-			logMessage("Errore nella chiusura del socket di log", taskName(0));
-			return E_DEFAUL_ERROR;
-		}
-		// Riavviamo il task di log e loggiamo il completamento dell'invio
-		printf("Socket di log chiuso, riavvio task di log \n");
-		if((taskResume(LOG_TID) < 0)){
-			logMessage("Problemi nel fare il resume del log", taskName(0));
-			return E_LOG;
-		}
-		logMessage("Inviato con successo il log all'host", taskName(LOG_TID));
-		return E_SUCCESS;
+	exit_number status;
+	if((status = getSizeofLog("/usr/log/log.txt", &logSize)) != E_SUCCESS){
+		return status;
 	}
-	else{
-		// Errore da gestire
-		if((taskResume(LOG_TID) < 0)){
-			logMessage("Problemi nel fare il resume del log", taskName(0));
-			return E_LOG;
-		}
-		logMessage("Size del log nulla o negativa [errore]", taskName(0));
-		return E_LOG_EMPTY;
+	// E si copia il contenuto in un buffer
+	char *logMsg = malloc(sizeof(char) * (logSize + 1));
+	if (log_debug_mode)
+		printf("Allocazione eseguita \n");
+	FILE *file = fopen("/usr/log/log.txt", "r");
+	/* Go back to the start of the file. */
+	if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
+	/* Read the entire file into memory. */
+	size_t newLen = fread(logMsg, sizeof(char), logSize, file);
+	if (log_debug_mode)
+		printf("newLen %i \n", newLen);
+	if ( ferror(file) != 0 ) {
+		fputs("Error reading file", stderr);
+	} else {
+		logMsg[newLen++] = '\0'; /* Just to be safe. */
 	}
-
+	if (log_debug_mode)
+		printf("%s", logMsg);
+	fclose(file);
+	// Si invia il messaggio
+	sendToConn(&host_conn, logMsg);
+	// Liberiamo la memoria allocata
+	free(logMsg);
+	// TODO: capire meglio shutdown e close
+	shutdown(host_conn.sock, SHUT_RDWR);
+	if (close(host_conn.sock) < 0){
+		return E_DEFAUL_ERROR;
+	}
+	// Riavviamo il task di log e loggiamo il completamento dell'invio
+	printf("Socket di log chiuso, riavvio task di log \n");
+	if((taskResume(LOG_TID) < 0)){
+		return E_RESUME_LOG;
+	}
+	return E_SUCCESS;
 }
 
-exit_number handle_inMsg(char* msg, int sender_id){
+void sendLogToHost(void){
+	exit_number status;
+	if((status = processLogToSend()) != E_SUCCESS){
+		logMessage(errorDescription(status), taskName(0));
+	}
+	else{
+		logMessage("Inviato con successo il log all'host", taskName(LOG_TID));
+	}
+}
+
+exit_number handleInMsgs(char* msg, int sender_id){
+
+	/*
+		Sintassi messaggi nei socket
+		"singleMsg.singleMsg." ecc
+	*/
+
+	char **single_msg_array;
+	int single_msg_count = 0;
+	//Conto il numero di messaggi nel socket
+	for(int ch_idx=0; ch_idx<strlen(msg); ch_idx++){
+	    if(msg[ch_idx] == '.')single_msg_count++;
+	}
+
+	if(single_msg_count == 0)return E_PARSING;
+	
+	single_msg_array = (char**)malloc(single_msg_count * sizeof(char*));
+	
+	//Effettuo una tokenizazione per dividere i messaggi in singleMsg
+	for(int msg_idx=0; msg_idx<single_msg_count; msg_idx++){
+	    if(msg_idx == 0){
+	        single_msg_array[msg_idx] = strtok(msg, ".");
+	    }
+	    else{
+	        single_msg_array[msg_idx] = strtok(NULL, ".");
+	    }
+		// Controllo che la tokeninzzazione sia avvenuta correttamente
+		if(single_msg_array[msg_idx] == NULL)return(E_PARSING);
+	}
+
+	exit_number status;
+    for(int msg_idx=0; msg_idx<single_msg_count; msg_idx++){
+        if((status = handleInSingleMsg(single_msg_array[msg_idx], sender_id)) == E_CLOSE)return E_CLOSE;
+		else if(status != E_SUCCESS){
+			logMessage(errorDescription(status), taskName(0));
+		}
+    }
+	return E_SUCCESS;
+}
+
+exit_number handleInSingleMsg(char* msg, int sender_id){
 
 	/*	
 		Sintassi messaggi:
@@ -452,7 +477,8 @@ exit_number handle_controlOutMsg(tpcp_msg* out_control_msg){
 	for(int node_idx=0; node_idx<total_conn; node_idx++){
 		if(node_conn[node_idx].connected_id == out_control_msg->recevier_id){
 			char msg[100];
-			snprintf(msg, 100,"%s;%i;%i", out_control_msg->command, out_control_msg->host_id, out_control_msg->route_id);
+			// Riformatto il pacchetto seguendo la sintassi definita in handleInSingleMsg
+			snprintf(msg, 100,"%s;%i;%i.", out_control_msg->command, out_control_msg->host_id, out_control_msg->route_id);
 			sendToConn(&node_conn[node_idx], msg);
 			logMessage("[t10] invio messaggio", taskName(0));
 			return E_SUCCESS;
@@ -512,8 +538,10 @@ exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg){
 
 void wifiMain(void){
 	
+	//aggiungo l'handler per il signal SIGUSR1
+	signal(SIGUSR1, wifiDestructor);
 
-	//tento monitoraggio dei socket con select
+	//monitoraggio dei socket con select
 
 	char msg[100] = {'\0'};;
 	char log_msg[100] = {'\0'};
@@ -559,8 +587,8 @@ void wifiMain(void){
 						snprintf(log_msg, 100, "Ricevuto messaggio da Rasp id : %i, %s", node_conn[conn_idx].connected_id, msg);
 						logMessage(log_msg, taskName(0));
 						memset(log_msg, 0, 100);
-						int sender_id = node_conn[conn_idx].connected_id;
-						if((status = handle_inMsg(msg, sender_id)) == E_CLOSE){
+
+						if((status = handleInMsgs(msg, node_conn[conn_idx].connected_id)) == E_CLOSE){
 							//se ho ricevuto un messaggio CLOSE dall'host termino il task
 							flag_running=false;
 						}
@@ -666,8 +694,6 @@ void wifiMain(void){
 
 	resetConnections();
 	logMessage("Terminato", taskName(0));
-
-
 
 }
 

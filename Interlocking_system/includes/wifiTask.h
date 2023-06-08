@@ -33,16 +33,18 @@ extern connection* getConnByIndex(int conn_idx);
 extern connection* getConnByID(int rasp_id);
 extern void sendToConn(connection *conn, char *msg);
 extern exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size);
-extern int getSizeofLog(char *path_to_file);
-extern exit_number sendLogToHost(void);
+extern exit_number getSizeofLog(char *path_to_file, int* size);
+exit_number processLogToSend(void);
+extern void sendLogToHost(void);
 
 
 
 extern void wifiMain(void);
-extern exit_number handle_inMsg(char* msg, int sender_id);
-extern exit_number handle_controlOutMsg(tpcp_msg* out_control_msg);
-extern exit_number handle_diagOutMsg(tpcp_msg* out_diagnostics_msg);
-extern void hookWifiDelete(_Vx_TASK_ID tid);
+extern exit_number handleInSingleMsg(char* msg, int sender_id);
+extern exit_number handleInMsgs(char* msg, int sender_id);
+extern exit_number handleOutControlMsg(tpcp_msg* out_control_msg);
+extern exit_number handleOutDiagMsg(tpcp_msg* out_diagnostics_msg);
+extern void wifiDestructor(int sig);
 extern void resetConnections();
 
 #endif /* INCLUDES_WIFITASK_H_ */

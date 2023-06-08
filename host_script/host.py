@@ -110,23 +110,33 @@ def reading_and_answer_ping(fds):
 
     print("[T1] Reading and answer thread avviato")
     poll_obj = select.poll()
-
+    total_conn = 0
     for fd in fds:
         poll_obj.register(fd, select.POLLIN)
-    
+        total_conn +=1
+
     while True:
+        if total_conn == 0:
+            break
         poll_result = poll_obj.poll()
         for fd_number, _ in poll_result:
             for fd in fds:
                 if fd_number == fd.fileno():
                     msg = fd.recv(50)
-                    if (msg.decode() == "PING_REQ;"):
-                        ack_msg = "PING_ACK;"
-                        fd.send(ack_msg.encode())
-                        print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
-                    else:                      
-                        print(f"[T1] Messaggio da {fd.getpeername()} : {msg.decode()}")
-
+                    if msg.decode() == "":
+                        print(f"Ip {fd.getpeername()} Disconnesso")
+                        poll_obj.unregister(fd)
+                        fd.close()
+                        total_conn -= 1
+                    else:
+                        if (msg.decode() == "PING_REQ;"):
+                            ack_msg = "PING_ACK;."
+                            fd.send(ack_msg.encode())
+                            print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
+                        else:                      
+                            print(f"[T1] Messaggio da {fd.getpeername()} : {msg.decode()}")
+    print("Tutti i nodi disconnessi, reading thread terminato")
+                    
 def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
     print("[T2] Send msg from keyboard thread avviato")
     while True:
@@ -143,6 +153,8 @@ def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
         # avremo una sovrapposizione di output grafico dovuta alle risposte a questo send]
         time.sleep(5)
 
+    
+    
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
 # rasp_id 0 è stato assegnato all'host che ha ip 172.23.78.0
@@ -218,7 +230,7 @@ def make_config_string(rasp_id, node_data):
 
 def check_syntax(msg_to_check:str):
     # Il messaggio per matchare deve essere PING; oppure REQ;numero;numero
-    pattern = r'^(PING;|REQ;\d+;\d+)$'
+    pattern = r'^(PING;\.|REQ;\d+;\d+\.)$'
     return re.match(pattern, msg_to_check) is not None
 
 
