@@ -29,7 +29,8 @@ extern exit_number connectToServer(connection *conn_server, char* server_ip, int
 extern exit_number addConnToClient(int num_client);
 
 extern void setBlockingMode(bool blocking_mode);
-extern connection* getConn(int conn_idx);
+extern connection* getConnByIndex(int conn_idx);
+extern connection* getConnByID(int rasp_id);
 extern void sendToConn(connection *conn, char *msg);
 extern exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size);
 extern exit_number getSizeofLog(char *path_to_file, int* size);
@@ -41,7 +42,8 @@ extern void sendLogToHost(void);
 extern void wifiMain(void);
 extern exit_number handleInSingleMsg(char* msg, int sender_id);
 extern exit_number handleInMsgs(char* msg, int sender_id);
-extern exit_number handleOutMsg(tpcp_msg* out_msg);
+extern exit_number handleOutControlMsg(tpcp_msg* out_control_msg);
+extern exit_number handleOutDiagMsg(tpcp_msg* out_diagnostics_msg);
 extern void wifiDestructor(int sig);
 extern void resetConnections();
 

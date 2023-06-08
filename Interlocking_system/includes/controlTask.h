@@ -13,7 +13,9 @@ typedef enum{
     POSITIONING,
     MALFUNCTION,
     RESERVED,
-    TRAIN_IN_TRANSITION
+    TRAIN_IN_TRANSITION,
+    FAIL_SAFE,
+    PING_FAIL_SAFE
 
 }tpcp_status;
 

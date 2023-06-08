@@ -3,6 +3,7 @@ import time
 import sys
 from threading import Thread
 import select
+import re
 
 
 PORT = 6543  # Port to listen on (non-privileged ports are > 1023)
@@ -105,9 +106,9 @@ class Graph:
         
         return first_nodes
 
-def reading_from_nodes(fds):
+def reading_and_answer_ping(fds):
 
-    print("reading thread avviato")
+    print("[T1] Reading and answer thread avviato")
     poll_obj = select.poll()
     total_conn = 0
     for fd in fds:
@@ -128,9 +129,31 @@ def reading_from_nodes(fds):
                         fd.close()
                         total_conn -= 1
                     else:
-                        print(f"Messaggio da {fd.getpeername()} : {msg.decode()}")
-                        
+                        if (msg.decode() == "PING_REQ;."):
+                            ack_msg = "PING_ACK;."
+                            fd.send(ack_msg.encode())
+                            # print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
+                        else:                      
+                            print(f"[T1] Messaggio da {fd.getpeername()} : {msg.decode()}")
     print("Tutti i nodi disconnessi, reading thread terminato")
+                    
+def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
+    print("[T2] Send msg from keyboard thread avviato")
+    while True:
+        msg = input("[T2] Messaggio da inviare a tutti i nodi:\n")
+        # Controlliamo che la sintassi del messaggio che vogliamo inviare sia corretta
+        if check_syntax(msg):
+            for conn in connected_nodes:
+                # Inviamo il messaggio a tutti i nodi connessi 
+                conn.send(msg.encode())
+                print("[T2] Messaggio inviato")
+        else:
+            print("Errore nella sintassi del messaggio, messaggio non inviato")
+        # Attendi 5 secondi prima di poter inviare un altro messaggio [senza lo sleep 
+        # avremo una sovrapposizione di output grafico dovuta alle risposte a questo send]
+        time.sleep(5)
+
+    
     
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
@@ -205,6 +228,10 @@ def make_config_string(rasp_id, node_data):
     return config_string
 
 
+def check_syntax(msg_to_check:str):
+    # Il messaggio per matchare deve essere PING; oppure REQ;numero;numero
+    pattern = r'^(PING;\.|REQ;\d+;\d+\.)$'
+    return re.match(pattern, msg_to_check) is not None
 
 
 def server_loop(node_num, net_graph):
@@ -257,22 +284,15 @@ def server_loop(node_num, net_graph):
 
 
         print("Tutte le connessioni sono state stabilite")
-        #genero un thread che fa il polling e stampa i messaggi ricevuti dai nodi
-        reading_thread = Thread(target=reading_from_nodes, args=(connected_nodes,))
+
+        # Genero ed avvio un thread che fa il polling e stampa i messaggi ricevuti dai nodi
+        reading_thread = Thread(target=reading_and_answer_ping, args=(connected_nodes,))
         reading_thread.start()
 
-        while True:
-            msg = input()
-            for conn in connected_nodes: 
-                conn.send(msg.encode())
-
-
-        s.close()
-
-def test():
-    pass
-
-
+        # Genero ed avvio un thread che permette di inviare un messaggio verso tutti i nodi
+        send_msg_thread = Thread(target=send_msg_from_keyboard, args=(connected_nodes,))
+        send_msg_thread.start()
+                    
 
 node1 = Node(1)
 node2 = Node(2)

@@ -21,13 +21,23 @@ typedef enum {
     E_DISCONNECTION,
     E_NODE_NOTFOUND,
     
+    //PING
+    E_PING,
+    E_PING_REQ,
+    E_PING_ACK,
+    E_PING_ERROR,
+
     //MSG
     E_CLOSE,
+
     //TIME
     E_SET_TIME,
 
     //PARSING
     E_PARSING,
+    E_PARSING_DATA_EMPTY,
+    E_PARSING_EMPTY,
+
 
     //POSITIONING
     E_POSITIONING

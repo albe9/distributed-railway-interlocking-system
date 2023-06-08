@@ -8,7 +8,10 @@ void destructorMain(void){
         perror("\nErrore nell'invio del messaggio di kill al wifiTask");
     }
     if(kill(CONTROL_TID, SIGUSR1) < 0){
-        perror("\nErrore nell'invio del messaggio di kill al controlTask");
+        perror("\nErrore nell'invio del messaggio di kill al ctrlTask");
+    }
+    if(kill(DIAGNOSTICS_TID, SIGUSR1) < 0){
+        perror("\nErrore nell'invio del messaggio di kill al diagTask");
     }
     if(kill(LOG_TID, SIGUSR1) < 0){
         perror("\nErrore nell'invio del messaggio di kill al logTask");
