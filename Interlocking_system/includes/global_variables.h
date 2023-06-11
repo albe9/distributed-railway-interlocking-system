@@ -42,7 +42,8 @@ TASK_ID POSITIONING_TID;
 TASK_ID DESTRUCTOR_TID;
 TASK_ID DIAGNOSTICS_TID;
 
-SEM_ID GLOBAL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da più task
+SEM_ID WIFI_CONTROL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e controlTask
+SEM_ID WIFI_DIAG_SEM;                   //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e diagTask
 //____________________________________________________________________________________________________________________________
 extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-commit-protocol
 
@@ -50,8 +51,6 @@ extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-co
 
 MSG_Q_ID IN_CONTROL_QUEUE;        // coda di messaggi da task_wifi->task_controllo
 MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wifi
-MSG_Q_ID IN_DIAGNOSTICS_QUEUE;    // coda di messaggi da task_wifi->task_diagnostica  
-MSG_Q_ID OUT_DIAGNOSTICS_QUEUE;   // coda di messaggi da task_diagnostica->task_wifi
 
 #define MAX_CONN      50          //numero massimo di connessioni per un nodo
 #define TAIL_ID      -9999        //Id associato al nodo successivo all'ultimo nodo di una route
@@ -94,8 +93,15 @@ extern route *node_routes;
 extern int route_count;
 extern int NODE_TYPE;
 extern bool IN_POSITION;
-extern bool ping_in_progress;
-extern bool ping_result;
+
+enum DIAG_STATUS{
+    NOT_ACTIVE,
+    STARTING,
+    ACTIVE,
+    ENDING
+}ping_status; // Indica se lo stato della procedura di ping
+
+extern bool ping_success;
 extern bool in_ping_fail_safe;
 extern int ping_answers;
 
