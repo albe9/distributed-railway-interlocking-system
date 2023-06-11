@@ -43,7 +43,7 @@ extern void wifiMain(void);
 extern exit_number handleInSingleMsg(char* msg, int sender_id);
 extern exit_number handleInMsgs(char* msg, int sender_id);
 extern exit_number handleOutControlMsg(tpcp_msg* out_control_msg);
-extern exit_number handleOutDiagMsg(tpcp_msg* out_diagnostics_msg);
+extern exit_number checkDiag();
 extern void wifiDestructor(int sig);
 extern void resetConnections();
 
