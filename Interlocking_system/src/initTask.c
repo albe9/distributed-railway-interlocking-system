@@ -274,11 +274,10 @@ void initMain(void){
 	// logMessage(msg,taskName(0));
 
 
-    GLOBAL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
+    WIFI_CONTROL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
+    WIFI_DIAG_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
     IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
     OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
-    IN_DIAGNOSTICS_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
-    OUT_DIAGNOSTICS_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 
     WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
     CONTROL_TID = taskSpawn("ctrlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);

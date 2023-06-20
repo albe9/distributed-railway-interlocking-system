@@ -20,6 +20,9 @@ char *errorDescription(exit_number exit_number) {
         case E_DISCONNECTION: return "NODE DISCONNECTION"; break;
         case E_NODE_NOTFOUND: return "CONNECTION TO NODE NOT FOUND"; break;
         
+        //PING
+        case E_PING_ACK: return "RECEIVED MORE PING_ACK THEN NUMBER OF ACTIVE CONNECTIONS"; break;
+
         //MSG
         case E_CLOSE: return "CLOSE MESSAGE BY HOST"; break;
         //TIME

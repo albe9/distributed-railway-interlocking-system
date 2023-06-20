@@ -247,6 +247,10 @@ void controlMain(void){
                     }
                     else if (strcmp(in_msg.command, "SENSOR_OFF") == 0){
                         status = handleMsg(&in_msg, false, NOT_RESERVED, NOT_RESERVED, "TRAIN_PASSED");
+                        // Resetto la flag che indica l'host corrente
+                        if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+                        CURRENT_HOST = -1;
+                        if(semGive(WIFI_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
                     }
                     else{
                         status = handleErrorMsg(&in_msg, "NOT_RESERVED");
@@ -369,8 +373,8 @@ void controlDestructor(int sig){
 exit_number resetNodeStatus(){
     //resetto lo stato del nodo
     NODE_STATUS=NOT_RESERVED;
-    if(semTake(GLOBAL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+    if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
     CURRENT_HOST = -1;
-    if(semGive(GLOBAL_SEM) < 0)return E_DEFAUL_ERROR;
+    if(semGive(WIFI_CONTROL_SEM) < 0)return E_DEFAUL_ERROR;
     return E_SUCCESS;
 }

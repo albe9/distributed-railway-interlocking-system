@@ -22,10 +22,7 @@ typedef enum {
     E_NODE_NOTFOUND,
     
     //PING
-    E_PING,
-    E_PING_REQ,
     E_PING_ACK,
-    E_PING_ERROR,
 
     //MSG
     E_CLOSE,

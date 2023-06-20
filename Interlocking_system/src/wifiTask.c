@@ -424,21 +424,33 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		logMessage(tmp_ping_msg_2, taskName(0));
 		memset(tmp_ping_msg_2, 0, 100);
 		// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
-		if(ping_in_progress){
-			ping_answers += 1;
-			char tmp_ping_msg_3[100];
-			sprintf(tmp_ping_msg_3, "-----Aumento di ping_answers: valore attuale %i", ping_answers);
-			logMessage(tmp_ping_msg_3, taskName(0));
-			// Se raggiungiamo il numero di PING_ACK giusto indichiamo il successo della procedura di ping al task di diagnostica
-			if (ping_answers == total_conn){
-				tpcp_msg answer_msg = {"PING_SUCCESS", RASP_ID, RASP_ID, ROUTE_ID_PING, HOST_ID_PING};
-				msgQSend(IN_DIAGNOSTICS_QUEUE, (char*)&answer_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
-			}
+		if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+		switch (ping_status)
+		{
+			case ACTIVE:
+				if(ping_success){
+					// Abbiamo ricevuto più PING_ACK del numero di connessioni attive
+					return E_PING_ACK;
+				}
+				else{
+					// Aumento il contatore
+					ping_answers += 1;
+					// Se raggiungiamo il numero di PING_ACK giusto indichiamo il successo della procedura di ping al task di diagnostica
+					if (ping_answers == total_conn){
+						ping_success = TRUE;
+					}
+				}
+				break;
+			case ENDING:
+				// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è disattivata
+				ping_answers = 0;
+				ping_status = NOT_ACTIVE;
+				break;
+			default:
+				//Se siamo in STARTING o NOT_ACTIVE non faccio nulla
+				break;
 		}
-		// Abbiamo ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress
-		else{
-			logMessage("-----Ricevuto un PING_ACK quando non eravamo in stato di ping_in_progress", taskName(0));
-		}
+		if(semGive(WIFI_DIAG_SEM) < 0)return E_DEFAUL_ERROR;
 	}
 	else if (strcmp(command_type, "CLOSE") == 0){
 		//inoltro a tutti i nodi connessi di terminare
@@ -461,7 +473,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		int msg_host = -1;
 		if(sscanf(msg_data,"%i;%i", &msg_host, &in_msg.route_id) != 2)return(E_PARSING);
 		//acquisisco il semaforo per accedere alla variabile globale (è condivisa con il task di controllo)
-		semTake(GLOBAL_SEM, WAIT_FOREVER);
+		semTake(WIFI_CONTROL_SEM, WAIT_FOREVER);
 		//se non ci sono host correnti lo setto
 		if(CURRENT_HOST == -1){
 			CURRENT_HOST = msg_host;
@@ -485,7 +497,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
 			logMessage("[t23] sposto messaggio dalla coda locale a quella globale", taskName(0));
 		}	
-		semGive(GLOBAL_SEM);
+		semGive(WIFI_CONTROL_SEM);
 	}
 
 
@@ -515,50 +527,35 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 
 }
 
-exit_number handleOutDiagMsg(tpcp_msg* out_diagnostics_msg){
-
-	//debug
-	char log_msg[100];
-	snprintf(log_msg, 100, "-----Prima di inoltrare il msg, command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg->command, out_diagnostics_msg->sender_id, out_diagnostics_msg->recevier_id, out_diagnostics_msg->route_id);
-	logMessage(log_msg, taskName(0));
-
-	// Nel caso si sia ricevuto un "PING_START"
-	if (strcmp(out_diagnostics_msg->command, "PING_START") == 0 ){
-		// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è in corso
-		ping_answers = 0;
-		ping_in_progress = TRUE;
-
-		// Inviamo un messaggio PING_REQ a tutti i nodi vicini
-		for(int node_idx=0; node_idx<total_conn; node_idx++){
-			// char msg[100];
-			// snprintf(msg, 100,"%s;%i;%i", out_diagnostics_msg->command, out_diagnostics_msg->host_id, out_diagnostics_msg->route_id);
-			sendToConn(&node_conn[node_idx], "PING_REQ;.");
-			logMessage("-----[t10] invio messaggio", taskName(0));
-		}
-		logMessage("-----PING_REQ inviate a tutti i vicini", taskName(0));
-		// Ritorniamo
-		return E_SUCCESS;
+exit_number checkDiag(){
+	
+	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+	switch (ping_status)
+	{
+		case STARTING:
+			// Inviamo un messaggio PING_REQ a tutti i nodi vicini
+			for(int node_idx=0; node_idx<total_conn; node_idx++){
+				sendToConn(&node_conn[node_idx], "PING_REQ;.");
+				logMessage("-----[t10] invio messaggio", taskName(0));
+			}
+			logMessage("-----PING_REQ inviate a tutti i vicini", taskName(0));
+			// Cambiamo lo stato del ping
+			ping_status = ACTIVE;
+			break;
+		case ENDING:
+			// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è disattivata
+			ping_answers = 0;
+			ping_status = NOT_ACTIVE;
+			break;
+		default:
+			//Se siamo in ACTIVE o NOT_ACTIVE non faccio nulla
+			break;
 	}
-
-	// Nel caso si sia ricevuto un "PING_FAIL"
-	else if (strcmp(out_diagnostics_msg->command, "PING_FAIL") == 0 ){
-		ping_in_progress = FALSE;
-		logMessage("-----WiFi è stato notificato del PING_FAIL", taskName(0));
-		return E_SUCCESS;
-	}
-
-	// Nel caso si sia ricevuto un "PING_FINISHED"
-	else if (strcmp(out_diagnostics_msg->command, "PING_FINISHED") == 0 ){
-		ping_in_progress = FALSE;
-		logMessage("-----WiFi è stato notificato del PING_FINISHED", taskName(0));
-		return E_SUCCESS;
-	}
-
-	else{
-		logMessage("-----Ricevuto messaggio anomalo da diagnostica", taskName(0));
-		return E_PING;
-	}
-
+	if(semGive(WIFI_DIAG_SEM) < 0)return E_DEFAUL_ERROR;
+	
+	// Ritorniamo
+	return E_SUCCESS;
+	
 }
 
 void wifiMain(void){
@@ -661,20 +658,10 @@ void wifiMain(void){
 			}
 		}
 
-		//gestisco i messaggi da inviare per conto del diagnosticsTask
-		tpcp_msg out_diagnostics_msg;		
-		ssize_t byte_recevied_diag = msgQReceive(OUT_DIAGNOSTICS_QUEUE, (char*)&out_diagnostics_msg, sizeof(tpcp_msg), 1);
-		if(byte_recevied_diag > 0){
-			logMessage("-----[t30] acquisisco semaforo per la coda", taskName(0));
-			logMessage("-----[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));
-			// debug
-			char msg[100];
-			snprintf(msg, 100, "-----command :%s sender :%i recivier:%i route:%i", out_diagnostics_msg.command, out_diagnostics_msg.sender_id, out_diagnostics_msg.recevier_id, out_diagnostics_msg.route_id);
-			logMessage(msg, taskName(0));
-			exit_number status_diag;
-			if((status_diag = handleOutDiagMsg(&out_diagnostics_msg)) != E_SUCCESS){
-				logMessage(errorDescription(status_diag), taskName(0));
-			}
+		//Controllo lo stato del diagnosticsTask
+		exit_number status_diag;
+		if((status_diag = checkDiag()) != E_SUCCESS){
+			logMessage(errorDescription(status_diag), taskName(0));
 		}
         
 	}
