@@ -3,6 +3,8 @@
 void diagnosticsMain(){
     //aggiungo l'handler per il signal SIGUSR1
 	signal(SIGUSR1, diagnosticsDestructor);
+
+    //TODO aggiungere check per verificare che il task di controllo sia sospeso, altrimenti si attende
     logMessage("-----Inizio diagnostica", taskName(0));
 
     // Segnaliamo lo start della diagniostica al wifi task
