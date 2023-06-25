@@ -9,6 +9,7 @@ void positioningMain(){
     else{
         IN_POSITION = true;
     }
+    logMessage("[t14] Terminazione del task di positioning", taskName(0));
     taskResume(CONTROL_TID);
 }
 

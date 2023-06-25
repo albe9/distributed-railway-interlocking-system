@@ -414,13 +414,13 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		memset(tmp_ping_msg, 0, 100);		
 		//Rispondo al ping segnalando di essere un nodo attivo
 		sendToConn(conn_ping, "PING_ACK;.");
-		sprintf(tmp_ping_msg, "-----Inviato comando PING_ACK al nodo %i", sender_id);
+		sprintf(tmp_ping_msg, "-----[t11] Inviato comando PING_ACK al nodo %i", sender_id);
 		logMessage(tmp_ping_msg, taskName(0));
 		memset(tmp_ping_msg, 0, 100);
 	}
 	else if (strcmp(command_type, "PING_ACK") == 0){
 		char tmp_ping_msg_2[100];
-		sprintf(tmp_ping_msg_2, "-----Ricevuto comando PING_ACK da nodo %i", sender_id);
+		sprintf(tmp_ping_msg_2, "-----[t11] Ricevuto comando PING_ACK da nodo %i", sender_id);
 		logMessage(tmp_ping_msg_2, taskName(0));
 		memset(tmp_ping_msg_2, 0, 100);
 		// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
@@ -528,17 +528,17 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 }
 
 exit_number checkDiag(){
-	
+	logMessage("-----[t18] acquisisco semaforo", taskName(0));
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+	logMessage("-----[t32] controllo area di memoria", taskName(0));
 	switch (ping_status)
 	{
 		case STARTING:
 			// Inviamo un messaggio PING_REQ a tutti i nodi vicini
 			for(int node_idx=0; node_idx<total_conn; node_idx++){
 				sendToConn(&node_conn[node_idx], "PING_REQ;.");
-				logMessage("-----[t10] invio messaggio", taskName(0));
 			}
-			logMessage("-----PING_REQ inviate a tutti i vicini", taskName(0));
+			logMessage("-----[t31] Inviato messaggi PING_REQ a tutti i vicini", taskName(0));
 			// Cambiamo lo stato del ping
 			ping_status = ACTIVE;
 			break;
@@ -546,11 +546,14 @@ exit_number checkDiag(){
 			// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è disattivata
 			ping_answers = 0;
 			ping_status = NOT_ACTIVE;
+			logMessage("-----[t31] Non invio messaggi di ping", taskName(0));
 			break;
 		default:
 			//Se siamo in ACTIVE o NOT_ACTIVE non faccio nulla
+			logMessage("-----[t31] Non invio messaggi di ping", taskName(0));
 			break;
 	}
+	logMessage("-----[t19] Rilascio semaforo", taskName(0));
 	if(semGive(WIFI_DIAG_SEM) < 0)return E_DEFAUL_ERROR;
 	
 	// Ritorniamo
@@ -586,7 +589,7 @@ void wifiMain(void){
 
 	bool flag_running=true;
 
-	while(flag_running){
+	while(flag_running){        
 		// Da man select .....if using select() within a loop, the
 		// sets must be reinitialized before each call.
 		// Resetto e riaggiungo gli fds dei socket delle connessioni
@@ -594,6 +597,13 @@ void wifiMain(void){
 		for(int conn_idx=0; conn_idx<total_conn; conn_idx++){
 			FD_SET(node_conn[conn_idx].sock, &readfds);
 		}
+
+		//Controllo lo stato del diagnosticsTask
+		exit_number status_diag;
+		if((status_diag = checkDiag()) != E_SUCCESS){
+			logMessage(errorDescription(status_diag), taskName(0));
+		}
+
 		// resetto il timeout(viene modificato da select)
 		struct timeval select_timeout={.tv_sec=0, .tv_usec=1000};
 		// controlla senza bloccare se un socket riceve un msg
@@ -638,6 +648,10 @@ void wifiMain(void){
 				}
 			}
 		}
+		else if (n_ready_conn == 0){
+			logMessage("[t26] nessun messaggio ricevuto", taskName(0));
+		}
+		
 		else if(n_ready_conn == -1){
 			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
 		}
@@ -656,14 +670,13 @@ void wifiMain(void){
 			if((status_control = handleOutControlMsg(&out_control_msg)) != E_SUCCESS){
 				logMessage(errorDescription(status_control), taskName(0));
 			}
+			else{
+				logMessage("[t10] Messaggio inviato, Task WiFi torna in idle", taskName(0));
+			}
 		}
-
-		//Controllo lo stato del diagnosticsTask
-		exit_number status_diag;
-		if((status_diag = checkDiag()) != E_SUCCESS){
-			logMessage(errorDescription(status_diag), taskName(0));
+		else if (byte_recevied_control == 0){
+			logMessage("[t38] Task WiFi torna in idle", taskName(0));
 		}
-        
 	}
 
 

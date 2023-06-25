@@ -167,11 +167,13 @@ void controlMain(void){
                 //
                 // Se la diagnostica ha rilevato un problema di connessione impostare lo stato su PING_FAIL_SAFE
                 if (in_ping_fail_safe == true){
+                    logMessage("-----[t21] In PING_FAIL_SAFE", taskName(0));
                     NODE_STATUS = PING_FAIL_SAFE;
                     logMessage("Stato impostato a PING_FAIL_SAFE", taskName(0));
                 }
                 // nel caso invece la diagnostica abbia avuto successo non si fa niente e si riparte dall'inizio del ciclo while
-                else{                 
+                else{    
+                    logMessage("-----[t20] Diagnostica avvenuta con successo", taskName(0));             
                     continue;
                 }
             }
@@ -242,10 +244,11 @@ void controlMain(void){
                 {
                 case NOT_RESERVED:
                     if (strcmp(in_msg.command, "REQ") == 0){
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato WAIT_ACK/WAIT_COMMIT", taskName(0));
                         status = handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
                     }
                     else if (strcmp(in_msg.command, "SENSOR_OFF") == 0){
+                        logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
                         status = handleMsg(&in_msg, false, NOT_RESERVED, NOT_RESERVED, "TRAIN_PASSED");
                         // Resetto la flag che indica l'host corrente
                         if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
@@ -258,12 +261,12 @@ void controlMain(void){
                     break;
                 case WAIT_ACK:
                     if (strcmp(in_msg.command, "ACK") == 0){
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato WAIT_COMMIT/WAIT_AGREE", taskName(0));
                         status = handleMsg(&in_msg, false, WAIT_COMMIT, WAIT_AGREE, "COMMIT");
                     }
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                         
                     }
@@ -273,12 +276,12 @@ void controlMain(void){
                     break;
                 case WAIT_COMMIT:
                     if (strcmp(in_msg.command, "COMMIT") == 0){
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato WAIT_AGREE/RESERVED", taskName(0));
                         status = handleMsg(&in_msg, true, WAIT_AGREE, RESERVED, "AGREE");
                     }
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                     }
                     else{
@@ -295,12 +298,12 @@ void controlMain(void){
                             taskSuspend(0);
                             //  Controllo se il positioning è avvenuto correttamente
                             if(!IN_POSITION){
-                                logMessage("[t15] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0));
+                                logMessage("[t13] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0));
                                 NODE_STATUS = MALFUNCTION;
                                 status = forwardNotOk(&in_msg, RASP_ID);
                             }
                             else{
-                                logMessage("[t13] Positioning avvenuto, setto lo stato RESERVED", taskName(0));
+                                logMessage("[t12] Positioning avvenuto, setto lo stato RESERVED", taskName(0));
                                 NODE_STATUS = RESERVED;
                                 status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL);
                             }
@@ -311,7 +314,7 @@ void controlMain(void){
                     }
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                     }
                     else{
@@ -332,12 +335,13 @@ void controlMain(void){
                     //         status = forwardMsg(&in_msg, HOST_ID, "TRAIN_PASSED");
                     //     }
                     if (strcmp(in_msg.command, "SENSOR_ON") == 0){
+                        logMessage("[t2] SensorOn", taskName(0));
                         // logMessage("[t1] setto lo stato", taskName(0));
                         status = handleMsg(&in_msg, true, NOT_RESERVED, NOT_RESERVED, "SENSOR_OFF");
                     }
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
-                        logMessage("[t1] setto lo stato", taskName(0));
+                        logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                     }
                     else{

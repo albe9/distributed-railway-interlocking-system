@@ -8,18 +8,24 @@ void diagnosticsMain(){
     logMessage("-----Inizio diagnostica", taskName(0));
 
     // Segnaliamo lo start della diagniostica al wifi task
+    logMessage("-----[t22] Acquisisco il semaforo di status", taskName(0));
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+    logMessage("-----[t25] Setto la flag di status", taskName(0));
     ping_status = STARTING;
+    logMessage("-----[t24] Rilascio il semaforo di status", taskName(0));
     if(semGive(WIFI_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
 
     // Mettiamoci in attesa del timeout per le risposte ai ping
+    logMessage("-----[t33] Attesa risposta al ping", taskName(0));
     taskDelay(TICKS_TO_SECOND * 15);
 
     // Accesso alle variabili globali tramite semaforo
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+    logMessage("-----[t34] Acquisisco il semaforo di status", taskName(0));
     // Fermiamo la procedura di ping
     ping_status = ENDING;
     // in base al successo o meno dei ping impostiamo la variabile globale di ping fail safe, che verrà controllata dal ControlTask dopo il resume
+    logMessage("-----[t35] Controllo esito della diagnostica", taskName(0));
     if(ping_success){
         in_ping_fail_safe = FALSE;
     }
@@ -36,6 +42,7 @@ void diagnosticsMain(){
     }
     // resettiamo la flag 
     ping_success = false;
+    logMessage("-----[t36] Rilascio il semaforo", taskName(0));
     if(semGive(WIFI_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
 
     // Logghiamo la fine della diagnostica e facciamo il resume del task di controllo
