@@ -674,9 +674,16 @@ void wifiMain(void){
 				logMessage("[t10] Messaggio inviato, Task WiFi torna in idle", taskName(0));
 			}
 		}
-		else if (byte_recevied_control == 0){
-			logMessage("[t38] Task WiFi torna in idle", taskName(0));
+		// Nel caso non erano presenti messaggi da inviare per conto del task di controllo
+		else if (byte_recevied_control < 0){
+			if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){
+				logMessage("[t38] Task WiFi torna in idle", taskName(0));
+			}
+			else{
+				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+			}
 		}
+
 	}
 
 

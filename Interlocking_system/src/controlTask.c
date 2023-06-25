@@ -326,14 +326,6 @@ void controlMain(void){
                     status = forwardNotOk(&in_msg, RASP_ID);
                     break;
                 case RESERVED:
-                    // if (strcmp(in_msg.command, "SENSOR_ON") == 0){
-                    //     if(current_route->rasp_id_next != TAIL_ID){
-                    //         status = forwardMsg(&in_msg, current_route->rasp_id_next, NULL);
-                    //         reset_status = resetNodeStatus();
-                    //     }
-                    //     else{
-                    //         status = forwardMsg(&in_msg, HOST_ID, "TRAIN_PASSED");
-                    //     }
                     if (strcmp(in_msg.command, "SENSOR_ON") == 0){
                         logMessage("[t2] SensorOn", taskName(0));
                         // logMessage("[t1] setto lo stato", taskName(0));

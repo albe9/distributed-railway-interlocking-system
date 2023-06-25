@@ -87,7 +87,7 @@ TASK_DEADLINES = {
 
 
 for log_idx in range(1,6):
-    log_path = "./log_test/log_192.168.1.21" + str(log_idx) + ".txt"
+    log_path = "./../connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
     with open(log_path, "r") as f:
         extract = f.readlines()
     type1_path = "./importer_files/type1_192.168.1.21" + str(log_idx) + ".txt"
