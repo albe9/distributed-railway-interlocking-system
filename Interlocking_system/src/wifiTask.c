@@ -517,7 +517,7 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 			// Riformatto il pacchetto seguendo la sintassi definita in handleInSingleMsg
 			snprintf(msg, 100,"%s;%i;%i.", out_control_msg->command, out_control_msg->host_id, out_control_msg->route_id);
 			sendToConn(&node_conn[node_idx], msg);
-			logMessage("[t10] invio messaggio", taskName(0));
+			logMessage("[t10] Messaggio inviato, Task WiFi torna in idle", taskName(0));
 			return E_SUCCESS;
 		}
 	}
@@ -670,9 +670,7 @@ void wifiMain(void){
 			if((status_control = handleOutControlMsg(&out_control_msg)) != E_SUCCESS){
 				logMessage(errorDescription(status_control), taskName(0));
 			}
-			else{
-				logMessage("[t10] Messaggio inviato, Task WiFi torna in idle", taskName(0));
-			}
+
 		}
 		// Nel caso non erano presenti messaggi da inviare per conto del task di controllo
 		else if (byte_recevied_control < 0){
