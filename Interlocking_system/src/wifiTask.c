@@ -681,7 +681,7 @@ void wifiMain(void){
 				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
 			}
 		}
-
+		logMessage("[t37] Conclusione ciclo Task WiFi", taskName(0));
 	}
 
 
