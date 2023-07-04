@@ -369,6 +369,7 @@ exit_number handleInMsgs(char* msg, int sender_id){
 			logMessage(errorDescription(status), taskName(0));
 		}
     }
+	logMessage("[t26] Non ci sono messaggi da gestire", taskName(0));
 	return E_SUCCESS;
 }
 
@@ -675,7 +676,7 @@ void wifiMain(void){
 		// Nel caso non erano presenti messaggi da inviare per conto del task di controllo
 		else if (byte_recevied_control < 0){
 			if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){
-				logMessage("[t38] Task WiFi torna in idle", taskName(0));
+				logMessage("[t29] Task WiFi torna in idle", taskName(0));
 			}
 			else{
 				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));

@@ -116,28 +116,28 @@ for log_idx in range(1,6):
                 thread_name = match.group(2)
                 f.write(f"{thread_name}\n{result_ms}\n")
     
-    type2_path = "./importer_files/type2_192.168.1.21" + str(log_idx) + ".txt"
-    with open(type2_path, "w") as f:
+    # type2_path = "./importer_files/type2_192.168.1.21" + str(log_idx) + ".txt"
+    # with open(type2_path, "w") as f:
 
-        task_transictions_dict = {}
-        for line in extract:
-            line=line.strip()
-            match = re.search("ms (.*Task)    -*\[(t\d*)\]", line)
-            if match != None:
-                task_name = match.group(1)
-                transition_name = match.group(2)
-                if task_name not in task_transictions_dict:
-                    task_transictions_dict[task_name] = []
-                task_transictions_dict[task_name].append(transition_name)
+    #     task_transictions_dict = {}
+    #     for line in extract:
+    #         line=line.strip()
+    #         match = re.search("ms (.*Task)    -*\[(t\d*)\]", line)
+    #         if match != None:
+    #             task_name = match.group(1)
+    #             transition_name = match.group(2)
+    #             if task_name not in task_transictions_dict:
+    #                 task_transictions_dict[task_name] = []
+    #             task_transictions_dict[task_name].append(transition_name)
         
-        f.write(f"PROCESSES: {len(task_transictions_dict)}\n")
-        for task_number,task_name in enumerate(task_transictions_dict):
-            transitions = task_transictions_dict[task_name]
-            f.write(f"process{task_number + 1}TransitionsNumber: {len(transitions)}\n")
-            for transition in transitions:
-                f.write(f"{transition}\n")
-            f.write(f"deadline: {TASK_DEADLINES[task_name]}\n")
-        f.write("CONTROLLABLE_TRANSITIONS: 0\n")
-        f.write("ALIAS_IDENTIFIERS: 0\n")
+    #     f.write(f"PROCESSES: {len(task_transictions_dict)}\n")
+    #     for task_number,task_name in enumerate(task_transictions_dict):
+    #         transitions = task_transictions_dict[task_name]
+    #         f.write(f"process{task_number + 1}TransitionsNumber: {len(transitions)}\n")
+    #         for transition in transitions:
+    #             f.write(f"{transition}\n")
+    #         f.write(f"deadline: {TASK_DEADLINES[task_name]}\n")
+    #     f.write("CONTROLLABLE_TRANSITIONS: 0\n")
+    #     f.write("ALIAS_IDENTIFIERS: 0\n")
         # print(task_transictions_dict)
     
