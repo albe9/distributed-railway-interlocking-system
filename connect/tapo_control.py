@@ -25,7 +25,7 @@ def main():
     command = sys.argv[1]
 
     config = configparser.ConfigParser()
-    if os.path.isdir("./tapo.config"):
+    if os.path.isfile("./tapo.config"):
         config.read("./tapo.config")
     else:
         raise FileNotFoundError("File tapo.config non presente")
