@@ -14,6 +14,7 @@ if [ ! -d "./log_files" ];
     fi
 
 launch_connect(){
+
     #verifico che la connessione ai target non sia già attiva (basta controllare la presenza delle pipe)
     for target in ${TARGETS[@]};
         do
@@ -24,7 +25,6 @@ launch_connect(){
             
             #crea una named pipe per ogni target su cui potremmo collegarci ed inviare comandi 
             mkfifo /tmp/fifo_$target
-            
             
         done
 
@@ -298,6 +298,29 @@ reboot_rasp(){
         done
     
     rm /tmp/fifo*
+
+}
+
+reboot_devices(){
+
+    #TODO: Controllare se necessario rimuovere le code
+    rm /tmp/fifo*
+    
+    echo "Accensione dei raspberry in corso..."
+    python3 ./tapo_control.py "turnOn"
+    sleep 35
+    echo "Presa di alimentazione accesa"
+
+}
+
+shutdown(){
+
+    #TODO: Controllare se necessario rimuovere le code
+    rm /tmp/fifo* 
+
+    python3 ./tapo_control.py "turnOff"
+    sleep 1
+
 }
 
 see_log(){
@@ -337,12 +360,13 @@ echo -e "Opzioni:
         -o  (output)           Mostro i log dei raspberry
         -d  (delete)           Effettua il task delete nei raspberry (per ora task_wifi)
         -r  (reboot)           Effettua il reboot dei raspberry
+        -t  (hard reboot)      Effettua uno spegnimento e accensione dell'alimentazione 
+        -s  (shutdown)         Effettua lo spegnimento completo del sistema
         -h  (help)             Mostra questo messaggio
     "
-
 }
 
-while getopts "cbluodrh" options;
+while getopts "cbluodrsth" options;
     do                                  
         case "${options}" in      
             c)
@@ -372,6 +396,14 @@ while getopts "cbluodrh" options;
             r)
                 echo "Reboot dei raspberry"
                 reboot_rasp
+                ;;
+            t)
+                echo "Spegnimento e accensione della presa"
+                reboot_devices
+                ;;
+            s)
+                echo "Shutdown system"
+                shutdown
                 ;;
             h)
                 help_workbench
