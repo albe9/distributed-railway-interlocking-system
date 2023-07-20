@@ -423,6 +423,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 	}
 	else if (strcmp(command_type, "PING_ACK") == 0){
 		char tmp_ping_msg_2[100];
+		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0));
 		sprintf(tmp_ping_msg_2, "-----[t11] Ricevuto comando PING_ACK da nodo %i", sender_id);
 		logMessage(tmp_ping_msg_2, taskName(0));
 		memset(tmp_ping_msg_2, 0, 100);
@@ -655,6 +656,7 @@ void wifiMain(void){
 			}
 		}
 		else if (n_ready_conn == 0){
+			logMessage("[t49] Preselection WiFi no msg", taskName(0));
 			logMessage("[t26] nessun messaggio ricevuto", taskName(0));
 		}
 		
@@ -668,7 +670,7 @@ void wifiMain(void){
 		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0));		
 		ssize_t byte_recevied_control = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_control_msg, sizeof(tpcp_msg), 1);
 		if(byte_recevied_control > 0){
-			logMessage("[t46] Preselection c'è msg da inviare", taskName(0));
+			logMessage("[t46] Preselection, presente msg da inviare", taskName(0));
 			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));				
 			// debug
 			// char msg[100];

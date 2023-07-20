@@ -60,16 +60,14 @@ void startLog(void){
 }
 
 void test(void){
-	// TEST_TID = taskSpawn("tTest", 50, 0, 20000,(FUNCPTR) mytest, 0,0,0,0,0,0,0,0,0,0);
-	// struct timespec res; 
-	// clock_getres(CLOCK_REALTIME, &res);
-	// printf("resolution real_time sec: %li ns: %li \n", res.tv_sec, res.tv_nsec);
-	// clock_getres(CLOCK_MONOTONIC, &res);
-	// printf("resolution monotonic sec: %li ns: %li \n", res.tv_sec, res.tv_nsec);
-	// clock_getres(CLOCK_PROCESS_CPUTIME_ID, &res);
-	// printf("resolution process_cpu_time sec: %li ns: %li \n", res.tv_sec, res.tv_nsec);
-	int tick_rate = sysClkRateGet();
-	printf("clock rate : %i\n", tick_rate);
+	clock_t timer1, timer2;
+    double elapsed;
+
+    timer1 = tickGet();
+	taskDelay(TICKS_TO_SECOND * 3);
+	timer2 = tickGet();
+    elapsed = (double)(timer2 - timer1)/TICKS_TO_SECOND;
+	printf("\n%li\n%li\n%f\n", timer1, timer2, elapsed);
 }
 
 void startInit(int rasp_id, char* host_ip){
