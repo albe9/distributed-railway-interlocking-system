@@ -369,6 +369,7 @@ exit_number handleInMsgs(char* msg, int sender_id){
 			logMessage(errorDescription(status), taskName(0));
 		}
     }
+	logMessage("[t49] Preselection WiFi no msg", taskName(0));
 	logMessage("[t26] Non ci sono messaggi da gestire", taskName(0));
 	return E_SUCCESS;
 }
@@ -415,6 +416,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		memset(tmp_ping_msg, 0, 100);		
 		//Rispondo al ping segnalando di essere un nodo attivo
 		sendToConn(conn_ping, "PING_ACK;.");
+		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0));
 		sprintf(tmp_ping_msg, "-----[t11] Inviato comando PING_ACK al nodo %i", sender_id);
 		logMessage(tmp_ping_msg, taskName(0));
 		memset(tmp_ping_msg, 0, 100);
@@ -493,10 +495,12 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			in_msg.sender_id=sender_id;
 			strcpy(in_msg.command, command_type);
 			in_msg.host_id = CURRENT_HOST;
+			logMessage("[t29] Preselection WiFi msg controllo", taskName(0));
 			logMessage("[t8] filtraggio messaggio concluso", taskName(0));
 			logMessage("[t6] acquisisco il semaforo per la coda", taskName(0));
 			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
-			logMessage("[t23] sposto messaggio dalla coda locale a quella globale", taskName(0));
+			logMessage("[t40] sposto messaggio dalla coda locale a quella globale", taskName(0));
+			logMessage("[t23] rilascio semaforo", taskName(0));
 		}	
 		semGive(WIFI_CONTROL_SEM);
 	}
@@ -518,7 +522,7 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 			// Riformatto il pacchetto seguendo la sintassi definita in handleInSingleMsg
 			snprintf(msg, 100,"%s;%i;%i.", out_control_msg->command, out_control_msg->host_id, out_control_msg->route_id);
 			sendToConn(&node_conn[node_idx], msg);
-			logMessage("[t10] Messaggio inviato, Task WiFi torna in idle", taskName(0));
+			logMessage("[t10] Messaggio inviato", taskName(0));
 			return E_SUCCESS;
 		}
 	}
@@ -529,6 +533,7 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 }
 
 exit_number checkDiag(){
+	logMessage("[t54] Preselection inizio ciclo Task WiFi", taskName(0));
 	logMessage("-----[t18] acquisisco semaforo", taskName(0));
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
 	logMessage("-----[t32] controllo area di memoria", taskName(0));
@@ -658,11 +663,13 @@ void wifiMain(void){
 		}
 
 		//gestisco i messaggi da inviare per conto del controlTask
-		tpcp_msg out_control_msg;		
+		tpcp_msg out_control_msg;
+		logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
+		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0));		
 		ssize_t byte_recevied_control = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_control_msg, sizeof(tpcp_msg), 1);
 		if(byte_recevied_control > 0){
-			logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
-			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));
+			logMessage("[t46] Preselection c'è msg da inviare", taskName(0));
+			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));				
 			// debug
 			// char msg[100];
 			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_control_msg.command, out_control_msg.sender_id, out_control_msg.recevier_id, out_control_msg.route_id);
@@ -676,7 +683,8 @@ void wifiMain(void){
 		// Nel caso non erano presenti messaggi da inviare per conto del task di controllo
 		else if (byte_recevied_control < 0){
 			if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){
-				logMessage("[t29] Task WiFi torna in idle", taskName(0));
+				logMessage("[t45] Preselection no msg da inviare", taskName(0));
+				logMessage("[t44] non si devono inviare messaggi", taskName(0));
 			}
 			else{
 				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));

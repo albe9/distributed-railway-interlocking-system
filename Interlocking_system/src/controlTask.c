@@ -147,7 +147,9 @@ void controlMain(void){
 
     tpcp_msg in_msg;
     while(true){
-        // Aspetto 15 secondi un eventuale messaggio proveniente da coda wifiTask altrimenti procedo ad eseguire il diagTask      
+        // Aspetto 15 secondi un eventuale messaggio proveniente da coda wifiTask altrimenti procedo ad eseguire il diagTask 
+        logMessage("[t27] acquisisco semaforo per la coda", taskName(0));
+        logMessage("[t39] controllo se è presente un messaggio", taskName(0));     
         ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), TICKS_TO_SECOND * 15);
         if(byte_recevied < 0){
             // Se non è presente un messaggio da wifiTask avvio il task di diagnostica e sospendo il task di controllo
@@ -183,7 +185,7 @@ void controlMain(void){
         }
         else{
             // Flusso normale di esecuzione del task di controllo, nel caso non si sia avviata la diagnostica
-            logMessage("[t27] acquisisco semaforo per la coda", taskName(0));
+            
             logMessage("[t7] sposto semaforo dalla coda globale a quella locale", taskName(0));
 
             char msg[100];
