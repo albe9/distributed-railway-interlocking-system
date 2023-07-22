@@ -189,11 +189,11 @@ void controlMain(void){
 
     startDiagnTime = tickGet();
     tpcp_msg in_msg;
-    while(true){
+    while(true){    
+        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
         logMessage("[t53] Preselezione", taskName(0));
         logMessage("[t27] acquisisco semaforo per la coda", taskName(0));
-        logMessage("[t39] controllo se presente un messaggio", taskName(0));     
-        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
+        logMessage("[t39] controllo se presente un messaggio", taskName(0)); 
         if(byte_recevied < 0){
             logMessage("[t42] Preselezione", taskName(0));
             logMessage("[t38] non presente un msg", taskName(0));
@@ -302,6 +302,7 @@ void controlMain(void){
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
                         logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
+                        logMessage("[t4] inoltro il messaggio al next o prev", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                         
                     }
@@ -318,6 +319,7 @@ void controlMain(void){
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
                         logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
+                        logMessage("[t4] inoltro il messaggio al next o prev", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                     }
                     else{
@@ -352,6 +354,7 @@ void controlMain(void){
                     else if (strcmp(in_msg.command, "NOT_OK") == 0){
                         reset_status = resetNodeStatus();
                         logMessage("[t1] setto lo stato NOT_RESERVED", taskName(0));
+                        logMessage("[t4] inoltro il messaggio al next o prev", taskName(0));
                         status = forwardNotOk(&in_msg, in_msg.sender_id);
                     }
                     else{

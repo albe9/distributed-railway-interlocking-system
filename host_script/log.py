@@ -28,6 +28,8 @@ def receiveAndSaveLog(conn : socket.socket, addr : tuple[str, int]):
 def check_if_log_active():
     # Esegui il comando ps -fA [ps mostra i processi in esecuzione -f info complete e A di tutti gli utenti]
     # e l'ouput viene reinderizzato al grep grazie alla pipe [ | ]
+    log_script_pid = os.getpid()
+
     command = 'ps -fA | grep host_script/log.py'
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
@@ -41,10 +43,36 @@ def check_if_log_active():
         print(f"process id:\n {process_id}")
 
         # Killa il processo
-        os.kill(int(process_id), signal.SIGTERM)
-        print("Processo log.py terminato con successo.")
-    else:
-        print("Il processo log.py non è attivo.")
+        if process_id != log_script_pid:
+            try :
+                os.kill(int(process_id), signal.SIGTERM)
+            except:
+                 None
+    
+    # Controllo se la log port è ancora in uso, nel caso la chiudo
+    command = f"lsof -i -P -n | grep {LOG_PORT}"
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+
+    
+
+    if result.stdout != "":
+        # Estrai l'ID del processo
+        lines = result.stdout.strip().split('\n')
+        print(lines)
+        
+        for line in lines:
+            process_id = line.split()[1]
+            print(f"process id:\n {process_id}")
+
+            if process_id != log_script_pid:
+                # Killa il processo
+                try :
+                    os.kill(int(process_id), signal.SIGTERM)
+                except:
+                    # Può tentare di killare due volte lo stesso processo, saltiamo l'errore
+                    None
+    
+    
 
 def log_loop(n_nodes:int):
     # TODO: trovare un modo per controllare se è già attivo un processo precedente di log che utilizza le porte

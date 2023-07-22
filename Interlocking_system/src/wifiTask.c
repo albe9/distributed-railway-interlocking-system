@@ -369,8 +369,6 @@ exit_number handleInMsgs(char* msg, int sender_id){
 			logMessage(errorDescription(status), taskName(0));
 		}
     }
-	logMessage("[t49] Preselection WiFi no msg", taskName(0));
-	logMessage("[t26] Non ci sono messaggi da gestire", taskName(0));
 	return E_SUCCESS;
 }
 
@@ -499,9 +497,9 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			logMessage("[t29] Preselection WiFi msg controllo", taskName(0));
 			logMessage("[t8] filtraggio messaggio concluso", taskName(0));
 			logMessage("[t6] acquisisco il semaforo per la coda", taskName(0));
-			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
 			logMessage("[t40] sposto messaggio dalla coda locale a quella globale", taskName(0));
 			logMessage("[t23] rilascio semaforo", taskName(0));
+			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
 		}	
 		semGive(WIFI_CONTROL_SEM);
 	}
@@ -654,6 +652,9 @@ void wifiMain(void){
 					}
 				}
 			}
+			//Dopo aver controllato tutti i socket non ho più msg da gestire e si procede
+			logMessage("[t49] Preselection WiFi no msg", taskName(0));
+			logMessage("[t26] Non ci sono messaggi da gestire", taskName(0));
 		}
 		else if (n_ready_conn == 0){
 			logMessage("[t49] Preselection WiFi no msg", taskName(0));
@@ -666,9 +667,9 @@ void wifiMain(void){
 
 		//gestisco i messaggi da inviare per conto del controlTask
 		tpcp_msg out_control_msg;
-		logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
-		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0));		
 		ssize_t byte_recevied_control = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_control_msg, sizeof(tpcp_msg), 1);
+		logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
+		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0));	
 		if(byte_recevied_control > 0){
 			logMessage("[t46] Preselection, presente msg da inviare", taskName(0));
 			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));				
