@@ -14,6 +14,7 @@
 #define INCLUDES_GLOBAL_VARIABLES_H_
 
 #include "errors.h"
+#include "gpio.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <msgQLib.h>
@@ -31,7 +32,7 @@
 #include <unistd.h>
 #include <stdbool.h>
 #include <socket.h>
-#include "gpioLib.h"
+
 
 TASK_ID LOG_TID;
 TASK_ID TEST_TID;
@@ -73,10 +74,7 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define DIAG_TIME 10              // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
 #define SIM_SENSOR 1              // Se 1 indica che i SENSOR_ON sono simulati con messaggi, se 0 si utilizzano i pulsanti fisici
 
-#define LED_RED 23
-#define LED_GREEN 24
-#define LED_BLU 22
-#define BUTTON 27
+
 
 typedef struct{
     int route_id;

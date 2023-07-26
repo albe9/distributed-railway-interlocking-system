@@ -11,7 +11,6 @@
 #include "initTask.h"
 #include "wifiTask.h"
 #include "destructorTask.h"
-#include <gpioLib.h>
 
 
 TASK_ID taskId;
@@ -90,50 +89,35 @@ void startWifi(void){
 // }
 
 void blinkLed(){
-	pinMode(LED_RED, OUT);
-	pinMode(LED_GREEN, OUT);
-	pinMode(LED_BLU, OUT);
+	turnOnLed(LED_RED);
 	sleep(3);
-	gpioWrite(LED_RED, HIGH);
-	sleep(1);
-	gpioWrite(LED_RED, LOW);
-	gpioWrite(LED_GREEN, HIGH); 
-	sleep(1); 
-	gpioWrite(LED_GREEN, LOW);
-	gpioWrite(LED_BLU, HIGH);
-	sleep(1);
-	gpioWrite(LED_BLU, LOW);
-
-	gpioFree(LED_RED);
-	gpioFree(LED_GREEN);
-	gpioFree(LED_BLU);
-	sleep(1);
+	turnOffLed(LED_RED);
+	turnOnLed(LED_GREEN);
+	sleep(3);
+	turnOffLed(LED_GREEN);
+	turnOnLed(LED_BLU);
+	sleep(3);
+	turnOffLed(LED_BLU);
 }
 
 void readButton() {
-    int stato = 0;
+
 	int i = 0;
-
-	pinMode(LED_RED, OUT);
-	pinMode(LED_GREEN, OUT);
-
-	pinMode(BUTTON, IN);
 
 	while (i < 100)
 	{
-		stato = gpioRead(BUTTON);
+		bool stato = button_is_pressed(BUTTON);
 		printf("STATO: %d \n", stato);
-		if(stato == 1){
-			gpioWrite(LED_RED, LOW);
-			gpioWrite(LED_GREEN, HIGH);
+		if(stato){
+			turnOnLed(LED_GREEN);
+			sleep(1);
+			turnOffLed(LED_GREEN);
 		}
 		else {
-			gpioWrite(LED_GREEN, LOW);
-			gpioWrite(LED_RED, HIGH);
+			turnOnLed(LED_RED);
 		}
 		sleep(1);
 		i++;
 	}
-	gpioFree(LED_RED);
-	gpioFree(LED_GREEN);
+	turnOffLed(LED_RED);
 }
