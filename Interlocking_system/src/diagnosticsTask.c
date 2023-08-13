@@ -17,7 +17,7 @@ void diagnosticsMain(){
 
     // Mettiamoci in attesa del timeout per le risposte ai ping
     logMessage("-----[t33] Attesa risposta al ping", taskName(0));
-    taskDelay(TICKS_TO_SECOND * 15);
+    taskDelay(TICKS_TO_SECOND * 2);
 
     // Accesso alle variabili globali tramite semaforo
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
