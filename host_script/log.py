@@ -30,24 +30,23 @@ def check_if_log_active():
     # e l'ouput viene reinderizzato al grep grazie alla pipe [ | ]
     log_script_pid = os.getpid()
 
-    command = 'ps -fA | grep host_script/log.py'
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    # command = 'ps -fA | grep host_script/log.py'
+    # result = subprocess.run(command, shell=True, capture_output=True, text=True)
 
-    # Controlla se il processo è attivo
-    if "log.py" in result.stdout:
-        # Estrai l'ID del processo
-        lines = result.stdout.strip().split('\n')
-        process_line = [line for line in lines if "log.py" in line][0]
-        print(f"process line:\n {process_line}")
-        process_id = process_line.split()[1]
-        print(f"process id:\n {process_id}")
+    # # Controlla se il processo è attivo
+    # if "log.py" in result.stdout:
+    #     # Estrai l'ID del processo
+    #     lines = result.stdout.strip().split('\n')
+    #     process_line = [line for line in lines if "log.py" in line][0]
+    #     process_id = process_line.split()[1]
 
-        # Killa il processo
-        if process_id != log_script_pid:
-            try :
-                os.kill(int(process_id), signal.SIGTERM)
-            except:
-                 None
+    #     # Killa il processo
+    #     if process_id != log_script_pid:
+    #         try :
+    #             os.kill(int(process_id), signal.SIGTERM)
+    #             print("processo precedente terminato")
+    #         except:
+    #              None
     
     # Controllo se la log port è ancora in uso, nel caso la chiudo
     command = f"lsof -i -P -n | grep {LOG_PORT}"
@@ -62,12 +61,12 @@ def check_if_log_active():
         
         for line in lines:
             process_id = line.split()[1]
-            print(f"process id:\n {process_id}")
 
             if process_id != log_script_pid:
                 # Killa il processo
                 try :
                     os.kill(int(process_id), signal.SIGTERM)
+                    print("Porta in uso precedente terminata")
                 except:
                     # Può tentare di killare due volte lo stesso processo, saltiamo l'errore
                     None
@@ -77,6 +76,7 @@ def check_if_log_active():
 def log_loop(n_nodes:int):
     # TODO: trovare un modo per controllare se è già attivo un processo precedente di log che utilizza le porte
     # check_if_log_active()
+    # time.sleep(2)
     print("Avvio log")
 
     # Usando with si ha che alla fine dell'esecuzione NON dobbiamo chiamare s.close()
