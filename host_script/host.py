@@ -230,7 +230,7 @@ def make_config_string(rasp_id, node_data):
 
 def check_syntax(msg_to_check:str):
     # Il messaggio per matchare deve essere PING; oppure REQ;numero;numero
-    pattern = r'^(PING;\.|REQ;\d+;\d+\.)$'
+    pattern = r'^(PING;\.|REQ;\d+;\d+\.|SENSOR_ON;\d+;\d+\.)$'
     return re.match(pattern, msg_to_check) is not None
 
 
