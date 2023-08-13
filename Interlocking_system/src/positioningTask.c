@@ -33,7 +33,7 @@ bool error_generator(){
 
     srand((int)time(0));
     int generate_error = rand() % 100;
-    if (generate_error <= PROB_ERROR) {
+    if (generate_error < PROB_ERROR) {
         return true;
     }
     else{
