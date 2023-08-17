@@ -180,13 +180,13 @@ void initMain(void){
 	readFromConn(&host_s, config_string, 1024);
     exit_number parsing_status;
 	if((parsing_status = parseConfigString(config_string, &node_routes, &node_net)) != E_SUCCESS){
-        logMessage(errorDescription(parsing_status), taskName(0));
+        logMessage(errorDescription(parsing_status), taskName(0), 2);
         exit(-1);
 	}
 
     setCurrentTime(current_time);
 
-    logMessage("Configurazione ricevuta", taskName(0));
+    logMessage("Configurazione ricevuta", taskName(0), 1);
     //printConfigInfo(node_routes, &node_net);
     
     
@@ -200,12 +200,12 @@ void initMain(void){
     //Prima di procedere attendo che l'host mi notifichi l'avvenuta configurazione di tutti i nodi
     memset(msg, 0, 100);
     readFromConn(&host_s, msg, 100);
-    logMessage(msg, taskName(0));
+    logMessage(msg, taskName(0), 1);
 	
     //chiudo la connessione con l'host
     shutdown(host_s.sock, SHUT_RDWR);
 		if (close(host_s.sock) < 0){
-			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
 		}
 
     //qui parte il protocollo per instaurare le connessioni dei nodi a catena
@@ -218,7 +218,7 @@ void initMain(void){
         do{
             conn_status = addConnToServer(node_net.prev_ips[node_idx], SERVER_PORT, node_net.prev_ids[node_idx]);
             if(conn_status != E_CONN_REFUSED && conn_status != E_SUCCESS){
-                logMessage(errorDescription(conn_status), taskName(0));
+                logMessage(errorDescription(conn_status), taskName(0), 2);
             }
         }while(conn_status == E_CONN_REFUSED);
     }
@@ -240,13 +240,13 @@ void initMain(void){
     else{
         exit_number conn_status = 0;
         if((conn_status = addConnToClient(node_net.next_node_count)) != E_SUCCESS){
-            logMessage(errorDescription(conn_status), taskName(0));
+            logMessage(errorDescription(conn_status), taskName(0), 2);
         }
         // Attendo che tutti i nodi collegati notifichino l'avvenuta connessione
         for(int node_idx=0; node_idx<node_net.next_node_count; node_idx++){
             memset(msg, 0, 100);
             readFromConn(getConnByIndex(node_net.prev_node_count + node_idx), msg, 100);
-            logMessage(strncat(msg, " ha stabilito tutte le connessioni", 100), taskName(0));
+            logMessage(strncat(msg, " ha stabilito tutte le connessioni", 100), taskName(0), 1);
         }
         // Ricevuta la notifica da tutt i nodi successivi , informo quelli precedenti
         memset(msg, 0, 100);
@@ -267,7 +267,7 @@ void initMain(void){
         NODE_TYPE = TYPE_LINEAR;
     }
 
-    logMessage("InitTask completato", taskName(0));
+    logMessage("InitTask completato", taskName(0), 1);
     // debug
     // memset(msg, 0, 100);
 	// snprintf(msg, 100, "nodo di tipo : %i", NODE_TYPE);
@@ -276,6 +276,7 @@ void initMain(void){
 
     WIFI_CONTROL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
     WIFI_DIAG_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
+    CONTROL_DIAG_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
     IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
     OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 

@@ -44,6 +44,7 @@ TASK_ID DIAGNOSTICS_TID;
 
 SEM_ID WIFI_CONTROL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e controlTask
 SEM_ID WIFI_DIAG_SEM;                   //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e diagTask
+SEM_ID CONTROL_DIAG_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da constrolTask e diagTask
 //____________________________________________________________________________________________________________________________
 extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-commit-protocol
 
@@ -59,7 +60,8 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define MAX_CTRL_SIZE 1024      
 #define MAX_CTRL_BUFF 10
 #define TYPE_SWITCH   2
-#define TYPE_LINEAR   3  
+#define TYPE_LINEAR   3 
+#define LOG_LEVEL 1               // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL 
 #define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
 #define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
 // TODO: controllare affidabilità della conversione tra tick e secondi effettivi  
@@ -102,7 +104,8 @@ enum DIAG_STATUS{
 }ping_status; // Indica se lo stato della procedura di ping
 
 extern bool ping_success;
-extern bool in_ping_fail_safe;
 extern int ping_answers;
+extern bool diag_success;
+extern bool diag_ended;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */

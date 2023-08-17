@@ -4,12 +4,12 @@ void positioningMain(){
     exit_number status;
     if((status = positioning()) != E_SUCCESS){
         IN_POSITION = false;
-        logMessage(errorDescription(status), taskName(0));
+        logMessage(errorDescription(status), taskName(0), 2);
     }
     else{
         IN_POSITION = true;
     }
-    logMessage("[t14] Terminazione del task di positioning", taskName(0));
+    logMessage("[t14] Terminazione del task di positioning", taskName(0), 0);
     taskResume(CONTROL_TID);
 }
 

@@ -24,7 +24,8 @@
 			"vxworks.h": "c",
 			"syscall.h": "c",
 			"vxworkscommon.h": "c",
-			"syslib.h": "c"
+			"syslib.h": "c",
+			"global_variables.h": "c"
 		}
 	},
 

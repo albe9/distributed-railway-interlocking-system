@@ -13,9 +13,8 @@
 #include <clockLib.h>
 
 
-extern void logMessage(char* msg, char* task_name);
+extern void logMessage(char* msg, char* task_name, int logLevel);
 extern void logInit(void);
-extern void mytest(void);
 extern void logDestructor(int sig);
 
 #endif /* INCLUDES_LOGTASK_H_ */

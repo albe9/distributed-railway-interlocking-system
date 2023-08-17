@@ -9,19 +9,14 @@ int LOG_FD;
 MSG_Q_ID LOG_QUEUE;
 
 
-void mytest(void){
-	
-	logMessage("Messaggio log di prova 1", taskName(LOG_TID));
-	logMessage("Messaggio log di prova 2", taskName(LOG_TID));
-	logMessage("Messaggio log di prova 3", taskName(LOG_TID));
-}
-
-
-
 //Funzione che scrive i messaggi sul file di log, gestisce l'accesso concorrente al file con un semaforo 
 
-void logMessage(char* msg, char* task_name){
+void logMessage(char* msg, char* task_name, int logLevel){
 	
+	if(logLevel < LOG_LEVEL){
+		return;
+	}
+
 	char final_msg[MAX_LOG_SIZE] = "";
 		
 	//TODO inserire controllo su lunghezza messaggio

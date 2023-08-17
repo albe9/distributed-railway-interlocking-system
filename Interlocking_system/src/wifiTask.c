@@ -64,20 +64,20 @@ exit_number addConnToServer(char* server_ip, int server_port, int server_id){
 		if(returned_id != server_id){
 			memset(log_msg, 0, 100);
 			snprintf(log_msg, 100, "Errore id server non corrispondente\nid aspettato : %i id ricevuto : %i", server_id, returned_id);
-			logMessage(log_msg, taskName(0));
+			logMessage(log_msg, taskName(0), 1);
 			return E_INVALID_ID;
 		}
 		else{
 			memset(log_msg, 0, 100);
 			snprintf(log_msg, 100, "Server id : %i aggiunto correttamente", server_id);
-			logMessage(log_msg, taskName(0));
+			logMessage(log_msg, taskName(0), 1);
 			node_conn[total_conn].connected_id = server_id;
 			total_conn++;
 			return E_SUCCESS;
 		}
 	}
 	else{
-		logMessage("Errore raggiunto numero massimo di socket per questo nodo", taskName(0));
+		logMessage("Errore raggiunto numero massimo di socket per questo nodo", taskName(0), 1);
 		return E_MAX_CONNECTION_NUMBER;
 	}
 	
@@ -118,7 +118,7 @@ exit_number addConnToClient(int num_client){
 	
 	// Effettuo il listen sul socket server con un buffer di 10 connessioni
 	listen(server_sock , 10);
-	logMessage("Sto aspettando connessioni", taskName(0));
+	logMessage("Sto aspettando connessioni", taskName(0), 1);
 
 
 	addrlen = sizeof(struct sockaddr_in);
@@ -159,7 +159,7 @@ exit_number addConnToClient(int num_client){
 
 			memset(log_msg, 0, 100);
 			snprintf(log_msg, 100, "Client id : %i aggiunto correttamente", client_id);
-			logMessage(log_msg, taskName(0));
+			logMessage(log_msg, taskName(0), 1);
 			node_conn[total_conn].connected_id = client_id;
 			total_conn++;
 			
@@ -204,7 +204,7 @@ connection* getConnByID(int rasp_id){
 				return conn;
 			}
 		}
-	logMessage("Nessun rasp ID presente uguale a quello cercato, ritorno un connection* null", taskName(0));
+	logMessage("Nessun rasp ID presente uguale a quello cercato, ritorno un connection* null", taskName(0), 1);
 	return conn;
 }
 
@@ -224,7 +224,7 @@ exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size){
 void wifiDestructor(int sig){
 
 	resetConnections();
-	logMessage("Task wifi eliminato",taskName(0));
+	logMessage("Task wifi eliminato",taskName(0), 1);
 	taskDelete(0);
 }
 
@@ -235,7 +235,7 @@ void resetConnections(){
 	for(int i=0; i< total_conn; i++){
 		shutdown(node_conn[i].sock, SHUT_RDWR);
 		if (close(node_conn[i].sock) < 0){
-			logMessage( errorDescription(E_DEFAUL_ERROR) ,taskName(0));
+			logMessage( errorDescription(E_DEFAUL_ERROR) ,taskName(0), 2);
 		}
 		node_conn[i] = (const connection){0};
 	}
@@ -325,10 +325,10 @@ exit_number processLogToSend(void){
 void sendLogToHost(void){
 	exit_number status;
 	if((status = processLogToSend()) != E_SUCCESS){
-		logMessage(errorDescription(status), taskName(0));
+		logMessage(errorDescription(status), taskName(0), 2);
 	}
 	else{
-		logMessage("Inviato con successo il log all'host", taskName(LOG_TID));
+		logMessage("Inviato con successo il log all'host", taskName(LOG_TID), 1);
 	}
 }
 
@@ -366,7 +366,7 @@ exit_number handleInMsgs(char* msg, int sender_id){
     for(int msg_idx=0; msg_idx<single_msg_count; msg_idx++){
         if((status = handleInSingleMsg(single_msg_array[msg_idx], sender_id)) == E_CLOSE)return E_CLOSE;
 		else if(status != E_SUCCESS){
-			logMessage(errorDescription(status), taskName(0));
+			logMessage(errorDescription(status), taskName(0), 2);
 		}
     }
 	return E_SUCCESS;
@@ -410,20 +410,20 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		connection* conn_ping = getConnByID(sender_id);
 		char tmp_ping_msg[100];
 		sprintf(tmp_ping_msg, "-----Ricevuto comando PING_REQ da nodo %i", sender_id);
-		logMessage(tmp_ping_msg, taskName(0));
+		logMessage(tmp_ping_msg, taskName(0), 1);
 		memset(tmp_ping_msg, 0, 100);		
 		//Rispondo al ping segnalando di essere un nodo attivo
 		sendToConn(conn_ping, "PING_ACK;.");
-		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0));
+		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0), 0);
 		sprintf(tmp_ping_msg, "-----[t11] Inviato comando PING_ACK al nodo %i", sender_id);
-		logMessage(tmp_ping_msg, taskName(0));
+		logMessage(tmp_ping_msg, taskName(0), 0);
 		memset(tmp_ping_msg, 0, 100);
 	}
 	else if (strcmp(command_type, "PING_ACK") == 0){
 		char tmp_ping_msg_2[100];
-		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0));
+		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0), 0);
 		sprintf(tmp_ping_msg_2, "-----[t11] Ricevuto comando PING_ACK da nodo %i", sender_id);
-		logMessage(tmp_ping_msg_2, taskName(0));
+		logMessage(tmp_ping_msg_2, taskName(0), 0);
 		memset(tmp_ping_msg_2, 0, 100);
 		// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
 		if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
@@ -494,11 +494,11 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			in_msg.sender_id=sender_id;
 			strcpy(in_msg.command, command_type);
 			in_msg.host_id = CURRENT_HOST;
-			logMessage("[t29] Preselection WiFi msg controllo", taskName(0));
-			logMessage("[t8] filtraggio messaggio concluso", taskName(0));
-			logMessage("[t6] acquisisco il semaforo per la coda", taskName(0));
-			logMessage("[t40] sposto messaggio dalla coda locale a quella globale", taskName(0));
-			logMessage("[t23] rilascio semaforo", taskName(0));
+			logMessage("[t29] Preselection WiFi msg controllo", taskName(0), 0);
+			logMessage("[t8] filtraggio messaggio concluso", taskName(0), 0);
+			logMessage("[t6] acquisisco il semaforo per la coda", taskName(0), 0);
+			logMessage("[t40] sposto messaggio dalla coda locale a quella globale", taskName(0), 0);
+			logMessage("[t23] rilascio semaforo", taskName(0), 0);
 			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
 		}	
 		semGive(WIFI_CONTROL_SEM);
@@ -513,7 +513,7 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 	//debug
 	char log_msg[100];
 	snprintf(log_msg, 100, "Prima di inoltrare il msg, command :%s sender :%i recivier:%i route:%i", out_control_msg->command, out_control_msg->sender_id, out_control_msg->recevier_id, out_control_msg->route_id);
-	logMessage(log_msg, taskName(0));
+	logMessage(log_msg, taskName(0), 1);
 
 	for(int node_idx=0; node_idx<total_conn; node_idx++){
 		if(node_conn[node_idx].connected_id == out_control_msg->recevier_id){
@@ -521,7 +521,7 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 			// Riformatto il pacchetto seguendo la sintassi definita in handleInSingleMsg
 			snprintf(msg, 100,"%s;%i;%i.", out_control_msg->command, out_control_msg->host_id, out_control_msg->route_id);
 			sendToConn(&node_conn[node_idx], msg);
-			logMessage("[t10] Messaggio inviato", taskName(0));
+			logMessage("[t10] Messaggio inviato", taskName(0), 0);
 			return E_SUCCESS;
 		}
 	}
@@ -532,10 +532,10 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 }
 
 exit_number checkDiag(){
-	logMessage("[t54] Preselection inizio ciclo Task WiFi", taskName(0));
-	logMessage("-----[t18] acquisisco semaforo", taskName(0));
+	logMessage("[t54] Preselection inizio ciclo Task WiFi", taskName(0), 0);
+	logMessage("-----[t18] acquisisco semaforo", taskName(0), 0);
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
-	logMessage("-----[t32] controllo area di memoria", taskName(0));
+	logMessage("-----[t32] controllo area di memoria", taskName(0), 0);
 	switch (ping_status)
 	{
 		case STARTING:
@@ -543,7 +543,7 @@ exit_number checkDiag(){
 			for(int node_idx=0; node_idx<total_conn; node_idx++){
 				sendToConn(&node_conn[node_idx], "PING_REQ;.");
 			}
-			logMessage("-----[t31] Inviato messaggi PING_REQ a tutti i vicini", taskName(0));
+			logMessage("-----[t31] Inviato messaggi PING_REQ a tutti i vicini", taskName(0), 0);
 			// Cambiamo lo stato del ping
 			ping_status = ACTIVE;
 			break;
@@ -551,14 +551,14 @@ exit_number checkDiag(){
 			// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è disattivata
 			ping_answers = 0;
 			ping_status = NOT_ACTIVE;
-			logMessage("-----[t31] Non invio messaggi di ping", taskName(0));
+			logMessage("-----[t31] Non invio messaggi di ping", taskName(0), 0);
 			break;
 		default:
 			//Se siamo in ACTIVE o NOT_ACTIVE non faccio nulla
-			logMessage("-----[t31] Non invio messaggi di ping", taskName(0));
+			logMessage("-----[t31] Non invio messaggi di ping", taskName(0), 0);
 			break;
 	}
-	logMessage("-----[t19] Rilascio semaforo", taskName(0));
+	logMessage("-----[t19] Rilascio semaforo", taskName(0), 0);
 	if(semGive(WIFI_DIAG_SEM) < 0)return E_DEFAUL_ERROR;
 	
 	// Ritorniamo
@@ -606,7 +606,7 @@ void wifiMain(void){
 		//Controllo lo stato del diagnosticsTask
 		exit_number status_diag;
 		if((status_diag = checkDiag()) != E_SUCCESS){
-			logMessage(errorDescription(status_diag), taskName(0));
+			logMessage(errorDescription(status_diag), taskName(0), 2);
 		}
 
 		// resetto il timeout(viene modificato da select)
@@ -622,7 +622,7 @@ void wifiMain(void){
 					if((status = readFromConn(&node_conn[conn_idx], msg, 100)) == E_SUCCESS){
 						//debug
 						snprintf(log_msg, 100, "Ricevuto messaggio da Rasp id : %i, %s", node_conn[conn_idx].connected_id, msg);
-						logMessage(log_msg, taskName(0));
+						logMessage(log_msg, taskName(0), 1);
 						memset(log_msg, 0, 100);
 						int sender_id = node_conn[conn_idx].connected_id;
 						if((status = handleInMsgs(msg, sender_id)) == E_CLOSE){
@@ -631,18 +631,18 @@ void wifiMain(void){
 						}
 						else if(status != E_SUCCESS){
 							// Faccio il log dell'errore
-							logMessage(errorDescription(status), taskName(0));
+							logMessage(errorDescription(status), taskName(0), 2);
 						}
 					}
 					else if(status == E_DISCONNECTION){
 						//Se un nodo interrompe la connessione loggo
 						memset(log_msg, 0, 100);
 						snprintf(log_msg, 100, "Disconnesso Rasp id : %i", node_conn[conn_idx].connected_id);
-						logMessage(log_msg, taskName(0));
+						logMessage(log_msg, taskName(0), 1);
 						// chiudo il socket relativo e rimuovo la sua connesione dall'array delle connessioni attive
 						shutdown(node_conn[conn_idx].sock, SHUT_RDWR);
 						if (close(node_conn[conn_idx].sock) < 0){
-							logMessage("Impossibile chiudere il socket",taskName(0));
+							logMessage("Impossibile chiudere il socket",taskName(0), 2);
 						}
 						node_conn[conn_idx] = (const connection){0};
 						total_conn -= 1;
@@ -653,52 +653,52 @@ void wifiMain(void){
 				}
 			}
 			//Dopo aver controllato tutti i socket non ho più msg da gestire e si procede
-			logMessage("[t49] Preselection WiFi no msg", taskName(0));
-			logMessage("[t26] Non ci sono messaggi da gestire", taskName(0));
+			logMessage("[t49] Preselection WiFi no msg", taskName(0), 0);
+			logMessage("[t26] Non ci sono messaggi da gestire", taskName(0), 0);
 		}
 		else if (n_ready_conn == 0){
-			logMessage("[t49] Preselection WiFi no msg", taskName(0));
-			logMessage("[t26] nessun messaggio ricevuto", taskName(0));
+			logMessage("[t49] Preselection WiFi no msg", taskName(0), 0);
+			logMessage("[t26] nessun messaggio ricevuto", taskName(0), 0);
 		}
 		
 		else if(n_ready_conn == -1){
-			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+			logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
 		}
 
 		//gestisco i messaggi da inviare per conto del controlTask
 		tpcp_msg out_control_msg;
 		ssize_t byte_recevied_control = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_control_msg, sizeof(tpcp_msg), 1);
-		logMessage("[t30] acquisisco semaforo per la coda", taskName(0));
-		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0));	
+		logMessage("[t30] acquisisco semaforo per la coda", taskName(0), 0);
+		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0), 0);	
 		if(byte_recevied_control > 0){
-			logMessage("[t46] Preselection, presente msg da inviare", taskName(0));
-			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0));				
+			logMessage("[t46] Preselection, presente msg da inviare", taskName(0), 0);
+			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0), 0);				
 			// debug
 			// char msg[100];
 			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_control_msg.command, out_control_msg.sender_id, out_control_msg.recevier_id, out_control_msg.route_id);
 			// logMessage(msg, taskName(0));
 			exit_number status_control;
 			if((status_control = handleOutControlMsg(&out_control_msg)) != E_SUCCESS){
-				logMessage(errorDescription(status_control), taskName(0));
+				logMessage(errorDescription(status_control), taskName(0), 2);
 			}
 
 		}
 		// Nel caso non erano presenti messaggi da inviare per conto del task di controllo
 		else if (byte_recevied_control < 0){
 			if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){
-				logMessage("[t45] Preselection no msg da inviare", taskName(0));
-				logMessage("[t44] non si devono inviare messaggi", taskName(0));
+				logMessage("[t45] Preselection no msg da inviare", taskName(0), 0);
+				logMessage("[t44] non si devono inviare messaggi", taskName(0), 0);
 			}
 			else{
-				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0));
+				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
 			}
 		}
-		logMessage("[t37] Conclusione ciclo Task WiFi", taskName(0));
+		logMessage("[t37] Conclusione ciclo Task WiFi", taskName(0), 0);
 	}
 
 
 	resetConnections();
-	logMessage("Terminato", taskName(0));
+	logMessage("Terminato", taskName(0), 1);
 
 }
 
