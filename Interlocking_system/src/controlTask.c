@@ -104,23 +104,26 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
             // snprintf(log_msg, 100, "handleMsg, command :%s sender :%i recivier:%i route:%i", msg->command, msg->sender_id, msg->recevier_id, msg->route_id);
             // logMessage(log_msg, taskName(0));
             NODE_STATUS = new_middleStatus;
-            
+            logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             status = forwardMsg(msg, current_route->rasp_id_next, NULL, true);
         }
         else{
             NODE_STATUS = new_edgeStatus;
-
+            if(NODE_STATUS == RESERVED)logMessage("[t12] setto lo stato RESERVED", taskName(0), 0);
+            else logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             status = forwardMsg(msg, current_route->rasp_id_prev, new_command, true);
         }
     }
     else{
         if(current_route->rasp_id_prev != HOST_ID){
             NODE_STATUS = new_middleStatus;
-
+            logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             status = forwardMsg(msg, current_route->rasp_id_prev, NULL, true);
         }
         else{
             NODE_STATUS = new_edgeStatus;
+            if(NODE_STATUS == RESERVED)logMessage("[t12] setto lo stato RESERVED", taskName(0), 0);
+            else logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             if(NODE_STATUS == RESERVED || NODE_STATUS == NOT_RESERVED){
     
                 status = forwardMsg(msg, current_route->rasp_id_prev, new_command, true);
@@ -173,10 +176,57 @@ void controlMain(void){
     tpcp_msg sensors_msg;
     while(true){    
 
-        // Controllo SensorOn
-
+        // Controllo SensorOn, da modificare per passare agli switch fisici
+        if(NODE_STATUS == RESERVED){
+            if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+            if(sensor_on_detected){
+                logMessage("[t56] preselection", taskName(0), 0);
+                logMessage("[t2] sensorOn", taskName(0), 0);
+                logMessage("SensorOn abilitato, setto lo stato TRAIN_IN_TRANSITION", taskName(0), 1);
+                // Setto lo stato, aggiorno il timer e resetto la flag in comune con il task wifi
+                NODE_STATUS = TRAIN_IN_TRANSITION;
+                startSensorOffTime = tickGet();
+                sensor_on_detected = false;
+            }
+            else{
+                logMessage("[t73] preselection", taskName(0), 0);
+                logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
+            }
+            if(semGive(WIFI_CONTROL_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+        }
+        else{
+            logMessage("[t73] preselection", taskName(0), 0);
+            logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
+        }
         // Controllo SensorOff
+        // Se sono nello stato SensoOn controllo quanto tempo è passato per effettuare il sensorOff
+        if(NODE_STATUS == TRAIN_IN_TRANSITION){
+            currentSensorOffTime = tickGet();
+            elapsedSensorOffTimer = (double)(currentSensorOffTime - startSensorOffTime)/TICKS_TO_SECOND;
+            if(elapsedSensorOffTimer >= 2){
+                logMessage("[t57] Preselection", taskName(0), 0);
+                logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);
+                sensors_msg.route_id = current_route->route_id;
+                sensors_msg.host_id = CURRENT_HOST;
 
+                if(current_route->rasp_id_next != TAIL_ID){
+                    forwardMsg(&sensors_msg, current_route->rasp_id_next, "SENSOR_ON", false);
+                }
+                else{
+                    forwardMsg(&sensors_msg, current_route->rasp_id_prev, "SENSOR_OFF", false);
+                }
+                resetNodeStatus();
+            }
+            else{
+                logMessage("[t53] Preselection", taskName(0), 0);
+                logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
+            }
+        }
+        else{
+            logMessage("[t53] Preselection", taskName(0), 0);
+            logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
+        }
+        
         // Controllo diagnostica
         if(flagDiagnOn){
             logMessage("[t60] preselection", taskName(0), 0);
@@ -199,6 +249,8 @@ void controlMain(void){
                 diag_ended = false;
                 diag_success = false;
                 flagDiagnOn = false;
+                // resetto il timer per la diagnostica (l'ho appena eseguita)
+                startDiagnTime = tickGet();
             }
             else{
                 logMessage("[t64] preseletion", taskName(0), 0);
@@ -216,51 +268,50 @@ void controlMain(void){
         ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
         logMessage("[t27] acquisisco semaforo per la coda", taskName(0), 0);
         logMessage("[t39] controllo se presente un messaggio", taskName(0), 0); 
-        // Aggiorno i timer per i sensorOff
-        currentSensorOffTime = tickGet();
 
         
         if(byte_recevied < 0){
             logMessage("[t42] Preselezione", taskName(0), 0);
             logMessage("[t38] non presente un msg", taskName(0), 0);
             if(!flagDiagnOn){
-                // Calcolo per quanto tempo (in secondi) non ho ricevuto messaggi, se maggiore di 5 sec avvio la diagnostica
+                // Calcolo per quanto tempo (in secondi) non ho ricevuto messaggi, se maggiore di DIAG_TIME avvio la diagnostica
                 currentDiagnTime = tickGet();
                 elapsedDiagnTimer = (double)(currentDiagnTime - startDiagnTime)/TICKS_TO_SECOND;
-                if(elapsedDiagnTimer >= 5){
+                if(elapsedDiagnTimer >= DIAG_TIME){
                     logMessage("[t50] Preselezione", taskName(0), 0);
                     exit_number status;
                     if((status = startDiagn()) != E_SUCCESS){
                         logMessage(errorDescription(status), taskName(0), 2);
                     }
                     flagDiagnOn = true;
-                    // resetto il timer per la diagnostica (l'ho appena eseguita)
-                    startDiagnTime = tickGet();
                 }
                 else{
                     logMessage("[t51] Preselezione", taskName(0), 0);
                     logMessage("[t52] Ritorno in idle", taskName(0), 0);
                 }
             }
+            else{
+                logMessage("[t51] Preselezione", taskName(0), 0);
+                logMessage("[t52] Ritorno in idle", taskName(0), 0);
+            }
         }
         else{
-            logMessage("[t43] Preselezione", taskName(0), 0);
-            logMessage("[t7] presente un msg", taskName(0), 0);
-            // Abbiamo simulato il sensor_on e off come messaggi. andranno sostituiti con uno switch fisico
-            if (NODE_STATUS == RESERVED && (strcmp(in_msg.command, "SENSOR_ON") == 0)){
-                logMessage("[t56] Preselection", taskName(0), 0);
-                logMessage("[t2] SensorOn", taskName(0), 0);
-                NODE_STATUS = TRAIN_IN_TRANSITION;
-                startSensorOffTime = tickGet();
-            }
-            else if (NODE_STATUS == NOT_RESERVED && strcmp(in_msg.command, "SENSOR_OFF") == 0){
+            if (NODE_STATUS == NOT_RESERVED && strcmp(in_msg.command, "SENSOR_OFF") == 0){
+                //poichè è un messaggio che simula un sensore, faccio finta di non aver ricevuto nessun messaggio nei log e di tornare in idle
+                logMessage("[t42] Preselezione", taskName(0), 0);
+                logMessage("[t38] nessun msg presente", taskName(0), 0);
+                logMessage("[t51] Preselezione", taskName(0), 0);
+                logMessage("[t52] controlTask torna in idle", taskName(0), 0);
+
                 logMessage("Inoltro il SensorOff", taskName(0), 1);
                 forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, false);
                 // Resetto la flag che indica l'host corrente
                 resetNodeStatus();
             }
             else{ 
-                // Flusso normale di esecuzione del task di controllo, nel caso non si sia avviata la diagnostica
+                // Flusso normale di esecuzione del task di controllo
+                logMessage("[t43] Preselezione", taskName(0), 0);
+                logMessage("[t7] presente un msg", taskName(0), 0);
                 char msg[100];
                 snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", in_msg.command, in_msg.sender_id, in_msg.recevier_id, in_msg.route_id);
                 logMessage(msg, taskName(0), 1);
@@ -280,6 +331,7 @@ void controlMain(void){
                     // TODO gestire risposta quando la route non è presente
                     logMessage("[t0] Preselection", taskName(0), 0);
                     logMessage("[t1] setto lo stato", taskName(0), 0);
+                    logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
                     exit_number status;
                     if((status = forwardMsg(&in_msg, in_msg.sender_id, "NOT_OK", true)) != E_SUCCESS){
                         logMessage(errorDescription(status), taskName(0), 2);
@@ -320,7 +372,6 @@ void controlMain(void){
                         if (strcmp(in_msg.command, "REQ") == 0){
                             logMessage("[t0] Preselection", taskName(0), 0);
                             logMessage("[t1] setto lo stato WAIT_ACK/WAIT_COMMIT", taskName(0), 0);
-                            logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
                             status = handleMsg(&in_msg, true, WAIT_ACK, WAIT_COMMIT, "ACK");
                         }
                         else{
@@ -331,7 +382,6 @@ void controlMain(void){
                         if (strcmp(in_msg.command, "ACK") == 0){
                             logMessage("[t0] Preselection", taskName(0), 0);
                             logMessage("[t1] setto lo stato WAIT_COMMIT/WAIT_AGREE", taskName(0), 0);
-                            logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
                             status = handleMsg(&in_msg, false, WAIT_COMMIT, WAIT_AGREE, "COMMIT");
                         }
                         else if (strcmp(in_msg.command, "NOT_OK") == 0){
@@ -350,7 +400,6 @@ void controlMain(void){
                         if (strcmp(in_msg.command, "COMMIT") == 0){
                             logMessage("[t0] Preselection", taskName(0), 0);
                             logMessage("[t1] setto lo stato WAIT_AGREE/RESERVED", taskName(0), 0);
-                            logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
                             status = handleMsg(&in_msg, true, WAIT_AGREE, RESERVED, "AGREE");
                         }
                         else if (strcmp(in_msg.command, "NOT_OK") == 0){
@@ -386,7 +435,6 @@ void controlMain(void){
                                 }
                             }
                             else{
-                                logMessage("[t12] setto lo stato RESERVED", taskName(0), 0);
                                 status = handleMsg(&in_msg, false, RESERVED, RESERVED, "TRAIN_OK");
                             }
                         }
@@ -430,34 +478,10 @@ void controlMain(void){
                         logMessage(errorDescription(reset_status), taskName(0), 2);
                     }
                 }
-                // resetto il timer per la diagnostica (ho ricevuto un messaggio)
-                startDiagnTime = tickGet();
             }
+            // resetto il timer per la diagnostica (ho ricevuto un messaggio)
+            startDiagnTime = tickGet();
         }
-
-        // Se sono nello stato SensoOn controllo quanto tempo è passato per effettuare il sensorOff
-        if(NODE_STATUS == TRAIN_IN_TRANSITION){
-            elapsedSensorOffTimer = (double)(currentSensorOffTime - startSensorOffTime)/TICKS_TO_SECOND;
-            if(elapsedSensorOffTimer >= 2){
-                logMessage("[t57] Preselection", taskName(0), 0);
-                logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);
-                sensors_msg.route_id = current_route->route_id;
-                sensors_msg.host_id = CURRENT_HOST;
-
-                if(current_route->rasp_id_next != TAIL_ID){
-                    forwardMsg(&sensors_msg, current_route->rasp_id_next, "SENSOR_ON", false);
-                }
-                else{
-                    forwardMsg(&sensors_msg, current_route->rasp_id_prev, "SENSOR_OFF", false);
-                }
-                resetNodeStatus();
-            }
-            else{
-                 logMessage("[t53] Preselection", taskName(0), 0);
-                logMessage("[t59] Torno in idle", taskName(0), 0);
-            }
-        }
-
     }
 }
 

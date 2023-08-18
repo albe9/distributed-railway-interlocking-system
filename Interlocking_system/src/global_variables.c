@@ -15,3 +15,4 @@ bool ping_success = false;      // Risultato di una procedura di ping, può esse
 bool diag_success = false;      // Risultato diagnostica, variabile condivisa tra diag e control task
 bool diag_ended = false;
 int ping_answers = 0;           // Numero di ack ricevuto in risposta ad una richiesta di ping
+bool sensor_on_detected = false;

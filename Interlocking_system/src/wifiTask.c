@@ -464,6 +464,12 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		}
 		return E_CLOSE;
 	}
+	else if (strcmp(command_type, "SENSOR_ON") == 0){
+		if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+		logMessage("Ricevuto messaggio simulato di SENSOR_ON ", taskName(0), 1);
+		sensor_on_detected = true;
+		if(semGive(WIFI_CONTROL_SEM) < 0)return E_DEFAUL_ERROR;
+	}
 	else{
 		//gestiamo i messaggi relativi al TPCP
 		tpcp_msg in_msg;
@@ -475,7 +481,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		int msg_host = -1;
 		if(sscanf(msg_data,"%i;%i", &msg_host, &in_msg.route_id) != 2)return(E_PARSING);
 		//acquisisco il semaforo per accedere alla variabile globale (è condivisa con il task di controllo)
-		semTake(WIFI_CONTROL_SEM, WAIT_FOREVER);
+		if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
 		//se non ci sono host correnti lo setto
 		if(CURRENT_HOST == -1){
 			CURRENT_HOST = msg_host;
@@ -501,7 +507,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			logMessage("[t23] rilascio semaforo", taskName(0), 0);
 			msgQSend(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL);
 		}	
-		semGive(WIFI_CONTROL_SEM);
+		if(semGive(WIFI_CONTROL_SEM) < 0)return E_DEFAUL_ERROR;
 	}
 
 

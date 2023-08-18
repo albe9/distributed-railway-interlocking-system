@@ -61,7 +61,7 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define MAX_CTRL_BUFF 10
 #define TYPE_SWITCH   2
 #define TYPE_LINEAR   3 
-#define LOG_LEVEL 1               // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL 
+#define LOG_LEVEL 0               // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL 
 #define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
 #define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
 // TODO: controllare affidabilità della conversione tra tick e secondi effettivi  
@@ -70,6 +70,7 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define SUCCESS TRUE              // SUCCESS è lo stato in cui la procedura di ping è andata a buon fine
 #define ROUTE_ID_PING 8888        //  Const int used in diagnostics task
 #define HOST_ID_PING 7777         //  Const int used in diagnostics task
+#define DIAG_TIME 10              // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
 
 typedef struct{
     int route_id;
@@ -107,5 +108,6 @@ extern bool ping_success;
 extern int ping_answers;
 extern bool diag_success;
 extern bool diag_ended;
+extern bool sensor_on_detected;
 
 #endif /* INCLUDES_GLOBAL_VARIABLES_H_ */
