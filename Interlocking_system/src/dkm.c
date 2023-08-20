@@ -52,7 +52,7 @@ void start3(void){
 
 */
 void startDestructor(void){
-	DESTRUCTOR_TID = taskSpawn("destructorTask", 100, 0, 20000,(FUNCPTR) destructorMain, 0,0,0,0,0,0,0,0,0,0);
+	DESTRUCTOR_TID = taskSpawn("destructorTask", PRI_0, 0, 20000,(FUNCPTR) destructorMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void startLog(void){
@@ -77,7 +77,7 @@ void startInit(int rasp_id, char* host_ip){
 	//Setto l'ip dell'host
 	snprintf(HOST_IP, 20, host_ip);
 	printf("\n\n%s", HOST_IP);
-	INIT_TID = taskSpawn("initTask", 50, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
+	INIT_TID = taskSpawn("initTask", PRI_0, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void startWifi(void){

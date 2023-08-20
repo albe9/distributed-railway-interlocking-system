@@ -104,6 +104,15 @@ enum DIAG_STATUS{
     ENDING
 }ping_status; // Indica se lo stato della procedura di ping
 
+enum PRI_LEV{
+    PRI_0 = 61,
+    PRI_1 = 60,
+    PRI_2 = 59,
+    PRI_3 = 58,
+    PRI_4 = 57,
+    PRI_5 = 56
+}priority_levels; // Indica i livelli di priority, in VxWorks 0 è priorità massima e 255 minima
+
 extern bool ping_success;
 extern int ping_answers;
 extern bool diag_success;

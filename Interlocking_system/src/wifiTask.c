@@ -541,6 +541,7 @@ exit_number checkDiag(){
 	logMessage("[t54] Preselection inizio ciclo Task WiFi", taskName(0), 0);
 	logMessage("-----[t18] acquisisco semaforo", taskName(0), 0);
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+	taskPrioritySet(0, PRI_2);
 	logMessage("-----[t32] controllo area di memoria", taskName(0), 0);
 	switch (ping_status)
 	{
@@ -566,6 +567,7 @@ exit_number checkDiag(){
 	}
 	logMessage("-----[t19] Rilascio semaforo", taskName(0), 0);
 	if(semGive(WIFI_DIAG_SEM) < 0)return E_DEFAUL_ERROR;
+	taskPrioritySet(0, PRI_1);
 	
 	// Ritorniamo
 	return E_SUCCESS;
@@ -675,10 +677,12 @@ void wifiMain(void){
 		tpcp_msg out_control_msg;
 		ssize_t byte_recevied_control = msgQReceive(OUT_CONTROL_QUEUE, (char*)&out_control_msg, sizeof(tpcp_msg), 1);
 		logMessage("[t30] acquisisco semaforo per la coda", taskName(0), 0);
+		taskPrioritySet(0, PRI_2);
 		logMessage("[t47] controllo se sono presenti msg da inviare", taskName(0), 0);	
 		if(byte_recevied_control > 0){
 			logMessage("[t46] Preselection, presente msg da inviare", taskName(0), 0);
-			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0), 0);				
+			logMessage("[t9] sposto messaggio dalla coda globale a quella locale", taskName(0), 0);
+			taskPrioritySet(0, PRI_1);				
 			// debug
 			// char msg[100];
 			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_control_msg.command, out_control_msg.sender_id, out_control_msg.recevier_id, out_control_msg.route_id);
@@ -694,6 +698,7 @@ void wifiMain(void){
 			if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){
 				logMessage("[t45] Preselection no msg da inviare", taskName(0), 0);
 				logMessage("[t44] non si devono inviare messaggi", taskName(0), 0);
+				taskPrioritySet(0, PRI_1);
 			}
 			else{
 				logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);

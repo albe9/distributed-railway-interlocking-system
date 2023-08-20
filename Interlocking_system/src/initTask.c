@@ -164,7 +164,7 @@ void initMain(void){
     
 
     // starto il logTask
-    LOG_TID = taskSpawn("LogTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+    LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 
 	//apro la connessione con l'host per ricevere i dati di configurazione
 	
@@ -280,8 +280,8 @@ void initMain(void){
     IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
     OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 
-    WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
-    CONTROL_TID = taskSpawn("ctrlTask", 50, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
+    WIFI_TID = taskSpawn("wifiTask", PRI_1, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
+    CONTROL_TID = taskSpawn("ctrlTask", PRI_1, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
     
     //rimuovo tutte le risorse allocate prima di terminare il task
     free(node_net.prev_ids);

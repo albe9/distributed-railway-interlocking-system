@@ -151,7 +151,7 @@ def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
             print("Errore nella sintassi del messaggio, messaggio non inviato")
         # Attendi 5 secondi prima di poter inviare un altro messaggio [senza lo sleep 
         # avremo una sovrapposizione di output grafico dovuta alle risposte a questo send]
-        time.sleep(5)
+        time.sleep(10)
 
     
     

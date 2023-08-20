@@ -12,10 +12,12 @@ void diagnosticsMain(){
     // Segnaliamo lo start della diagniostica al wifi task
     logMessage("-----[t22] Acquisisco il semaforo di status", taskName(0), 0);
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+    taskPrioritySet(0, PRI_2);
     logMessage("-----[t25] Setto la flag di status", taskName(0), 0);
     ping_status = STARTING;
     logMessage("-----[t24] Rilascio il semaforo di status", taskName(0), 0);
     if(semGive(WIFI_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+    taskPrioritySet(0, PRI_1);
 
     // Mettiamoci in attesa del timeout per le risposte ai ping
     logMessage("-----[t33] Attesa risposta al ping", taskName(0), 0);
@@ -24,6 +26,7 @@ void diagnosticsMain(){
     // Accesso alle variabili globali tramite semaforo
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
     logMessage("-----[t34] Acquisisco il semaforo di status", taskName(0), 0);
+    taskPrioritySet(0, PRI_2);
     // Fermiamo la procedura di ping
     ping_status = ENDING;
     // in base al successo o meno dei ping impostiamo la variabile globale di ping fail safe
@@ -46,6 +49,7 @@ void diagnosticsMain(){
     ping_success = false;
     logMessage("-----[t36] Rilascio il semaforo", taskName(0), 0);
     if(semGive(WIFI_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+    taskPrioritySet(0, PRI_1);
 
     // Logghiamo la fine della diagnostica
     char log_msg[100];
@@ -55,6 +59,7 @@ void diagnosticsMain(){
     // Scriviamo l'esito nell'area di memoria condivisa con il task di controllo
     if(semTake(CONTROL_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
     logMessage("-----[t55] Acquisisco il semaforo", taskName(0), 0);
+    taskPrioritySet(0, PRI_2);
     logMessage("-----[t20] Scrivo esito diagnostica", taskName(0), 0);
     diag_ended = true;
     if(in_ping_fail_safe){
@@ -65,6 +70,7 @@ void diagnosticsMain(){
     }
     logMessage("-----[t21] Rilascio il semaforo", taskName(0), 0);
     if(semGive(CONTROL_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+    taskPrioritySet(0, PRI_1);
 
 }
 
