@@ -4,6 +4,7 @@ import sys
 from threading import Thread
 import select
 import re
+import datetime
 
 
 PORT = 6543  # Port to listen on (non-privileged ports are > 1023)
@@ -134,19 +135,32 @@ def reading_and_answer_ping(fds):
                             fd.send(ack_msg.encode())
                             # print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
                         else:                      
-                            print(f"[T1] Messaggio da {fd.getpeername()} : {msg.decode()}")
+                            print(f"{getTime()}[T1] Messaggio da {fd.getpeername()[0]} : {msg.decode()}")
     print("Tutti i nodi disconnessi, reading thread terminato")
                     
 def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
     print("[T2] Send msg from keyboard thread avviato")
     while True:
-        msg = input("[T2] Messaggio da inviare a tutti i nodi:\n")
+        msg = input(f"{getTime()}[T2] Messaggio da inviare a tutti i nodi:\n")
+        # Dividiamo il messaggio in una prima parte in cui sono indicati gli host a cui inviare il messaggio e una seconda parte
+        # che indica il messaggio da inviare
+        splitted_msg = msg.split(" ")
+
+        node_to_send_msg = splitted_msg[0].split(",")
+
+        command_msg = splitted_msg[1]
+
         # Controlliamo che la sintassi del messaggio che vogliamo inviare sia corretta
-        if check_syntax(msg):
+        if check_syntax(command_msg):
+        
             for conn in connected_nodes:
-                # Inviamo il messaggio a tutti i nodi connessi 
-                conn.send(msg.encode())
-                print("[T2] Messaggio inviato")
+                node_ip = conn.getpeername()[0]
+                # L'id del nodo a cui devo inviare è l'ultima lettera dell'ip
+                node_id = node_ip[-1]
+                if node_id in node_to_send_msg: 
+                    # Inviamo il messaggio al nodo d'interesse
+                    conn.send(command_msg.encode())
+                    print(f"{getTime()}[T2] Inviato {command_msg} al nodo {node_id} (IP: {node_ip})")
         else:
             print("Errore nella sintassi del messaggio, messaggio non inviato")
         # Attendi 5 secondi prima di poter inviare un altro messaggio [senza lo sleep 
@@ -155,6 +169,9 @@ def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
 
     
     
+def getTime():
+    current_time = datetime.datetime.now().strftime("%H:%M:%S")
+    return f"({current_time})"
 
 # I route sono dizionari con chiave id rotta e con valore un dizionario con chiave id del nodo e come valore informazioni del nodo nella rotta
 # rasp_id 0 è stato assegnato all'host che ha ip 172.23.78.0

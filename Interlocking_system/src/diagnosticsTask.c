@@ -10,8 +10,8 @@ void diagnosticsMain(){
     logMessage("-----Inizio diagnostica", taskName(0), 1);
 
     // Segnaliamo lo start della diagniostica al wifi task
-    logMessage("-----[t22] Acquisisco il semaforo di status", taskName(0), 0);
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+    logMessage("-----[t22] Acquisisco il semaforo di status", taskName(0), 0);
     taskPrioritySet(0, PRI_2);
     logMessage("-----[t25] Setto la flag di status", taskName(0), 0);
     ping_status = STARTING;
@@ -20,8 +20,8 @@ void diagnosticsMain(){
     taskPrioritySet(0, PRI_1);
 
     // Mettiamoci in attesa del timeout per le risposte ai ping
-    logMessage("-----[t33] Attesa risposta al ping", taskName(0), 0);
     taskDelay(TICKS_TO_SECOND * 2);
+    logMessage("-----[t33] Conclusione attesa risposta al ping", taskName(0), 0);  
 
     // Accesso alle variabili globali tramite semaforo
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
@@ -71,7 +71,6 @@ void diagnosticsMain(){
     logMessage("-----[t21] Rilascio il semaforo", taskName(0), 0);
     if(semGive(CONTROL_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
     taskPrioritySet(0, PRI_1);
-
 }
 
 void diagnosticsDestructor(int sig){

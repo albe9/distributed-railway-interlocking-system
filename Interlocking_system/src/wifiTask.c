@@ -539,8 +539,8 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 
 exit_number checkDiag(){
 	logMessage("[t54] Preselection inizio ciclo Task WiFi", taskName(0), 0);
-	logMessage("-----[t18] acquisisco semaforo", taskName(0), 0);
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
+	logMessage("-----[t18] acquisisco semaforo", taskName(0), 0);
 	taskPrioritySet(0, PRI_2);
 	logMessage("-----[t32] controllo area di memoria", taskName(0), 0);
 	switch (ping_status)
@@ -705,6 +705,7 @@ void wifiMain(void){
 			}
 		}
 		logMessage("[t37] Conclusione ciclo Task WiFi", taskName(0), 0);
+		taskDelay(8);
 	}
 
 

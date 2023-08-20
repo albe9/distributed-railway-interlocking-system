@@ -233,9 +233,9 @@ void controlMain(void){
         
         // Controllo diagnostica
         if(flagDiagnOn){
-            logMessage("[t60] preselection", taskName(0), 0);
-            logMessage("[t63] acquisisco il semaforo", taskName(0), 0);
+            logMessage("[t60] preselection", taskName(0), 0);           
             if(semTake(CONTROL_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+            logMessage("[t63] acquisisco il semaforo", taskName(0), 0);
             taskPrioritySet(0, PRI_2);
             logMessage("[t68] verifico se diag terminata", taskName(0), 0);
             if(diag_ended){
@@ -426,24 +426,41 @@ void controlMain(void){
                         if (strcmp(in_msg.command, "AGREE") == 0){
                             logMessage("[t0] Preselection", taskName(0), 0);
                             logMessage("[t1] setto lo stato", taskName(0), 0);
-                            if(NODE_TYPE == TYPE_SWITCH && !IN_POSITION ){
-                                //se il nodo è di scambio e non è in posizione avvio il positioning task
-                                logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0), 0);
-                                POSITIONING_TID = taskSpawn("positioningTask", PRI_1, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
-                                taskSuspend(0);
-                                //  Controllo se il positioning è avvenuto correttamente
-                                if(!IN_POSITION){
-                                    logMessage("[t13] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0), 0);
-                                    NODE_STATUS = MALFUNCTION;
-                                    status = forwardNotOk(&in_msg, RASP_ID);
+                            
+                            if(NODE_TYPE == TYPE_SWITCH){
+                                // Il nodo è di scambio va controllato se serve il positioning
+                                if(railswitch.last_route_id != in_msg.route_id || (railswitch.last_route_id == in_msg.route_id && !railswitch.in_position)){
+                                    // Il nodo di scambio ha il deviatoio su una rotta diversa oppure non è in posizione, si deve avviare il positioning
+                                    logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0), 0);
+                                    POSITIONING_TID = taskSpawn("positioningTask", PRI_1, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
+                                    taskSuspend(0);
+                                    // 
+                                    //  Qui è in corso il positioning
+                                    //
+
+                                    //  Positioning finito, il ctrlTask è ripreso. Controllo se il positioning è avvenuto correttamente
+                                    if(!railswitch.in_position){
+                                        logMessage("[t13] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0), 0);
+                                        NODE_STATUS = MALFUNCTION;
+                                        status = forwardNotOk(&in_msg, RASP_ID);
+                                    }
+                                    else{
+                                        logMessage("[t15] Positioning avvenuto, setto lo stato RESERVED", taskName(0), 0);
+                                        NODE_STATUS = RESERVED;
+                                        status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, true);
+                                    }                                       
                                 }
                                 else{
-                                    logMessage("[t15] Positioning avvenuto, setto lo stato RESERVED", taskName(0), 0);
+                                    // Il nodo di scambio ha il deviatoio già in posizione
+                                    logMessage("[t12] Positioning avvenuto, setto lo stato RESERVED", taskName(0), 0);
                                     NODE_STATUS = RESERVED;
                                     status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, true);
                                 }
+
+                                
                             }
                             else{
+                                // Il nodo non è di scambio, non si ha bisogno del positioning
                                 status = handleMsg(&in_msg, false, RESERVED, RESERVED, "TRAIN_OK");
                             }
                         }
@@ -491,7 +508,9 @@ void controlMain(void){
             // resetto il timer per la diagnostica (ho ricevuto un messaggio)
             startDiagnTime = tickGet();
         }
+        taskDelay(8);
     }
+    
 }
 
 void controlDestructor(int sig){

@@ -3,11 +3,11 @@
 void positioningMain(){
     exit_number status;
     if((status = positioning()) != E_SUCCESS){
-        IN_POSITION = false;
+        railswitch.in_position = false;
         logMessage(errorDescription(status), taskName(0), 2);
     }
     else{
-        IN_POSITION = true;
+        railswitch.in_position = true;
     }
     logMessage("[t14] Terminazione del task di positioning", taskName(0), 0);
     taskResume(CONTROL_TID);

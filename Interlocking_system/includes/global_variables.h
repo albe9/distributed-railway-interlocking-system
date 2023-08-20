@@ -86,6 +86,11 @@ typedef struct{
     int host_id;
 }tpcp_msg;
 
+typedef struct{
+    int last_route_id;  // indica l'ultima rotta per cui è stato richiesto il positioning
+    bool in_position;   // indica l'esito del positioning
+}railroad_switch;       // Questa struttura serve per simulare dove è posizionato il deviatoio
+
 extern int SERVER_PORT;
 extern int LOG_PORT;
 extern int RASP_ID;
@@ -96,6 +101,7 @@ extern route *node_routes;
 extern int route_count;
 extern int NODE_TYPE;
 extern bool IN_POSITION;
+extern railroad_switch railswitch; // Questa variabile indica 
 
 enum DIAG_STATUS{
     NOT_ACTIVE,
