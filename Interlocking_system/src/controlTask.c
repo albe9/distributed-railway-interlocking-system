@@ -13,7 +13,6 @@ exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command, bool log_t
     // char log_msg[100];
     // snprintf(log_msg, 100, "forwardMsg, command :%s sender :%i recivier:%i route:%i", msg->command, msg->sender_id, msg->recevier_id, msg->route_id);
     // logMessage(log_msg, taskName(0));
-
     if(command != NULL){
         memset(msg->command , 0, sizeof(msg->command));
         strcpy(msg->command, command);
@@ -428,11 +427,12 @@ void controlMain(void){
                             logMessage("[t1] setto lo stato", taskName(0), 0);
                             
                             if(NODE_TYPE == TYPE_SWITCH){
-                                // Il nodo è di scambio va controllato se serve il positioning
-                                if(railswitch.last_route_id != in_msg.route_id || (railswitch.last_route_id == in_msg.route_id && !railswitch.in_position)){
+                                // Il nodo è di scambio, va controllato se serve il positioning
+                                if((railswitch.last_route_id != in_msg.route_id) || (railswitch.last_route_id == in_msg.route_id && !railswitch.in_position)){
                                     // Il nodo di scambio ha il deviatoio su una rotta diversa oppure non è in posizione, si deve avviare il positioning
                                     logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0), 0);
-                                    POSITIONING_TID = taskSpawn("positioningTask", PRI_1, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
+                                    railswitch.last_route_id = in_msg.route_id;
+                                    POSITIONING_TID = taskSpawn("posiTask", PRI_1, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
                                     taskSuspend(0);
                                     // 
                                     //  Qui è in corso il positioning
@@ -452,7 +452,7 @@ void controlMain(void){
                                 }
                                 else{
                                     // Il nodo di scambio ha il deviatoio già in posizione
-                                    logMessage("[t12] Positioning avvenuto, setto lo stato RESERVED", taskName(0), 0);
+                                    logMessage("[t12] Deviatoio già in posizione, setto lo stato RESERVED", taskName(0), 0);
                                     NODE_STATUS = RESERVED;
                                     status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, true);
                                 }

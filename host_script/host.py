@@ -141,30 +141,36 @@ def reading_and_answer_ping(fds):
 def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
     print("[T2] Send msg from keyboard thread avviato")
     while True:
-        msg = input(f"{getTime()}[T2] Messaggio da inviare a tutti i nodi:\n")
-        # Dividiamo il messaggio in una prima parte in cui sono indicati gli host a cui inviare il messaggio e una seconda parte
+        msg = input(f"{getTime()}[T2] Messaggio da inviare ai nodi specifici:\n")
+        # Dividiamo il messaggio in una prima parte in cui sono indicati i nodi a cui inviare il messaggio e una seconda parte
         # che indica il messaggio da inviare
         splitted_msg = msg.split(" ")
 
-        node_to_send_msg = splitted_msg[0].split(",")
+        # nodes_to_send_msg è tipo "1,4,6" o "1"
+        nodes_to_send_msg = splitted_msg[0]
 
+        #command_msg è tipo "REQ;0;1." o "SENSOR_ON;0;2."
         command_msg = splitted_msg[1]
 
-        # Controlliamo che la sintassi del messaggio che vogliamo inviare sia corretta
-        if check_syntax(command_msg):
-        
-            for conn in connected_nodes:
-                node_ip = conn.getpeername()[0]
-                # L'id del nodo a cui devo inviare è l'ultima lettera dell'ip
-                node_id = node_ip[-1]
-                if node_id in node_to_send_msg: 
-                    # Inviamo il messaggio al nodo d'interesse
-                    conn.send(command_msg.encode())
-                    print(f"{getTime()}[T2] Inviato {command_msg} al nodo {node_id} (IP: {node_ip})")
+        # Controlliamo che la sintassi dei nodi da inviare e del comando che vogliamo inviare sia corretta
+        if check_nodes_syntax(nodes_to_send_msg):
+            splitted_node_to_send_msg = nodes_to_send_msg.split(",")
+            if check_cmd_syntax(command_msg):            
+                for conn in connected_nodes:
+                    node_ip = conn.getpeername()[0]
+                    # L'id del nodo a cui devo inviare è l'ultima lettera dell'ip
+                    node_id = node_ip[-1]
+                    if node_id in splitted_node_to_send_msg: 
+                        # Inviamo il messaggio al nodo d'interesse
+                        conn.send(command_msg.encode())
+                        print(f"{getTime()}[T2] Inviato {command_msg} al nodo {node_id} (IP: {node_ip})")
+            else:
+                print("Errore nella sintassi del comando messaggio, messaggio non inviato...")
         else:
-            print("Errore nella sintassi del messaggio, messaggio non inviato")
-        # Attendi 5 secondi prima di poter inviare un altro messaggio [senza lo sleep 
-        # avremo una sovrapposizione di output grafico dovuta alle risposte a questo send]
+            print("Errore nella sintassi dei nodi a cui inviare il messaggio, messaggio non inviato...")
+        
+        # Attendi 10 secondi prima di poter inviare un altro messaggio [senza lo sleep 
+        # avremo una sovrapposizione di output grafico dovuta alle risposte dei nodi]
         time.sleep(10)
 
     
@@ -245,10 +251,17 @@ def make_config_string(rasp_id, node_data):
     return config_string
 
 
-def check_syntax(msg_to_check:str):
-    # Il messaggio per matchare deve essere PING; oppure REQ;numero;numero
-    pattern = r'^(PING;\.|REQ;\d+;\d+\.|SENSOR_ON;\d+;\d+\.)$'
+def check_cmd_syntax(msg_to_check:str):
+    # Il messaggio per matchare deve essere PING;. oppure REQ;host_id;route_id. 
+    # oppure SENSOR_ON;host_id;route_id. oppure NOT_OK;host_id;route_id. 
+    pattern = r'^(PING;\.|REQ;\d+;\d+\.|SENSOR_ON;\d+;\d+\.|NOT_OK;\d+;\d+\.)$'
     return re.match(pattern, msg_to_check) is not None
+
+def check_nodes_syntax(nodes_to_check:str):
+    # Il messaggio per matchare deve essere composto da una sequenza di numeri (se più di uno separati da virgola)
+    # e non ci possono essere altri caratteri non numerici nel mezzo
+    pattern = r"^\d+(?:,\d+)*$"
+    return re.match(pattern, nodes_to_check) is not None
 
 
 def server_loop(node_num, net_graph):

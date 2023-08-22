@@ -160,9 +160,6 @@ void printConfigInfo(route *routes, network *net){
 }
 
 void initMain(void){
-	
-    
-
     // starto il logTask
     LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 
