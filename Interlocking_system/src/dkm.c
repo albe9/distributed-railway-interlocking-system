@@ -88,36 +88,3 @@ void startWifi(void){
 // 	resetConnections();
 // }
 
-void blinkLed(){
-	turnOnLed(LED_RED);
-	sleep(3);
-	turnOffLed(LED_RED);
-	turnOnLed(LED_GREEN);
-	sleep(3);
-	turnOffLed(LED_GREEN);
-	turnOnLed(LED_BLU);
-	sleep(3);
-	turnOffLed(LED_BLU);
-}
-
-void readButton() {
-
-	int i = 0;
-
-	while (i < 100)
-	{
-		bool stato = button_is_pressed(BUTTON);
-		printf("STATO: %d \n", stato);
-		if(stato){
-			turnOnLed(LED_GREEN);
-			sleep(1);
-			turnOffLed(LED_GREEN);
-		}
-		else {
-			turnOnLed(LED_RED);
-		}
-		sleep(1);
-		i++;
-	}
-	turnOffLed(LED_RED);
-}

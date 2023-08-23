@@ -6,29 +6,13 @@
 #ifndef GPIO_H
 #define GPIO_H
 
-#include "vxWorks.h"
-#include "taskLib.h"
-#include "stdio.h"
-#include "stdlib.h"
-#include "sysLib.h"
-#include <stdbool.h>
+#include "global_variables.h"
 #include <subsys/gpio/vxbGpioLib.h>
 
-#define OUT 1
-#define IN 0
+void changeLedColor(status_color node_status_col);
 
-#define HIGH 1
-#define LOW 0
+void setLedColor(color new_color);
 
-#define LED_RED 23
-#define LED_GREEN 24
-#define LED_BLU 22
-#define BUTTON 27
-
-void turnOnLed(UINT32 pinNumber);
-
-void turnOffLed(UINT32 pinNumber);
-
-bool button_is_pressed(UINT32 pinNumber);
+bool readButton();
 
 #endif /* GPI_H */

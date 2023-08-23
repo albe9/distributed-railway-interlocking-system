@@ -14,7 +14,6 @@
 #define INCLUDES_GLOBAL_VARIABLES_H_
 
 #include "errors.h"
-#include "gpio.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <msgQLib.h>
@@ -122,6 +121,23 @@ enum PRI_LEV{
     PRI_4 = 57,
     PRI_5 = 56
 }priority_levels; // Indica i livelli di priority, in VxWorks 0 è priorità massima e 255 minima
+
+typedef struct{
+    bool R;
+    bool G;
+    bool B;
+}color;
+
+typedef enum STATUS_COLORS{
+    OFF_COL,
+    INIT_COL,
+    NOT_RESERVED_COL,
+    MESSAGE_EXCHANGE_COL,
+    POSITIONING_COL,
+    RESERVED_COL,
+    TRAIN_IN_TRANSITION_COL,
+    FAIL_COL
+}status_color;
 
 extern bool ping_success;
 extern int ping_answers;

@@ -1,7 +1,8 @@
 #include "controlTask.h"
 #include "diagnosticsTask.h"
+#include "gpio.h"
 
-static tpcp_status NODE_STATUS=NOT_RESERVED;
+static tpcp_status NODE_STATUS = NOT_RESERVED;
 static int HOST_ID = 0;    //per adesso gestiamo un solo host
 static route* current_route = NULL;
 
@@ -106,12 +107,12 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
             // char log_msg[100];
             // snprintf(log_msg, 100, "handleMsg, command :%s sender :%i recivier:%i route:%i", msg->command, msg->sender_id, msg->recevier_id, msg->route_id);
             // logMessage(log_msg, taskName(0));
-            NODE_STATUS = new_middleStatus;
+            setNodeStatus(new_middleStatus);
             logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             status = forwardMsg(msg, current_route->rasp_id_next, NULL, true);
         }
         else{
-            NODE_STATUS = new_edgeStatus;
+            setNodeStatus(new_edgeStatus);
             if(NODE_STATUS == RESERVED)logMessage("[t12] setto lo stato RESERVED", taskName(0), 0);
             else logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             status = forwardMsg(msg, current_route->rasp_id_prev, new_command, true);
@@ -119,12 +120,12 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
     }
     else{
         if(current_route->rasp_id_prev != HOST_ID){
-            NODE_STATUS = new_middleStatus;
+            setNodeStatus(new_middleStatus);
             logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             status = forwardMsg(msg, current_route->rasp_id_prev, NULL, true);
         }
         else{
-            NODE_STATUS = new_edgeStatus;
+            setNodeStatus(new_middleStatus);
             if(NODE_STATUS == RESERVED)logMessage("[t12] setto lo stato RESERVED", taskName(0), 0);
             else logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             if(NODE_STATUS == RESERVED || NODE_STATUS == NOT_RESERVED){
@@ -165,8 +166,11 @@ exit_number startDiagn(){
 }
 
 void controlMain(void){
-    //aggiungo l'handler per il signal SIGUSR1
+    // Aggiungo l'handler per il signal SIGUSR1
 	signal(SIGUSR1, controlDestructor);
+
+    // Setto lo stato iniziale come NOT_RESERVED
+    resetNodeStatus();
 
     // Definiamo un timer per poter far partire la diagnostica secondo le specifiche (Es ogni 15 secondi senza ricezioni di msg)
     clock_t startDiagnTime, currentDiagnTime, 
@@ -182,14 +186,14 @@ void controlMain(void){
         // Se è attiva la simulazione dei sensori con i messaggi
         if(SIM_SENSOR){
             // Controllo SensorOn
-            if(NODE_STATUS == RESERVED && SIM_SENSOR){
+            if(NODE_STATUS == RESERVED){
                 if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
                 if(sensor_on_detected){
                     logMessage("[t56] preselection", taskName(0), 0);
                     logMessage("[t2] sensorOn", taskName(0), 0);
                     logMessage("SensorOn abilitato, setto lo stato TRAIN_IN_TRANSITION", taskName(0), 1);
                     // Setto lo stato, aggiorno il timer e resetto la flag in comune con il task wifi
-                    NODE_STATUS = TRAIN_IN_TRANSITION;
+                    setNodeStatus(TRAIN_IN_TRANSITION);
                     startSensorOffTime = tickGet();
                     sensor_on_detected = false;
                 }
@@ -234,8 +238,45 @@ void controlMain(void){
         }
         // Se invece i sensori sono implementati con pulsanti fisici
         else{
-            // TODO: da implementare
+            // Controllo SensorOn
+            if(NODE_STATUS == RESERVED){               
+                if(readButton()){
+                    logMessage("[t56] preselection", taskName(0), 0);
+                    logMessage("[t2] sensorOn", taskName(0), 0);
+                    logMessage("SensorOn abilitato, setto lo stato TRAIN_IN_TRANSITION", taskName(0), 1);
+                    setNodeStatus(TRAIN_IN_TRANSITION);
+                }
+                else{
+                    logMessage("[t73] preselection", taskName(0), 0);
+                    logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
+                }
+            }
+            else{
+                logMessage("[t73] preselection", taskName(0), 0);
+                logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
+            }
+            // Controllo SensorOff
+            // Se sono nello stato TRAIN_IN_TRANSITION e mi accorgo che il bottone non è più premuto
+            // vuol dire che il treno ha finito di passare e torno in NOT_RESERVED
+            if(NODE_STATUS == TRAIN_IN_TRANSITION){
+                if(readButton()){
+                    // Il treno sta ancora passando
+                    logMessage("[t53] Preselection", taskName(0), 0);
+                    logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
+                }
+                else{
+                    // Il treno ha finito di passare
+                    logMessage("[t57] Preselection", taskName(0), 0);
+                    logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);                    
+                    resetNodeStatus();
+                }
+            }
+            else{
+                logMessage("[t53] Preselection", taskName(0), 0);
+                logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
+            }
         }
+        
         // Controllo diagnostica
         if(flagDiagnOn){
             logMessage("[t60] preselection", taskName(0), 0);           
@@ -254,7 +295,7 @@ void controlMain(void){
                     logMessage("[t70] preseletion", taskName(0), 0);
                     logMessage("[t72] diag termina con errore", taskName(0), 0);
                     // TODO gestire stato PING-FAIL-SAFE
-                    NODE_STATUS = PING_FAIL_SAFE;
+                    setNodeStatus(PING_FAIL_SAFE);
                 }
                 diag_ended = false;
                 diag_success = false;
@@ -447,19 +488,19 @@ void controlMain(void){
                                     //  Positioning finito, il ctrlTask è ripreso. Controllo se il positioning è avvenuto correttamente
                                     if(!railswitch.in_position){
                                         logMessage("[t13] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0), 0);
-                                        NODE_STATUS = MALFUNCTION;
+                                        setNodeStatus(MALFUNCTION);
                                         status = forwardNotOk(&in_msg, RASP_ID);
                                     }
                                     else{
                                         logMessage("[t15] Positioning avvenuto, setto lo stato RESERVED", taskName(0), 0);
-                                        NODE_STATUS = RESERVED;
+                                        setNodeStatus(RESERVED);
                                         status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, true);
                                     }                                       
                                 }
                                 else{
                                     // Il nodo di scambio ha il deviatoio già in posizione
                                     logMessage("[t12] Deviatoio già in posizione, setto lo stato RESERVED", taskName(0), 0);
-                                    NODE_STATUS = RESERVED;
+                                    setNodeStatus(RESERVED);
                                     status = forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, true);
                                 }
 
@@ -530,9 +571,49 @@ void controlDestructor(int sig){
 
 exit_number resetNodeStatus(){
     //resetto lo stato del nodo
-    NODE_STATUS=NOT_RESERVED;
+    NODE_STATUS = NOT_RESERVED;
+    changeLedColor(NOT_RESERVED_COL);
     if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
     CURRENT_HOST = -1;
     if(semGive(WIFI_CONTROL_SEM) < 0)return E_DEFAUL_ERROR;
     return E_SUCCESS;
+}
+
+void setNodeStatus(tpcp_status new_status){
+    // Oltre a settare lo stato del nodo accende il led del relativo colore
+    // Nota: il caso NOT_RESERVED non è considerato, c'è la funzione resetNodeStatus()
+    NODE_STATUS = new_status;
+    switch (new_status){
+        case WAIT_ACK:
+            changeLedColor(MESSAGE_EXCHANGE_COL);
+            break;
+        case WAIT_COMMIT:
+            changeLedColor(MESSAGE_EXCHANGE_COL);
+            break;
+        case WAIT_AGREE:
+            changeLedColor(MESSAGE_EXCHANGE_COL);
+            break;
+        case POSITIONING:
+            changeLedColor(POSITIONING_COL);
+            break;
+        case MALFUNCTION:
+            changeLedColor(FAIL_COL);
+            break;
+        case RESERVED:
+            changeLedColor(RESERVED_COL);
+            break;
+        case TRAIN_IN_TRANSITION:
+            changeLedColor(TRAIN_IN_TRANSITION_COL);
+            break;
+        case FAIL_SAFE:
+            changeLedColor(FAIL_COL);
+            break;
+        case PING_FAIL_SAFE:
+            changeLedColor(FAIL_COL);
+            break;
+        default:
+            // TODO: gestire caso in cui viene passato tpcp_status non esistente
+            logMessage("Errore nel settare stato nodo", taskName(0), 1);
+            break;
+    }
 }

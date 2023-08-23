@@ -27,5 +27,6 @@ extern exit_number handleErrorMsg(tpcp_msg* msg, char* current_status);
 extern exit_number startDiagn();
 extern void controlDestructor(int sig);
 extern exit_number resetNodeStatus();
+extern void setNodeStatus(tpcp_status new_status);
 
 #endif /* INCLUDES_CONTROLTASK_H_ */
