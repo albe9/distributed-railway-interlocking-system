@@ -179,57 +179,63 @@ void controlMain(void){
     tpcp_msg sensors_msg;
     while(true){    
 
-        // Controllo SensorOn, da modificare per passare agli switch fisici
-        if(NODE_STATUS == RESERVED){
-            if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
-            if(sensor_on_detected){
-                logMessage("[t56] preselection", taskName(0), 0);
-                logMessage("[t2] sensorOn", taskName(0), 0);
-                logMessage("SensorOn abilitato, setto lo stato TRAIN_IN_TRANSITION", taskName(0), 1);
-                // Setto lo stato, aggiorno il timer e resetto la flag in comune con il task wifi
-                NODE_STATUS = TRAIN_IN_TRANSITION;
-                startSensorOffTime = tickGet();
-                sensor_on_detected = false;
+        // Se è attiva la simulazione dei sensori con i messaggi
+        if(SIM_SENSOR){
+            // Controllo SensorOn
+            if(NODE_STATUS == RESERVED && SIM_SENSOR){
+                if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
+                if(sensor_on_detected){
+                    logMessage("[t56] preselection", taskName(0), 0);
+                    logMessage("[t2] sensorOn", taskName(0), 0);
+                    logMessage("SensorOn abilitato, setto lo stato TRAIN_IN_TRANSITION", taskName(0), 1);
+                    // Setto lo stato, aggiorno il timer e resetto la flag in comune con il task wifi
+                    NODE_STATUS = TRAIN_IN_TRANSITION;
+                    startSensorOffTime = tickGet();
+                    sensor_on_detected = false;
+                }
+                else{
+                    logMessage("[t73] preselection", taskName(0), 0);
+                    logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
+                }
+                if(semGive(WIFI_CONTROL_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
             }
             else{
                 logMessage("[t73] preselection", taskName(0), 0);
                 logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
             }
-            if(semGive(WIFI_CONTROL_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
-        }
-        else{
-            logMessage("[t73] preselection", taskName(0), 0);
-            logMessage("[t74] non avviene il sensorOn", taskName(0), 0);
-        }
-        // Controllo SensorOff
-        // Se sono nello stato SensoOn controllo quanto tempo è passato per effettuare il sensorOff
-        if(NODE_STATUS == TRAIN_IN_TRANSITION){
-            currentSensorOffTime = tickGet();
-            elapsedSensorOffTimer = (double)(currentSensorOffTime - startSensorOffTime)/TICKS_TO_SECOND;
-            if(elapsedSensorOffTimer >= 2){
-                logMessage("[t57] Preselection", taskName(0), 0);
-                logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);
-                sensors_msg.route_id = current_route->route_id;
-                sensors_msg.host_id = CURRENT_HOST;
+            // Controllo SensorOff
+            // Se sono nello stato SensoOn controllo quanto tempo è passato per effettuare il sensorOff
+            if(NODE_STATUS == TRAIN_IN_TRANSITION){
+                currentSensorOffTime = tickGet();
+                elapsedSensorOffTimer = (double)(currentSensorOffTime - startSensorOffTime)/TICKS_TO_SECOND;
+                if(elapsedSensorOffTimer >= 2){
+                    logMessage("[t57] Preselection", taskName(0), 0);
+                    logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);
+                    sensors_msg.route_id = current_route->route_id;
+                    sensors_msg.host_id = CURRENT_HOST;
 
-                if(current_route->rasp_id_next != TAIL_ID){
-                    forwardMsg(&sensors_msg, current_route->rasp_id_next, "SENSOR_ON", false);
+                    if(current_route->rasp_id_next != TAIL_ID){
+                        forwardMsg(&sensors_msg, current_route->rasp_id_next, "SENSOR_ON", false);
+                    }
+                    else{
+                        forwardMsg(&sensors_msg, current_route->rasp_id_prev, "SENSOR_OFF", false);
+                    }
+                    resetNodeStatus();
                 }
                 else{
-                    forwardMsg(&sensors_msg, current_route->rasp_id_prev, "SENSOR_OFF", false);
+                    logMessage("[t53] Preselection", taskName(0), 0);
+                    logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
                 }
-                resetNodeStatus();
             }
             else{
                 logMessage("[t53] Preselection", taskName(0), 0);
                 logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
             }
         }
+        // Se invece i sensori sono implementati con pulsanti fisici
         else{
-            logMessage("[t53] Preselection", taskName(0), 0);
-            logMessage("[t59] Non avviene sensorOff", taskName(0), 0);
+            // TODO: da implementare
         }
-        
         // Controllo diagnostica
         if(flagDiagnOn){
             logMessage("[t60] preselection", taskName(0), 0);           
