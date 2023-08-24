@@ -59,17 +59,6 @@ void startLog(void){
 	LOG_TID = taskSpawn("logTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
-void test(void){
-	clock_t timer1, timer2;
-    double elapsed;
-
-    timer1 = tickGet();
-	taskDelay(TICKS_TO_SECOND * 3);
-	timer2 = tickGet();
-    elapsed = (double)(timer2 - timer1)/TICKS_TO_SECOND;
-	printf("\n%li\n%li\n%f\n", timer1, timer2, elapsed);
-}
-
 void startInit(int rasp_id, char* host_ip){
 	//Setto l'id e l'ip del raspberry
 	RASP_ID = rasp_id;

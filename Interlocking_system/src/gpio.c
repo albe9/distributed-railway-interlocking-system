@@ -12,10 +12,6 @@
 #define LED_BLUE 22
 #define BUTTON 27
 
-static bool led_active = false;
-
-static color node_color = {.R = false, .G = false, .B = false};
-
 color BLACK = {.R = false, .G = false, .B = false};
 color BLUE = {.R = false, .G = false, .B = true};
 color GREEN = {.R = false, .G = true, .B = false};
@@ -38,15 +34,9 @@ color WHITE = {.R = true, .G = true, .B = true};
 // dell'esecuzione e non ad ogni chiamata
 
 void changeLedColor(status_color node_status_col){
-    // Ogni volta che utilizziamo un led che è stato precedentemente accesso
-    // si deve procedere a settare tutti i canali LOW e disallocarli con Free
+    // Se attivi disallochiamo i canali RGB dei led
     if(led_active){
-        vxbGpioSetValue(LED_RED, LOW);
-        vxbGpioFree(LED_RED);
-        vxbGpioSetValue(LED_GREEN, LOW);
-        vxbGpioFree(LED_GREEN);
-        vxbGpioSetValue(LED_BLUE, LOW);
-        vxbGpioFree(LED_BLUE);
+        deactivateLed();
     }
     // Poi si deve reiniziallizare ogni canale come OUTPUT
     vxbGpioSetDir(LED_RED, OUT);
@@ -111,4 +101,16 @@ void setLedColor(color new_color){
 bool readButton(){
     vxbGpioSetDir(BUTTON, IN);
     return vxbGpioGetValue(BUTTON);
+}
+
+void deactivateLed(){
+    // Ogni volta che utilizziamo un led che è stato precedentemente accesso
+    // si deve procedere a settare tutti i canali LOW e disallocarli con Free   
+    vxbGpioSetValue(LED_RED, LOW);
+    vxbGpioFree(LED_RED);
+    vxbGpioSetValue(LED_GREEN, LOW);
+    vxbGpioFree(LED_GREEN);
+    vxbGpioSetValue(LED_BLUE, LOW);
+    vxbGpioFree(LED_BLUE);
+    
 }

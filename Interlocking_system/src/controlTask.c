@@ -564,6 +564,10 @@ void controlDestructor(int sig){
     if(resetNodeStatus() != E_SUCCESS){
         logMessage("Errore nella chiusura del control Task", taskName(0), 2);
     }
+    // Se attivi disallochiamo i canali RGB dei led
+    if(led_active){
+        deactivateLed();
+        }
     taskDelete(0);
 }
 
@@ -571,8 +575,7 @@ void controlDestructor(int sig){
 
 exit_number resetNodeStatus(){
     //resetto lo stato del nodo
-    NODE_STATUS = NOT_RESERVED;
-    changeLedColor(NOT_RESERVED_COL);
+    setNodeStatus(NOT_RESERVED);
     if(semTake(WIFI_CONTROL_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
     CURRENT_HOST = -1;
     if(semGive(WIFI_CONTROL_SEM) < 0)return E_DEFAUL_ERROR;
@@ -581,9 +584,11 @@ exit_number resetNodeStatus(){
 
 void setNodeStatus(tpcp_status new_status){
     // Oltre a settare lo stato del nodo accende il led del relativo colore
-    // Nota: il caso NOT_RESERVED non è considerato, c'è la funzione resetNodeStatus()
     NODE_STATUS = new_status;
     switch (new_status){
+        case NOT_RESERVED:
+            changeLedColor(NOT_RESERVED_COL);
+            break;
         case WAIT_ACK:
             changeLedColor(MESSAGE_EXCHANGE_COL);
             break;
