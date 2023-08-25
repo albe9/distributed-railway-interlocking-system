@@ -125,7 +125,7 @@ exit_number handleMsg(tpcp_msg* msg, bool direction, tpcp_status new_middleStatu
             status = forwardMsg(msg, current_route->rasp_id_prev, NULL, true);
         }
         else{
-            setNodeStatus(new_middleStatus);
+            setNodeStatus(new_edgeStatus);
             if(NODE_STATUS == RESERVED)logMessage("[t12] setto lo stato RESERVED", taskName(0), 0);
             else logMessage("[t4] inoltro il messaggio al next o prev", taskName(0), 0);
             if(NODE_STATUS == RESERVED || NODE_STATUS == NOT_RESERVED){
