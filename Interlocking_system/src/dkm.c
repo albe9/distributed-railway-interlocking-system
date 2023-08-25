@@ -11,6 +11,7 @@
 #include "initTask.h"
 #include "wifiTask.h"
 #include "destructorTask.h"
+#include "gpio.h"
 
 
 TASK_ID taskId;
@@ -77,3 +78,31 @@ void startWifi(void){
 // 	resetConnections();
 // }
 
+void testColor() {
+	changeLedColor(OFF_COL); //spento
+	sleep(6);
+	changeLedColor(INIT_COL); //CIANO
+	sleep(6);
+	changeLedColor(NOT_RESERVED_COL); //BLU
+	sleep(6);
+	changeLedColor(MESSAGE_EXCHANGE_COL); //GIALLO
+	sleep(6);
+	changeLedColor(POSITIONING_COL); //BIANCO
+	sleep(6);
+	changeLedColor(RESERVED_COL); //VERDE
+	sleep(6);
+	changeLedColor(TRAIN_IN_TRANSITION_COL); //MAGENTA
+	sleep(6);
+	changeLedColor(FAIL_COL);
+	sleep(6);
+	changeLedColor(OFF_COL);
+	while (true)
+	{
+		if (readButton()){
+			changeLedColor(MESSAGE_EXCHANGE_COL);
+			sleep(6);
+			break;
+		}
+	}
+	
+}
