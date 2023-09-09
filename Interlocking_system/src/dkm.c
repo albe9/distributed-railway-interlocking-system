@@ -14,50 +14,8 @@
 #include "gpio.h"
 
 
-TASK_ID taskId;
-
-
-//test per il passaggio di stringhe come parametro
-/*
-char message[20] = "log di prova";
-
-void myRoutine(_Vx_usr_arg_t message){
-	logMsg("Messaggio di prova : %s", message, 0, 0, 0, 0, 0);
-	logMsg("Task name : %s", taskName(0), 0, 0, 0, 0, 0);
-}
-
-
-//test per creare un elenco di task con relativi id (per disattivarli ecc) 
-void myRoutine4(void){
-	int maxTasks = 50;
-	TASK_ID id_list[maxTasks];
-	TASK_DESC task_info;
-
-	
-	taskIdListGet(id_list, maxTasks);
-	for(int i=0;i<maxTasks;i++)
-	{
-		if(taskInfoGet(id_list[i], &task_info) == ERROR){
-			printf("\nErrore al task numero : %i\n",i);
-		}
-		else{
-			printf("\ntask : %s\n",task_info.td_name);
-		}
-	}
-	
-}
-
-void start3(void){
-	taskId = taskSpawn("test task", 1, 0, 20000,(FUNCPTR) myRoutine4, 0,0,0,0,0,0,0,0,0,0);
-}
-
-*/
 void startDestructor(void){
 	DESTRUCTOR_TID = taskSpawn("destructorTask", PRI_0, 0, 20000,(FUNCPTR) destructorMain, 0,0,0,0,0,0,0,0,0,0);
-}
-
-void startLog(void){
-	LOG_TID = taskSpawn("logTask", 100, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void startInit(int rasp_id, char* host_ip){
@@ -69,14 +27,6 @@ void startInit(int rasp_id, char* host_ip){
 	printf("\n\n%s", HOST_IP);
 	INIT_TID = taskSpawn("initTask", PRI_0, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
-
-void startWifi(void){
-	WIFI_TID = taskSpawn("wifiTask", 50, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
-}
-
-// void reset(void){
-// 	resetConnections();
-// }
 
 void testColor() {
 	changeLedColor(OFF_COL); //spento
