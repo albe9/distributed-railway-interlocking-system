@@ -9,7 +9,7 @@
 #include "global_variables.h"
 #include <subsys/gpio/vxbGpioLib.h>
 
-static bool led_active = false;
+extern bool led_active;
 
 static color node_color = {.R = false, .G = false, .B = false};
 

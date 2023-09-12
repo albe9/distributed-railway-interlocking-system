@@ -11,7 +11,6 @@ typedef enum{
     WAIT_COMMIT,
     WAIT_AGREE,
     POSITIONING,
-    MALFUNCTION,
     RESERVED,
     TRAIN_IN_TRANSITION,
     FAIL_SAFE,

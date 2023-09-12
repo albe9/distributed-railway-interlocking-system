@@ -12,6 +12,8 @@
 #define LED_BLUE 22
 #define BUTTON 27
 
+bool led_active = false;
+
 color BLACK = {.R = false, .G = false, .B = false};
 color BLUE = {.R = false, .G = false, .B = true};
 color GREEN = {.R = false, .G = true, .B = false};

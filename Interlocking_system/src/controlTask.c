@@ -487,8 +487,8 @@ void controlMain(void){
 
                                     //  Positioning finito, il ctrlTask è ripreso. Controllo se il positioning è avvenuto correttamente
                                     if(!railswitch.in_position){
-                                        logMessage("[t13] Setto lo stato MALFUNCTION e inoltro msg ai vicini", taskName(0), 0);
-                                        setNodeStatus(MALFUNCTION);
+                                        logMessage("[t13] Setto lo stato FAIL_SAFE e inoltro msg ai vicini", taskName(0), 0);
+                                        setNodeStatus(FAIL_SAFE);
                                         status = forwardNotOk(&in_msg, RASP_ID);
                                     }
                                     else{
@@ -522,7 +522,7 @@ void controlMain(void){
                             status = handleErrorMsg(&in_msg, "WAIT_AGREE");
                         }
                         break;
-                    case MALFUNCTION:
+                    case FAIL_SAFE:
                         // Se sono nello stato malfunction rispondo con not_ok a qualsiasi messaggio
                         status = forwardNotOk(&in_msg, RASP_ID);
                         break;
@@ -559,6 +559,7 @@ void controlMain(void){
     }
     
 }
+
 
 void controlDestructor(int sig){
     if(resetNodeStatus() != E_SUCCESS){
@@ -600,9 +601,6 @@ void setNodeStatus(tpcp_status new_status){
             break;
         case POSITIONING:
             changeLedColor(POSITIONING_COL);
-            break;
-        case MALFUNCTION:
-            changeLedColor(FAIL_COL);
             break;
         case RESERVED:
             changeLedColor(RESERVED_COL);
