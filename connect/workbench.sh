@@ -358,7 +358,7 @@ echo -e "Opzioni:
         -l  (load)             Esegue il Load del modulo sui raspberry
         -u  (unload)           Esegue l'unload del modulo sui raspberry
         -o  (output)           Mostro i log dei raspberry
-        -d  (delete)           Effettua il task delete nei raspberry (per ora task_wifi)
+        -d  (delete)           Effettua il task delete nei raspberry
         -r  (reboot)           Effettua il reboot dei raspberry
         -t  (hard reboot)      Effettua uno spegnimento e accensione dell'alimentazione 
         -s  (shutdown)         Effettua lo spegnimento completo del sistema
