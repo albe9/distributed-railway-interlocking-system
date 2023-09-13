@@ -647,6 +647,8 @@ void wifiMain(void){
 						memset(log_msg, 0, 100);
 						snprintf(log_msg, 100, "Disconnesso Rasp id : %i", node_conn[conn_idx].connected_id);
 						logMessage(log_msg, taskName(0), 1);
+						// Setto il colore del led
+						changeLedColor(FAIL_COL);
 						// chiudo il socket relativo e rimuovo la sua connesione dall'array delle connessioni attive
 						shutdown(node_conn[conn_idx].sock, SHUT_RDWR);
 						if (close(node_conn[conn_idx].sock) < 0){

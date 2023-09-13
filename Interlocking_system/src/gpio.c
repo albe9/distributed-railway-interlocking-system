@@ -61,13 +61,13 @@ void changeLedColor(status_color node_status_col){
         setLedColor(BLACK);
         break;
     case INIT_COL:
-        setLedColor(CYAN);
+        setLedColor(YELLOW);
         break;
     case NOT_RESERVED_COL:
         setLedColor(BLUE);
         break;
     case MESSAGE_EXCHANGE_COL:
-        setLedColor(YELLOW);
+        setLedColor(CYAN);
         break;
     case POSITIONING_COL:
         setLedColor(WHITE);
@@ -82,7 +82,7 @@ void changeLedColor(status_color node_status_col){
         setLedColor(RED);
         break;
     default:
-        logMessage("Errore nel settare colore led", taskName(0), 1);
+        logMessage("Errore nel settare colore led", taskName(0), 2);
         break;
     }
     
@@ -97,7 +97,7 @@ void setLedColor(color new_color){
     node_color.B = new_color.B;
     char msg[50];
     snprintf(msg, 50, "Nuovo colore led RGB: %d %d %d", node_color.R, node_color.G, node_color.B);
-    logMessage(msg, taskName(0), 0);
+    logMessage(msg, taskName(0), 1);
 }
 
 bool readButton(){

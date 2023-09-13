@@ -13,6 +13,7 @@
 
 #include "global_variables.h"
 #include "logTask.h"
+#include "gpio.h"
 #include <sys/select.h>
 // #include <epollLib.h>
 

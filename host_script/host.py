@@ -144,6 +144,7 @@ def send_msg_from_keyboard(connected_nodes:list[socket.socket]):
         msg = input(f"{getTime()}[T2] Messaggio da inviare ai nodi specifici:\n")
         # Dividiamo il messaggio in una prima parte in cui sono indicati i nodi a cui inviare il messaggio e una seconda parte
         # che indica il messaggio da inviare
+        # es di msg : "1 REQ;0;1."
         splitted_msg = msg.split(" ")
 
         # nodes_to_send_msg è tipo "1,4,6" o "1"

@@ -70,7 +70,7 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define SUCCESS TRUE              // SUCCESS è lo stato in cui la procedura di ping è andata a buon fine
 #define ROUTE_ID_PING 8888        //  Const int used in diagnostics task
 #define HOST_ID_PING 7777         //  Const int used in diagnostics task
-#define DIAG_TIME 10              // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
+#define DIAG_TIME 2              // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
 #define SIM_SENSOR 0             // Se 1 indica che i SENSOR_ON sono simulati con messaggi, se 0 si utilizzano i pulsanti fisici
 
 

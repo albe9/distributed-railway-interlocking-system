@@ -27,6 +27,7 @@ exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command, bool log_t
         taskPrioritySet(0, PRI_2);
         logMessage("[t41] Scrivo il messaggio", taskName(0), 0);
         logMessage("[t28] Rilascio il semaforo e abbasso la priorità", taskName(0), 0);
+        logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
         taskPrioritySet(0, PRI_1);
     }
 
@@ -44,6 +45,7 @@ exit_number forwardNotOk(tpcp_msg* msg, int sender_id){
     taskPrioritySet(0, PRI_2);
     logMessage("[t41] Scrivo il messaggio", taskName(0), 0);
     logMessage("[t28] Rilascio il semaforo e abbasso la priorità", taskName(0), 0);
+    logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
     taskPrioritySet(0, PRI_1);
 
     if(sender_id == RASP_ID){
@@ -267,7 +269,8 @@ void controlMain(void){
                 else{
                     // Il treno ha finito di passare
                     logMessage("[t57] Preselection", taskName(0), 0);
-                    logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);                    
+                    logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);    
+                    logMessage("SensorOff abilitato, setto lo stato NOT_RESERVED", taskName(0), 1);                
                     resetNodeStatus();
                 }
             }
@@ -338,15 +341,18 @@ void controlMain(void){
                         logMessage(errorDescription(status), taskName(0), 2);
                     }
                     flagDiagnOn = true;
+                    logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
                 }
                 else{
                     logMessage("[t51] Preselezione", taskName(0), 0);
                     logMessage("[t52] Ritorno in idle", taskName(0), 0);
+                    logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
                 }
             }
             else{
                 logMessage("[t51] Preselezione", taskName(0), 0);
                 logMessage("[t52] Ritorno in idle", taskName(0), 0);
+                logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
             }
         }
         else{
@@ -357,6 +363,7 @@ void controlMain(void){
                 taskPrioritySet(0, PRI_1);
                 logMessage("[t51] Preselezione", taskName(0), 0);
                 logMessage("[t52] controlTask torna in idle", taskName(0), 0);
+                logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
 
                 logMessage("Inoltro il SensorOff", taskName(0), 1);
                 forwardMsg(&in_msg, current_route->rasp_id_prev, NULL, false);
@@ -523,7 +530,11 @@ void controlMain(void){
                         }
                         break;
                     case FAIL_SAFE:
-                        // Se sono nello stato malfunction rispondo con not_ok a qualsiasi messaggio
+                        // Se sono nello stato fail_safe rispondo con not_ok a qualsiasi messaggio
+                        status = forwardNotOk(&in_msg, RASP_ID);
+                        break;
+                    case PING_FAIL_SAFE:
+                        // Se sono nello stato fail_safe rispondo con not_ok a qualsiasi messaggio
                         status = forwardNotOk(&in_msg, RASP_ID);
                         break;
                     case RESERVED:
@@ -616,7 +627,7 @@ void setNodeStatus(tpcp_status new_status){
             break;
         default:
             // TODO: gestire caso in cui viene passato tpcp_status non esistente
-            logMessage("Errore nel settare stato nodo", taskName(0), 1);
+            logMessage("Errore nel settare stato nodo", taskName(0), 2);
             break;
     }
 }
