@@ -21,7 +21,8 @@ void logMessage(char* msg, char* task_name, int logLevel){
 		
 	//TODO inserire controllo su lunghezza messaggio
 	
-	
+	/* TODO aggiugere ifdef per abilitare un metodo o l'altro per loggare i tempi
+	//metodo basato su clock_gettime
 	//Salvo il timestamp
 	time_t rawtime;
 	struct tm * timeinfo;
@@ -42,6 +43,21 @@ void logMessage(char* msg, char* task_name, int logLevel){
 	//appendo timestamp e taskname
 	strcat(final_msg, timestamp);
 	strcat(final_msg, log_ms);
+	*/
+
+	//Metodo basato su sysTimestamp()
+	UINT64 log_time_micro = 0;
+	semTake(TIMER_SEM, WAIT_FOREVER);
+	log_time_micro = totalCurrentTimeMicro;
+	semGive(TIMER_SEM);
+	// sommo al tempo totale dato dagli overflow il tempo attuale in microsecondi
+	log_time_micro += (sysTimestamp())/54;
+
+	char log_micro[100];
+	snprintf(log_micro, 100, "%llu    ", log_time_micro);
+	printf("%s\n", log_micro);
+
+	strcat(final_msg, log_micro);
 	strcat(final_msg, task_name);
 	strcat(final_msg, "    ");	
 	strcat(final_msg, msg);	

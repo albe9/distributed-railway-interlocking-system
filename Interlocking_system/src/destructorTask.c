@@ -13,6 +13,9 @@ void destructorMain(void){
     if(kill(DIAGNOSTICS_TID, SIGUSR1) < 0){
         perror("\nErrore nell'invio del messaggio di kill al diagTask");
     }
+    if(kill(TIMER_TID, SIGUSR1) < 0){
+        perror("\nErrore nell'invio del messaggio di kill al timerTask");
+    }
     if(kill(LOG_TID, SIGUSR1) < 0){
         perror("\nErrore nell'invio del messaggio di kill al logTask");
     }

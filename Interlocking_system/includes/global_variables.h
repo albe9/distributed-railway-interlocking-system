@@ -41,7 +41,9 @@ TASK_ID CONTROL_TID;
 TASK_ID POSITIONING_TID;
 TASK_ID DESTRUCTOR_TID;
 TASK_ID DIAGNOSTICS_TID;
+TASK_ID TIMER_TID;
 
+SEM_ID TIMER_SEM;
 SEM_ID WIFI_CONTROL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e controlTask
 SEM_ID WIFI_DIAG_SEM;                   //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e diagTask
 SEM_ID CONTROL_DIAG_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da constrolTask e diagTask
@@ -105,6 +107,8 @@ extern int route_count;
 extern int NODE_TYPE;
 extern bool IN_POSITION;
 extern railroad_switch railswitch; // Questa variabile indica 
+extern UINT64 totalCurrentTimeMicro;
+
 
 enum DIAG_STATUS{
     NOT_ACTIVE,
