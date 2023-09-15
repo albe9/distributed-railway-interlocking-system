@@ -14,9 +14,7 @@
 #include "timerTask.h"
 #include "gpio.h"
 
-void test_size(void){
-	printf("%i", sizeof(u_int64_t));
-}
+
 
 void start_timer(void){
 	TIMER_TID = taskSpawn("timerTask", PRI_0, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
@@ -26,22 +24,39 @@ void start_log(void){
 	LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
+void test_delay_timer(void){
+	uint64_t previus_micro =0, current_micro = 0;
+	uint64_t elapsed[100];
+
+	for(int i = 0; i< 100; i++){
+		current_micro = getTimeMicro();
+		logMessage("prova per il delay della funzione logMessage","dmkTest", -1);
+		elapsed[i] = current_micro - previus_micro;
+		previus_micro = current_micro;
+	}
+
+	for(int i = 0; i< 100; i++){
+		printf("%llu\n", elapsed[i]); 
+	}
+}
 
 void test_timer1(void)
 {
-	UINT64 log_time_micro = 0;
+	uint64_t log_time_micro = 0;
 	semTake(TIMER_SEM, WAIT_FOREVER);
 	log_time_micro = totalCurrentTimeMicro;
 	semGive(TIMER_SEM);
+	printf("Timer task ha riportato : %llu\n", log_time_micro);
 	// sommo al tempo totale dato dagli overflow il tempo attuale in microsecondi
 	log_time_micro += (sysTimestamp())/54;
+	printf("%llu\n", log_time_micro);
 
-	char log_micro[100];
-	snprintf(log_micro, 100, "%llu    ", log_time_micro);
-	printf("%s\n", log_micro);
+	// char log_micro[100];
+	// snprintf(log_micro, 100, "%llu    ", log_time_micro);
+	// printf("%s\n", log_micro);
 }
-test_timer2(void){
-	u_int64_t time_micro = 0;
+void test_timer2(void){
+	uint64_t time_micro = 0;
 	time_micro = getTimeMicro();
 	printf("%llu\n", time_micro);
 }
@@ -49,6 +64,7 @@ test_timer2(void){
 void test_timer(void){
 	test_timer1();
 	test_timer2();
+	printf("\n");
 }
 
 void startDestructor(void){

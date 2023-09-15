@@ -107,7 +107,7 @@ extern int route_count;
 extern int NODE_TYPE;
 extern bool IN_POSITION;
 extern railroad_switch railswitch; // Questa variabile indica 
-extern UINT64 totalCurrentTimeMicro;
+extern uint64_t totalCurrentTimeMicro;
 
 
 enum DIAG_STATUS{

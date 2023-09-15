@@ -46,16 +46,10 @@ void logMessage(char* msg, char* task_name, int logLevel){
 	*/
 
 	//Metodo basato su sysTimestamp()
-	UINT64 log_time_micro = 0;
-	semTake(TIMER_SEM, WAIT_FOREVER);
-	log_time_micro = totalCurrentTimeMicro;
-	semGive(TIMER_SEM);
-	// sommo al tempo totale dato dagli overflow il tempo attuale in microsecondi
-	log_time_micro += (sysTimestamp())/54;
+	uint64_t log_time_micro = getTimeMicro();
 
 	char log_micro[100];
 	snprintf(log_micro, 100, "%llu    ", log_time_micro);
-	printf("%s\n", log_micro);
 
 	strcat(final_msg, log_micro);
 	strcat(final_msg, task_name);

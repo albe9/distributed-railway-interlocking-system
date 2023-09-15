@@ -16,4 +16,4 @@ bool diag_ended = false;
 int ping_answers = 0;           // Numero di ack ricevuto in risposta ad una richiesta di ping
 bool sensor_on_detected = false;
 railroad_switch railswitch = {.in_position = false, .last_route_id = 0};
-UINT64 totalCurrentTimeMicro = 0;
+uint64_t totalCurrentTimeMicro = 0;
