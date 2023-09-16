@@ -63,19 +63,19 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define MAX_CTRL_BUFF 10
 #define TYPE_SWITCH   2
 #define TYPE_LINEAR   3 
-#define LOG_LEVEL 0               // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL 
-#define LOG_ACTIVE 1              // Stato che indica che si sta eseguendo il log
-#define LOG_SUSPENDED 0           // Stato che indica che il log è momentaneamente sospeso
+#define LOG_LEVEL 0                         // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL 
+#define LOG_ACTIVE 1                        // Stato che indica che si sta eseguendo il log
+#define LOG_SUSPENDED 0                     // Stato che indica che il log è momentaneamente sospeso
 // TODO: controllare affidabilità della conversione tra tick e secondi effettivi  
-#define TICKS_TO_SECOND 60        // Testando il codice si ha che 60 tick sono equivalenti ad 1 sec
-#define FAIL FALSE                // FAIL è lo stato in cui la procedura di ping non è andata a buon fine
-#define SUCCESS TRUE              // SUCCESS è lo stato in cui la procedura di ping è andata a buon fine
-#define ROUTE_ID_PING 8888        //  Const int used in diagnostics task
-#define HOST_ID_PING 7777         //  Const int used in diagnostics task
-#define DIAG_TIME 2              // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
-#define SIM_SENSOR 0             // Se 1 indica che i SENSOR_ON sono simulati con messaggi, se 0 si utilizzano i pulsanti fisici
-
-
+#define TICKS_TO_SECOND 60                  // Testando il codice si ha che 60 tick sono equivalenti ad 1 sec
+#define FAIL FALSE                          // FAIL è lo stato in cui la procedura di ping non è andata a buon fine
+#define SUCCESS TRUE                        // SUCCESS è lo stato in cui la procedura di ping è andata a buon fine
+#define ROUTE_ID_PING 8888                  //  Const int used in diagnostics task
+#define HOST_ID_PING 7777                   //  Const int used in diagnostics task
+#define DIAG_TIME 2                         // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
+#define SIM_SENSOR 0                        // Se 1 indica che i SENSOR_ON sono simulati con messaggi, se 0 si utilizzano i pulsanti fisici
+#define TIME_TO_GET_OVERFLOW_MICRO 79536431 // Esprimiamo il tempo in microsecondi totali trascorsi  (2^32-1)/54 = numero di microsecondi che impiega sysTimestamp ad effettuare overflow
+#define TIMER_FREQ_MHz 54                    // Frequenza del timer della cpu BCM2711 espresso in MHz
 
 typedef struct{
     int route_id;

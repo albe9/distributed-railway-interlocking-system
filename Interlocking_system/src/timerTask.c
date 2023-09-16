@@ -6,20 +6,19 @@ void timerMain(void){
 	signal(SIGUSR1, timerDestructor);
 
     TIMER_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
-	uint32_t currentTimeNano;
+	uint32_t currentTimerRegValue;
 	bool flagOverflow = false;
 	int overflowCounter = 0;
 	while(true){
-		currentTimeNano = sysTimestamp();
-		if(currentTimeNano >= 4294967000 && !flagOverflow){
+		currentTimerRegValue = sysTimestamp();
+		if(currentTimerRegValue >= 4294967000 && !flagOverflow){
 			flagOverflow = true;
 		}
-		else if(currentTimeNano <= 1000 && flagOverflow){
+		else if(currentTimerRegValue <= 1000 && flagOverflow){
 			overflowCounter ++;
-			// printf("%i\n", overflowCounter);
+	
             semTake(TIMER_SEM, WAIT_FOREVER);
-            // Esprimiamo il tempo in microsecondi totali trascorsi  (2^32-1)/54 = numero di microsecondi che impiega sysTimestamp ad effettuare overflow
-			totalCurrentTimeMicro = (uint64_t)(overflowCounter * 79536431 + currentTimeNano/54);
+			totalCurrentTimeMicro = (uint64_t)(overflowCounter * TIME_TO_GET_OVERFLOW_MICRO + currentTimerRegValue / TIMER_FREQ_MHz);
             semGive(TIMER_SEM);
 			
 			flagOverflow = false;
@@ -40,7 +39,7 @@ uint64_t getTimeMicro(void)
 	// sommo al tempo totale dato dagli overflow il tempo attuale in microsecondi
 	uint32_t time_reg_micro = sysTimestamp();
 	// printf("sysTimestamp            : %llu\n", time_reg_micro);
-	time_reg_micro /= 54;
+	time_reg_micro /= TIMER_FREQ_MHz;
 	// printf("sysTimestamp / 54       : %llu\n", time_reg_micro);
 	
 	// printf("%llu\n", (uint64_t)time_reg_micro);

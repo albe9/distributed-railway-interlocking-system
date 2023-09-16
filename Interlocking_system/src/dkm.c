@@ -30,7 +30,8 @@ void test_delay_timer(void){
 
 	for(int i = 0; i< 100; i++){
 		current_micro = getTimeMicro();
-		logMessage("prova per il delay della funzione logMessage","dmkTest", -1);
+		// logMessage("prova per il delay della funzione logMessage","dmkTest", 1);
+		taskDelay(1);
 		elapsed[i] = current_micro - previus_micro;
 		previus_micro = current_micro;
 	}
@@ -50,7 +51,6 @@ void test_timer1(void)
 	// sommo al tempo totale dato dagli overflow il tempo attuale in microsecondi
 	log_time_micro += (sysTimestamp())/54;
 	printf("%llu\n", log_time_micro);
-
 	// char log_micro[100];
 	// snprintf(log_micro, 100, "%llu    ", log_time_micro);
 	// printf("%s\n", log_micro);
@@ -65,7 +65,13 @@ void test_timer(void){
 	test_timer1();
 	test_timer2();
 	printf("\n");
+
+	// UINT64	time_nano = 0;
+	// sysTimestamp64(&time_nano);
+	// printf("%llu\n", time_nano);
 }
+
+
 
 void startDestructor(void){
 	DESTRUCTOR_TID = taskSpawn("destructorTask", PRI_0, 0, 20000,(FUNCPTR) destructorMain, 0,0,0,0,0,0,0,0,0,0);
