@@ -24,6 +24,41 @@ void start_log(void){
 	LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 
+
+
+void test_core1(void){
+	taskDelay(120);
+	printf("task1 start\n");
+	while(true){
+		int a = 0;
+		for(int i = 0; i< 100000000; i++){
+			a++;
+		}
+		break;
+	}
+	printf("task1 end\n");
+}
+
+void test_core2(void){
+	printf("task2 start\n");
+	while(true){
+		int a = 0;
+		for(int i = 0; i< 100000000; i++){
+			a++;
+		}
+		break;
+	}
+	printf("task2 end\n");
+}
+
+test_core(void){
+	TASK_ID core1, core2;
+	core1 = taskSpawn("testCore1", PRI_1, 0, 20000,(FUNCPTR) test_core1, 0,0,0,0,0,0,0,0,0,0);
+	taskCpuAffinitySet(core1, 1 << 3);
+	core2 = taskSpawn("testCore2", PRI_0, 0, 20000,(FUNCPTR) test_core2, 0,0,0,0,0,0,0,0,0,0);
+	taskCpuAffinitySet(core2, 1 << 3);
+}
+
 void test_delay_timer(void){
 	uint64_t previus_micro =0, current_micro = 0;
 	uint64_t elapsed[100];

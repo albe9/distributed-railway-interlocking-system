@@ -22,8 +22,8 @@ void timerMain(void){
             semGive(TIMER_SEM);
 			
 			flagOverflow = false;
-			// taskdelay di 70 secondi per evitare il busy sleep
-			taskDelay(4200);
+			// taskdelay di 76 secondi per evitare il busy sleep
+			taskDelay(4560);
 		}
 	}
 }
