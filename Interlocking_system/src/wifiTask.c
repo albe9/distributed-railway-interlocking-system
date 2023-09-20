@@ -708,6 +708,7 @@ void wifiMain(void){
 		}
 		logMessage("[t37] Conclusione ciclo Task WiFi", taskName(0), 0);
 		taskDelay(8);
+		logMessage("[t77] task suspend 8 tick terminato", taskName(0), 0);
 	}
 
 

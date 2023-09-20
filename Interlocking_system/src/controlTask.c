@@ -24,11 +24,11 @@ exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command, bool log_t
 
     if(log_transitions){
         logMessage("[t5] acquisisco semaforo per la coda", taskName(0), 0);
-        taskPrioritySet(0, PRI_2);
+        // taskPrioritySet(0, PRI_2);
         logMessage("[t41] Scrivo il messaggio", taskName(0), 0);
         logMessage("[t28] Rilascio il semaforo e abbasso la priorità", taskName(0), 0);
         logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
-        taskPrioritySet(0, PRI_1);
+        // taskPrioritySet(0, PRI_1);
     }
 
     if(msgQSend(OUT_CONTROL_QUEUE, (char*)msg, sizeof(tpcp_msg), WAIT_FOREVER, MSG_PRI_NORMAL) != OK){
@@ -42,11 +42,11 @@ exit_number forwardMsg(tpcp_msg* msg, int receiver_id, char* command, bool log_t
 exit_number forwardNotOk(tpcp_msg* msg, int sender_id){
 
     logMessage("[t5] acquisisco semaforo per la coda", taskName(0), 0);
-    taskPrioritySet(0, PRI_2);
+    // taskPrioritySet(0, PRI_2);
     logMessage("[t41] Scrivo il messaggio", taskName(0), 0);
     logMessage("[t28] Rilascio il semaforo e abbasso la priorità", taskName(0), 0);
     logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
-    taskPrioritySet(0, PRI_1);
+    // taskPrioritySet(0, PRI_1);
 
     if(sender_id == RASP_ID){
         memset(msg->command , 0, sizeof(msg->command));
@@ -158,7 +158,9 @@ exit_number startDiagn(){
     // Se non è presente un messaggio da wifiTask avvio il task di diagnostica
     if(strcmp(strerror(errno), "S_objLib_OBJ_TIMEOUT") == 0){              
         logMessage("[t17] Avvio task di diagnostica", taskName(0), 0);
-        DIAGNOSTICS_TID = taskSpawn("diagTask", PRI_1, 0, 20000,(FUNCPTR) diagnosticsMain, 0,0,0,0,0,0,0,0,0,0);
+        DIAGNOSTICS_TID = taskCreate("diagTask", PRI_1, 0, 20000,(FUNCPTR) diagnosticsMain, 0,0,0,0,0,0,0,0,0,0);
+        taskCpuAffinitySet(DIAGNOSTICS_TID, 1 << 3);
+        taskActivate(DIAGNOSTICS_TID);
         logMessage("-----Task di diagnostica avviato", taskName(0), 1);
         return E_SUCCESS;
     }
@@ -285,7 +287,7 @@ void controlMain(void){
             logMessage("[t60] preselection", taskName(0), 0);           
             if(semTake(CONTROL_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
             logMessage("[t63] acquisisco il semaforo", taskName(0), 0);
-            taskPrioritySet(0, PRI_2);
+            // taskPrioritySet(0, PRI_2);
             logMessage("[t68] verifico se diag terminata", taskName(0), 0);
             if(diag_ended){
                 logMessage("[t65] preseletion", taskName(0), 0);
@@ -311,7 +313,7 @@ void controlMain(void){
                 logMessage("[t66] diagnostica da terminare, rilascio sem", taskName(0), 0);
             }
             if(semGive(CONTROL_DIAG_SEM) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
-            taskPrioritySet(0, PRI_1);
+            // taskPrioritySet(0, PRI_1);
             
         }
         else{
@@ -320,16 +322,16 @@ void controlMain(void){
         }
 
         // Controllo messaggi da wifiTask
-        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
         logMessage("[t27] acquisisco semaforo per la coda", taskName(0), 0);
-        taskPrioritySet(0, PRI_2);
+        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
+        // taskPrioritySet(0, PRI_2);
         logMessage("[t39] controllo se presente un messaggio", taskName(0), 0); 
 
         
         if(byte_recevied < 0){
             logMessage("[t42] Preselezione", taskName(0), 0);
             logMessage("[t38] non presente un msg", taskName(0), 0);
-            taskPrioritySet(0, PRI_1);
+            // taskPrioritySet(0, PRI_1);
             if(!flagDiagnOn){
                 // Calcolo per quanto tempo (in secondi) non ho ricevuto messaggi, se maggiore di DIAG_TIME avvio la diagnostica
                 currentDiagnTime = tickGet();
@@ -360,7 +362,7 @@ void controlMain(void){
                 //poichè è un messaggio che simula un sensore, faccio finta di non aver ricevuto nessun messaggio nei log e di tornare in idle
                 logMessage("[t42] Preselezione", taskName(0), 0);
                 logMessage("[t38] nessun msg presente", taskName(0), 0);
-                taskPrioritySet(0, PRI_1);
+                // taskPrioritySet(0, PRI_1);
                 logMessage("[t51] Preselezione", taskName(0), 0);
                 logMessage("[t52] controlTask torna in idle", taskName(0), 0);
                 logMessage("[t75] Ritorno in idle aggregazione", taskName(0), 0);
@@ -567,6 +569,7 @@ void controlMain(void){
             startDiagnTime = tickGet();
         }
         taskDelay(8);
+        logMessage("[t76] task suspend 8 tick terminato", taskName(0), 0);
     }
     
 }
