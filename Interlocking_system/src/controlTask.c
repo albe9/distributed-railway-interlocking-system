@@ -322,8 +322,10 @@ void controlMain(void){
         }
 
         // Controllo messaggi da wifiTask
+        taskDelay(1);
+		logMessage("[t79] attesa acquisizione semaforo completata", taskName(0), 0);
+        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), NO_WAIT);
         logMessage("[t27] acquisisco semaforo per la coda", taskName(0), 0);
-        ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
         // taskPrioritySet(0, PRI_2);
         logMessage("[t39] controllo se presente un messaggio", taskName(0), 0); 
 

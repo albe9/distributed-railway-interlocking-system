@@ -5,7 +5,7 @@ void timerMain(void){
 	//aggiungo l'handler per il signal SIGUSR1
 	signal(SIGUSR1, timerDestructor);
 
-    TIMER_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
+    TIMER_SEM = semMCreate(SEM_Q_PRIORITY);
 	uint32_t currentTimerRegValue;
 	bool flagOverflow = false;
 	int overflowCounter = 0;

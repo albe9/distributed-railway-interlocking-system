@@ -17,11 +17,15 @@
 
 
 void start_timer(void){
-	TIMER_TID = taskSpawn("timerTask", PRI_0, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
+	TIMER_TID = taskCreate("timerTask", PRI_6, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
+	taskCpuAffinitySet(TIMER_TID, 1 << 2);
+	taskActivate(TIMER_TID);
 }
 
 void start_log(void){
-	LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskCreate("LogTask", PRI_6, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+    taskCpuAffinitySet(LOG_TID, 1 << 1);
+	taskActivate(LOG_TID);
 }
 
 
