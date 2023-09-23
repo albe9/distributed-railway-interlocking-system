@@ -492,7 +492,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 			in_msg.sender_id = RASP_ID;
 			strcpy(in_msg.command, "NOT_OK");
 			in_msg.host_id = msg_host;
-			handleOutControlMsg(&in_msg);
+			handleOutControlMsg(&in_msg, true);
 		}
 		else{
 			//passo i dati al task di controllo
@@ -514,7 +514,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 	return E_SUCCESS;
 }
 
-exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
+exit_number handleOutControlMsg(tpcp_msg* out_control_msg, bool flag_log_not_ok){
 
 	//debug
 	char log_msg[100];
@@ -527,7 +527,15 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg){
 			// Riformatto il pacchetto seguendo la sintassi definita in handleInSingleMsg
 			snprintf(msg, 100,"%s;%i;%i.", out_control_msg->command, out_control_msg->host_id, out_control_msg->route_id);
 			sendToConn(&node_conn[node_idx], msg);
-			logMessage("[t10] Messaggio inviato", taskName(0), 0);
+			if (flag_log_not_ok){
+				logMessage("[t48] Preselection", taskName(0), 0);
+				logMessage("[t11] Messaggio NOT_OK inviato", taskName(0), 0);
+			}
+			else{
+				logMessage("[t10] Messaggio inviato", taskName(0), 0);
+			}
+
+
 			return E_SUCCESS;
 		}
 	}
@@ -693,7 +701,7 @@ void wifiMain(void){
 			// snprintf(msg, 100, "command :%s sender :%i recivier:%i route:%i", out_control_msg.command, out_control_msg.sender_id, out_control_msg.recevier_id, out_control_msg.route_id);
 			// logMessage(msg, taskName(0));
 			exit_number status_control;
-			if((status_control = handleOutControlMsg(&out_control_msg)) != E_SUCCESS){
+			if((status_control = handleOutControlMsg(&out_control_msg, false)) != E_SUCCESS){
 				logMessage(errorDescription(status_control), taskName(0), 2);
 			}
 
