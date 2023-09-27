@@ -7,7 +7,7 @@ void diagnosticsMain(){
     //aggiungo l'handler per il signal SIGUSR1
 	signal(SIGUSR1, diagnosticsDestructor);
 
-    logMessage("-----Inizio diagnostica", taskName(0), 1);
+    logMessage("[t82] Inizio loop diagTask", taskName(0), 0);
 
     // Segnaliamo lo start della diagniostica al wifi task
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);

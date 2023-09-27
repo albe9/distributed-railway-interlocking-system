@@ -1,6 +1,8 @@
 #include "positioningTask.h"
 
 void positioningMain(){
+
+    logMessage("[t83] Inizio posiTask", taskName(0), 0);
     exit_number status;
     if((status = positioning()) != E_SUCCESS){
         railswitch.in_position = false;

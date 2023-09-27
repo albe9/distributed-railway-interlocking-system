@@ -187,6 +187,8 @@ void controlMain(void){
     tpcp_msg sensors_msg;
     while(true){    
 
+        logMessage("[t81] Inizio loop ctrlTask", taskName(0), 0);
+
         // Se è attiva la simulazione dei sensori con i messaggi
         if(SIM_SENSOR){
             // Controllo SensorOn
