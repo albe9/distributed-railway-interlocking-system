@@ -546,7 +546,6 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg, bool flag_log_not_ok)
 }
 
 exit_number checkDiag(){
-	logMessage("[t54] Preselection inizio ciclo Task WiFi", taskName(0), 0);
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
 	logMessage("-----[t18] acquisisco semaforo", taskName(0), 0);
 	//taskPrioritySet(0, PRI_2);
@@ -610,7 +609,8 @@ void wifiMain(void){
 
 	bool flag_running=true;
 
-	while(flag_running){        
+	while(flag_running){     
+		logMessage("[t54] inizio ciclo Task WiFi", taskName(0), 0);   
 		// Da man select .....if using select() within a loop, the
 		// sets must be reinitialized before each call.
 		// Resetto e riaggiungo gli fds dei socket delle connessioni
