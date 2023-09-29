@@ -327,7 +327,6 @@ void controlMain(void){
         ssize_t byte_recevied = msgQReceive(IN_CONTROL_QUEUE, (char*)&in_msg, sizeof(tpcp_msg), 1);
         logMessage("[t79] attesa acquisizione msg completata", taskName(0), 0);
         logMessage("[t27] acquisisco semaforo per la coda", taskName(0), 0);
-        // taskPrioritySet(0, PRI_2);
         logMessage("[t39] controllo se presente un messaggio", taskName(0), 0); 
 
         
@@ -491,7 +490,9 @@ void controlMain(void){
                                     // Il nodo di scambio ha il deviatoio su una rotta diversa oppure non è in posizione, si deve avviare il positioning
                                     logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0), 0);
                                     railswitch.last_route_id = in_msg.route_id;
-                                    POSITIONING_TID = taskSpawn("posiTask", PRI_1, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
+                                    POSITIONING_TID = taskCreate("posiTask", PRI_3, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
+                                    taskCpuAffinitySet(POSITIONING_TID, 1 << 3);
+                                    taskActivate(POSITIONING_TID);
                                     taskSuspend(0);
                                     // 
                                     //  Qui è in corso il positioning
