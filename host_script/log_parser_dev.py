@@ -1,7 +1,10 @@
 import re
 import datetime
 import sys
+import os
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 """
 Creare un documento di tipo "File Importer Box" e importare nel progetto
@@ -79,13 +82,28 @@ ciascuna transizione
 grafo delle marcature e in quello delle classi
 """
 
+N_TOTAL_TRANSITIONS = 80
+
+analysis_path = "./host_script/analysis"
+isExist = os.path.exists(analysis_path)
+if not isExist:
+    # Create a new directory because it does not exist
+    os.makedirs(analysis_path)
+
+type1_path = "./host_script/importer_files"
+isExist = os.path.exists(type1_path)
+if not isExist:
+    # Create a new directory because it does not exist
+    os.makedirs(type1_path)
 
 for log_idx in range(1,6):
-    log_path = "./../connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
+    # Extract the info from the logs
+    log_path = "./connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
     with open(log_path, "r") as f:
         extract = f.readlines()
-    type1_path = "./importer_files/type1_192.168.1.21" + str(log_idx) + ".txt"
-    with open(type1_path, "w") as f:
+
+    # Create the type_1 files
+    with open(f"{type1_path}/type1_192.168.1.21" + str(log_idx) + ".txt", "w") as f:
         prev_time = None
         for line in extract:
             line=line.strip()
@@ -103,10 +121,66 @@ for log_idx in range(1,6):
 
 
                 result = round(result / 1000)
-                thread_name = match.group(2)
-                f.write(f"{thread_name}\n{result}\n")
-    
+                trans_name = match.group(2)
+                f.write(f"{trans_name}\n{result}\n")
 
+    # Create a list where element 0 has all the time of executions of transition t0 
+    # for example the list will be [[0,0,0], [16,17,16,0], ...]
+    transitions = [["-"] for _ in range(N_TOTAL_TRANSITIONS + 1)]
+    prev_time = None
+    for line in extract:
+        line=line.strip()
+
+        # match = re.search("(\d*h:\d*m:\d*s:\d*ms).*\[(t\d*)\]",line)
+        match = re.search("(\d+)    .*\[t(\d+)\]",line)
+        
+        if match is not None:
+            current_time_micro = int(match.group(1))
+            if prev_time is None:
+                prev_time = current_time_micro
+            
+            result = current_time_micro - prev_time
+            prev_time = current_time_micro
+
+
+            result = round(result / 1000)
+            trans_num = int(match.group(2))
+            
+            # Check if it's the first time that we encounter a transition
+            if transitions[trans_num][0] == "-":
+                transitions[trans_num] = [result]
+            elif isinstance(transitions[trans_num][0], int):
+                transitions[trans_num].append(result)
+
+    # Compute statistics
+    max_execution_times = {}        
+    for idx, transition in enumerate(transitions):
+        # Check if transition has data
+        if transition[0] != "-":
+            max_time = max(transition)
+            min_time = min(transition)
+            avg_time = sum(transition) / len(transition)
+            # print(f"t{idx:02d} --->     Max: {max_time:04d}     Min:{min_time:04d}     Avg:{avg_time:07.2f}")
+            if max_execution_times.get(max_time) == None:
+                max_execution_times[max_time] = []
+            max_execution_times[max_time].append(f"t{idx}")
+
+    # Create graph
+    x = []
+    y = []        
+    for time, trans_list in max_execution_times.items():
+        x.append(time)
+        y.append(len(trans_list))
+    colors = np.random.rand(len(x), 3)
+    plt.bar(x, y, color=colors, width=1.6)
+    plt.xlabel('Max execution time [ms]')
+    plt.ylabel('Occurrences')
+
+    plt.savefig(f'{analysis_path}/transitions_192.186.1.21{log_idx}.png')
+        
+
+
+    
 
 def draw_task_execution_times():
 
