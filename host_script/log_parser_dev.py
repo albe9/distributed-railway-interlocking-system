@@ -126,57 +126,57 @@ for log_idx in range(1,6):
 
     # Create a list where element 0 has all the time of executions of transition t0 
     # for example the list will be [[0,0,0], [16,17,16,0], ...]
-    transitions = [["-"] for _ in range(N_TOTAL_TRANSITIONS + 1)]
-    prev_time = None
-    for line in extract:
-        line=line.strip()
+    # transitions = [["-"] for _ in range(N_TOTAL_TRANSITIONS + 1)]
+    # prev_time = None
+    # for line in extract:
+    #     line=line.strip()
 
-        # match = re.search("(\d*h:\d*m:\d*s:\d*ms).*\[(t\d*)\]",line)
-        match = re.search("(\d+)    .*\[t(\d+)\]",line)
+    #     # match = re.search("(\d*h:\d*m:\d*s:\d*ms).*\[(t\d*)\]",line)
+    #     match = re.search("(\d+)    .*\[t(\d+)\]",line)
         
-        if match is not None:
-            current_time_micro = int(match.group(1))
-            if prev_time is None:
-                prev_time = current_time_micro
+    #     if match is not None:
+    #         current_time_micro = int(match.group(1))
+    #         if prev_time is None:
+    #             prev_time = current_time_micro
             
-            result = current_time_micro - prev_time
-            prev_time = current_time_micro
+    #         result = current_time_micro - prev_time
+    #         prev_time = current_time_micro
 
 
-            result = round(result / 1000)
-            trans_num = int(match.group(2))
+    #         result = round(result / 1000)
+    #         trans_num = int(match.group(2))
             
-            # Check if it's the first time that we encounter a transition
-            if transitions[trans_num][0] == "-":
-                transitions[trans_num] = [result]
-            elif isinstance(transitions[trans_num][0], int):
-                transitions[trans_num].append(result)
+    #         # Check if it's the first time that we encounter a transition
+    #         if transitions[trans_num][0] == "-":
+    #             transitions[trans_num] = [result]
+    #         elif isinstance(transitions[trans_num][0], int):
+    #             transitions[trans_num].append(result)
 
-    # Compute statistics
-    max_execution_times = {}        
-    for idx, transition in enumerate(transitions):
-        # Check if transition has data
-        if transition[0] != "-":
-            max_time = max(transition)
-            min_time = min(transition)
-            avg_time = sum(transition) / len(transition)
-            # print(f"t{idx:02d} --->     Max: {max_time:04d}     Min:{min_time:04d}     Avg:{avg_time:07.2f}")
-            if max_execution_times.get(max_time) == None:
-                max_execution_times[max_time] = []
-            max_execution_times[max_time].append(f"t{idx}")
+    # # Compute statistics
+    # max_execution_times = {}        
+    # for idx, transition in enumerate(transitions):
+    #     # Check if transition has data
+    #     if transition[0] != "-":
+    #         max_time = max(transition)
+    #         min_time = min(transition)
+    #         avg_time = sum(transition) / len(transition)
+    #         # print(f"t{idx:02d} --->     Max: {max_time:04d}     Min:{min_time:04d}     Avg:{avg_time:07.2f}")
+    #         if max_execution_times.get(max_time) == None:
+    #             max_execution_times[max_time] = []
+    #         max_execution_times[max_time].append(f"t{idx}")
 
-    # Create graph
-    x = []
-    y = []        
-    for time, trans_list in max_execution_times.items():
-        x.append(time)
-        y.append(len(trans_list))
-    colors = np.random.rand(len(x), 3)
-    plt.bar(x, y, color=colors, width=1.6)
-    plt.xlabel('Max execution time [ms]')
-    plt.ylabel('Occurrences')
+    # # Create graph
+    # x = []
+    # y = []        
+    # for time, trans_list in max_execution_times.items():
+    #     x.append(time)
+    #     y.append(len(trans_list))
+    # colors = np.random.rand(len(x), 3)
+    # plt.bar(x, y, color=colors, width=1.6)
+    # plt.xlabel('Max execution time [ms]')
+    # plt.ylabel('Occurrences')
 
-    plt.savefig(f'{analysis_path}/transitions_192.186.1.21{log_idx}.png')
+    # plt.savefig(f'{analysis_path}/transitions_192.186.1.21{log_idx}.png')
         
 
 
@@ -199,11 +199,11 @@ def draw_task_execution_times():
     }
 
     for log_idx in range(1,6):
-        log_path = "./../connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
+        log_path = "./connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
         with open(log_path, "r") as f:
             log = f.read()
             match_list = re.findall("(wifiTask)",log)
             for match in match_list:
                 print(match)
         break
-draw_task_execution_times()
+# draw_task_execution_times()
