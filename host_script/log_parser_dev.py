@@ -1,6 +1,7 @@
 import re
 import datetime
 import sys
+import matplotlib.pyplot as plt
 
 """
 Creare un documento di tipo "File Importer Box" e importare nel progetto
@@ -106,4 +107,29 @@ for log_idx in range(1,6):
                 f.write(f"{thread_name}\n{result}\n")
     
 
-    
+
+def draw_task_execution_times():
+
+    task_start_end = {
+        "ctrlTask" : ["t81","t76"],
+        "diagTask" : ["t82","t21"],
+        "posiTask" : ["t83","t80"],
+        "wifiTask" : ["t54","t77"],
+    }
+
+    task_times = {
+        "ctrlTask" : [],
+        "diagTask" : [],
+        "posiTask" : [],
+        "wifiTask" : [],
+    }
+
+    for log_idx in range(1,6):
+        log_path = "./../connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
+        with open(log_path, "r") as f:
+            log = f.read()
+            match_list = re.findall("(wifiTask)",log)
+            for match in match_list:
+                print(match)
+        break
+draw_task_execution_times()
