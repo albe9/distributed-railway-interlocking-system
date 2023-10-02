@@ -82,15 +82,20 @@ ciascuna transizione
 grafo delle marcature e in quello delle classi
 """
 
+# In questo modo i path sono assoluti (lo script può essere eseguito da qualsiasi directory)
+abs_path = os.path.abspath(__file__)
+HOST_SCRIPT_DIR = os.path.dirname(abs_path)
+BASE_DIR = os.path.dirname(HOST_SCRIPT_DIR)
+
 N_TOTAL_TRANSITIONS = 80
 
-analysis_path = "./host_script/analysis"
+analysis_path = f"{HOST_SCRIPT_DIR}/analysis"
 isExist = os.path.exists(analysis_path)
 if not isExist:
     # Create a new directory because it does not exist
     os.makedirs(analysis_path)
 
-type1_path = "./host_script/importer_files"
+type1_path = f"{HOST_SCRIPT_DIR}/importer_files"
 isExist = os.path.exists(type1_path)
 if not isExist:
     # Create a new directory because it does not exist
@@ -98,7 +103,7 @@ if not isExist:
 
 for log_idx in range(1,6):
     # Extract the info from the logs
-    log_path = "./connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
+    log_path = f"{BASE_DIR}/connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
     with open(log_path, "r") as f:
         extract = f.readlines()
 
@@ -180,30 +185,67 @@ for log_idx in range(1,6):
         
 
 
+
     
 
 def draw_task_execution_times():
 
     task_start_end = {
         "ctrlTask" : ["t81","t76"],
+        "wifiTask" : ["t54","t77"],
         "diagTask" : ["t82","t21"],
         "posiTask" : ["t83","t80"],
-        "wifiTask" : ["t54","t77"],
     }
 
     task_times = {
         "ctrlTask" : [],
+        "wifiTask" : [],
         "diagTask" : [],
         "posiTask" : [],
-        "wifiTask" : [],
     }
 
     for log_idx in range(1,6):
-        log_path = "./connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
+        #resetto così da poter utilizzare lo stesso dict con tutti i log
+        for task_name in task_times:
+            task_times[task_name].clear()
+        log_path = f"{BASE_DIR}/connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
         with open(log_path, "r") as f:
             log = f.read()
-            match_list = re.findall("(wifiTask)",log)
-            for match in match_list:
-                print(match)
-        break
-# draw_task_execution_times()
+            match_list = re.findall("(\d+)    (\w+)    -*\[(t\d+)\]",log)
+
+            for time, task_name, trans_name in match_list:
+                # Converto in ms e salvo i tempi delle trans di start come negativi, così sommando quelli di end ottengo il tempo trascorso
+                if task_start_end[task_name][0] == trans_name:
+                    task_times[task_name].append(- round(int(time) / 1000))
+                elif task_start_end[task_name][1] == trans_name:
+                    task_times[task_name][-1] += round(int(time) / 1000)
+            #rimuovo le transizioni negative se presenti (ultima transizione del log è stata uno start e non è stato catturato l'end)
+            for task_name in task_times:
+                for time_idx, time in enumerate(task_times[task_name]):
+                    if time < 0:
+                        task_times[task_name].pop(time_idx)
+
+        if log_idx == 2 :
+            fig, axs = plt.subplots(len(task_times), sharex= False, constrained_layout=True)
+        else:
+            fig, axs = plt.subplots(len(task_times)-1, sharex= False, constrained_layout=True)
+            axs[1].sharex(axs[0])
+        fig.set_size_inches(10,10)
+        fig.suptitle("Distribution of task termination times", fontsize=20 ,fontweight='bold')
+        bins_n = 20
+        colors = ["red", "blue", "green", "orange"]
+
+        
+
+        for task_idx, task_name in enumerate(task_times):
+            if log_idx != 2 and task_name == "posiTask":
+                continue
+            axs[task_idx].hist(task_times[task_name], bins=bins_n, color=colors[task_idx])
+            axs[task_idx].ticklabel_format(useOffset=False)
+            axs[task_idx].set_title(task_name, fontsize=14 ,fontweight='bold')
+            axs[task_idx].set_xlabel("time (ms)")
+        
+        plt.savefig(f'{HOST_SCRIPT_DIR}/analysis/task_times_192.186.1.21{log_idx}.png')
+
+
+draw_task_execution_times()
