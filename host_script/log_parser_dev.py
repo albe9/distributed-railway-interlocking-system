@@ -3,7 +3,9 @@ import datetime
 import sys
 import os
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import numpy as np
+import matplotlib.transforms as transforms
 
 
 """
@@ -87,7 +89,10 @@ abs_path = os.path.abspath(__file__)
 HOST_SCRIPT_DIR = os.path.dirname(abs_path)
 BASE_DIR = os.path.dirname(HOST_SCRIPT_DIR)
 
-N_TOTAL_TRANSITIONS = 80
+# Questo numero è superiore al numero di transizioni presenti nella rete
+# per evitare che aggiunti future di nuove transizioni vadano a richiedere
+# la modifica di questo valore
+N_TOTAL_TRANSITIONS = 90
 
 analysis_path = f"{HOST_SCRIPT_DIR}/analysis"
 isExist = os.path.exists(analysis_path)
@@ -131,61 +136,101 @@ for log_idx in range(1,6):
 
     # Create a list where element 0 has all the time of executions of transition t0 
     # for example the list will be [[0,0,0], [16,17,16,0], ...]
-    # transitions = [["-"] for _ in range(N_TOTAL_TRANSITIONS + 1)]
-    # prev_time = None
-    # for line in extract:
-    #     line=line.strip()
+    transitions = [["-"] for _ in range(N_TOTAL_TRANSITIONS + 1)]
+    prev_time = None
 
-    #     # match = re.search("(\d*h:\d*m:\d*s:\d*ms).*\[(t\d*)\]",line)
-    #     match = re.search("(\d+)    .*\[t(\d+)\]",line)
+    countings = {}
+    for line in extract:
+        line=line.strip()
+
+        # match = re.search("(\d*h:\d*m:\d*s:\d*ms).*\[(t\d*)\]",line)
+        match = re.search("(\d+)    .*\[t(\d+)\]",line)
         
-    #     if match is not None:
-    #         current_time_micro = int(match.group(1))
-    #         if prev_time is None:
-    #             prev_time = current_time_micro
+        if match is not None:
+            current_time_micro = int(match.group(1))
+            if prev_time is None:
+                prev_time = current_time_micro
             
-    #         result = current_time_micro - prev_time
-    #         prev_time = current_time_micro
+            result = current_time_micro - prev_time
+            prev_time = current_time_micro
 
 
-    #         result = round(result / 1000)
-    #         trans_num = int(match.group(2))
+            result = round(result / 1000)
+            trans_num = int(match.group(2))
+
+            if result in countings:
+                countings[result] += 1
+            else:
+                countings[result] = 1
             
-    #         # Check if it's the first time that we encounter a transition
-    #         if transitions[trans_num][0] == "-":
-    #             transitions[trans_num] = [result]
-    #         elif isinstance(transitions[trans_num][0], int):
-    #             transitions[trans_num].append(result)
+            # Check if it's the first time that we encounter a transition
+            if transitions[trans_num][0] == "-":
+                # If first time create a list with a single value
+                transitions[trans_num] = [result]
+            elif isinstance(transitions[trans_num][0], int):
+                # If not first time append to the list
+                transitions[trans_num].append(result)
 
-    # # Compute statistics
-    # max_execution_times = {}        
-    # for idx, transition in enumerate(transitions):
-    #     # Check if transition has data
-    #     if transition[0] != "-":
-    #         max_time = max(transition)
-    #         min_time = min(transition)
-    #         avg_time = sum(transition) / len(transition)
-    #         # print(f"t{idx:02d} --->     Max: {max_time:04d}     Min:{min_time:04d}     Avg:{avg_time:07.2f}")
-    #         if max_execution_times.get(max_time) == None:
-    #             max_execution_times[max_time] = []
-    #         max_execution_times[max_time].append(f"t{idx}")
+    # Compute statistics
+    max_execution_times = {}        
+    for idx, transition in enumerate(transitions):
+        # Check if transition has data
+        if transition[0] != "-":
+            max_time = max(transition)
+            min_time = min(transition)
+            avg_time = sum(transition) / len(transition)
+            # print(f"t{idx:02d} --->     Max: {max_time:04d}     Min:{min_time:04d}     Avg:{avg_time:07.2f}")
+            if max_execution_times.get(max_time) == None:
+                max_execution_times[max_time] = []
+            max_execution_times[max_time].append(f"t{idx}")
+    max_execution_times = dict(sorted(max_execution_times.items()))        
 
-    # # Create graph
-    # x = []
-    # y = []        
-    # for time, trans_list in max_execution_times.items():
-    #     x.append(time)
-    #     y.append(len(trans_list))
-    # colors = np.random.rand(len(x), 3)
-    # plt.bar(x, y, color=colors, width=1.6)
-    # plt.xlabel('Max execution time [ms]')
-    # plt.ylabel('Occurrences')
+    # Create max graph
+    times = []
+    occurrencies = []        
+    for time, trans_list in max_execution_times.items():
+        times.append(time)
+        occurrencies.append(len(trans_list))
+    
+    n = len(times)
+    colors = list(mcolors.TABLEAU_COLORS.values())
+    colors = colors[:n] if n <= len(colors) else colors * (n // len(colors)) + colors[:n % len(colors)]
+    plt.style.use("ggplot")
+    fig, ax = plt.subplots(dpi=288)
+    bar_container = ax.bar(times, occurrencies, color=colors, width=2)
+    ax.set(ylabel="Occurrencies", title="Max execution times [ms]")
+    ax.tick_params(axis='x', labelsize=6)
+    ax.set_xticks(times)
+    fig.savefig(f'{analysis_path}/transitions_max_192.186.1.21{log_idx}.png')
 
-    # plt.savefig(f'{analysis_path}/transitions_192.186.1.21{log_idx}.png')
-        
+    # Create execution times graph
+    countings = dict(sorted(countings.items()))
+    times = list(countings.keys())
+    occurrencies = list(countings.values())
 
+    n = len(times)
+    colors = list(mcolors.TABLEAU_COLORS.values())
+    colors = colors[:n] if n <= len(colors) else colors * (n // len(colors)) + colors[:n % len(colors)]
+    plt.style.use("ggplot")
+    fig, ax = plt.subplots(dpi=288)
+    bar_container = ax.bar(times, occurrencies, color=colors, width=2)
 
-
+    for bar, occurrency, num in zip(bar_container, occurrencies, range(0, n)):
+        ax.text(bar.get_x() + bar.get_width()/2, 10 if num % 2 == 0 else 20, str(occurrency),
+                ha='center', va='center', rotation='vertical', fontsize=6)
+    ax.set(ylabel="Occurrencies", title="Execution times [ms]")
+    ax.tick_params(axis='x', labelsize=4)
+    ax.set_xticks(times, labels=times, visible=False)
+    tick_labels = times
+    for i, tick_label in enumerate(tick_labels):
+        if i % 2 == 1:  # Se l'indice è dispari, sposta l'etichetta verso il basso
+            trans = transforms.Affine2D().translate(0, -5) + ax.transData
+            ax.text(tick_label, 0, str(tick_label), transform=trans, ha='center', fontsize=6)
+        else:  # Altrimenti, posiziona l'etichetta normalmente
+            trans = transforms.Affine2D().translate(0, -8) + ax.transData
+            ax.text(tick_label, 0, str(tick_label), transform=trans, ha='center', fontsize=6)
+    ax.set_ylim(0, 100)
+    fig.savefig(f'{analysis_path}/transitions_exec_192.186.1.21{log_idx}.png')
     
 
 def draw_task_execution_times():
@@ -248,4 +293,4 @@ def draw_task_execution_times():
         plt.savefig(f'{HOST_SCRIPT_DIR}/analysis/task_times_192.186.1.21{log_idx}.png')
 
 
-draw_task_execution_times()
+# draw_task_execution_times()
