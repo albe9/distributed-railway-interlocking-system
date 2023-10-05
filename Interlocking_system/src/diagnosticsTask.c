@@ -12,7 +12,7 @@ void diagnosticsMain(){
     // Segnaliamo lo start della diagniostica al wifi task
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
     logMessage("-----[t22] Acquisisco il semaforo di status", taskName(0), 0);
-    taskPrioritySet(0, PRI_3);
+    taskPrioritySet(0, PRI_2);
     logMessage("-----[t25] Setto la flag di status", taskName(0), 0);
     ping_status = STARTING;
     logMessage("-----[t24] Rilascio il semaforo di status", taskName(0), 0);
@@ -26,7 +26,7 @@ void diagnosticsMain(){
     // Accesso alle variabili globali tramite semaforo
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
     logMessage("-----[t34] Acquisisco il semaforo di status", taskName(0), 0);
-    taskPrioritySet(0, PRI_3);
+    taskPrioritySet(0, PRI_2);
     // Fermiamo la procedura di ping
     ping_status = ENDING;
     // in base al successo o meno dei ping impostiamo la variabile globale di ping fail safe
