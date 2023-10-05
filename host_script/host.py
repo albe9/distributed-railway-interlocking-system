@@ -13,6 +13,9 @@ HOST_IP_SUFFIX = "192.168.1.21"
 HOST_ID = 0
 HOST_IP = sys.argv[2]
 TAIL_ID = -9999
+AUTOMATIC_TESTING_ROUTES = False
+ROUTES_TO_TEST = [3,3]
+ROUTES_TESTED_COUNTER = [0,0]
 
 class Node:
     # rasp_id deve essere univoco in tutto il grafo
@@ -134,6 +137,36 @@ def reading_and_answer_ping(fds):
                             ack_msg = "PING_ACK;."
                             fd.send(ack_msg.encode())
                             # print(f"[T1] Inviato a {fd.getpeername()} : {ack_msg}")
+                        elif AUTOMATIC_TESTING_ROUTES:
+                            if ("TRAIN_OK" in msg.decode()):
+                                print(f"ricevuto train_ok da {fd.getpeername()[0]}, inoltro sensor_on automaticamente")
+                                
+                                if fd.getpeername()[0] == "192.168.1.211":
+                                    sensor_on_msg = "SENSOR_ON;0;2."
+                                    fd.send(sensor_on_msg.encode())
+                                elif fd.getpeername()[0] == "192.168.1.214":
+                                    sensor_on_msg = "SENSOR_ON;0;1."
+                                    fd.send(sensor_on_msg.encode())
+                                else:
+                                    print("Testing automatico completato")
+                            elif ("SENSOR_OFF" in msg.decode()):
+                                print(f"ricevuto sensor_off da {fd.getpeername()[0]}, inoltro nuova richiesta automaticamente")
+                                if fd.getpeername()[0] == "192.168.1.211" and ROUTES_TESTED_COUNTER[0] < ROUTES_TO_TEST[0]:
+                                    ROUTES_TESTED_COUNTER[0] += 1
+                                    req_msg = "REQ;0;2."
+                                    for fd2 in fds:
+                                        if fd2.getpeername()[0] == "192.168.1.214":
+                                            fd2.send(req_msg.encode())
+                                elif fd.getpeername()[0] == "192.168.1.214" and ROUTES_TESTED_COUNTER[1] < ROUTES_TO_TEST[1]:
+                                    ROUTES_TESTED_COUNTER[1] += 1
+                                    req_msg = "REQ;0;1."
+                                    for fd2 in fds:
+                                        if fd2.getpeername()[0] == "192.168.1.211":
+                                            fd2.send(req_msg.encode())
+                                else:
+                                    print("Testing automatico completato")
+                                    break
+                                print(f"progresso : [{ROUTES_TESTED_COUNTER[0]},{ROUTES_TESTED_COUNTER[1]}]/[{ROUTES_TO_TEST[0]},{ROUTES_TO_TEST[1]}]")
                         else:                      
                             print(f"{getTime()}[T1] Messaggio da {fd.getpeername()[0]} : {msg.decode()}")
     print("Tutti i nodi disconnessi, reading thread terminato")
@@ -320,9 +353,16 @@ def server_loop(node_num, net_graph):
         reading_thread = Thread(target=reading_and_answer_ping, args=(connected_nodes,))
         reading_thread.start()
 
-        # Genero ed avvio un thread che permette di inviare un messaggio verso tutti i nodi
-        send_msg_thread = Thread(target=send_msg_from_keyboard, args=(connected_nodes,))
-        send_msg_thread.start()
+        if AUTOMATIC_TESTING_ROUTES:
+            for conn in connected_nodes:
+                if conn.getpeername()[0] == "192.168.1.211":
+                    msg = "REQ;0;1."
+                    conn.send(msg.encode())
+                    print("Iniziato testing automatico")
+        else:
+            # Genero ed avvio un thread che permette di inviare un messaggio verso un nodo collegato specifico
+            send_msg_thread = Thread(target=send_msg_from_keyboard, args=(connected_nodes,))
+            send_msg_thread.start()
                     
 
 node1 = Node(1)

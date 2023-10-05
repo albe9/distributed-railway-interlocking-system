@@ -271,15 +271,23 @@ void initMain(void){
 	// logMessage(msg,taskName(0));
 
 
-    WIFI_CONTROL_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
-    WIFI_DIAG_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
-    CONTROL_DIAG_SEM = semBCreate(SEM_Q_FIFO, SEM_FULL);
-    IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
-    OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
+    WIFI_CONTROL_SEM = semMCreate(SEM_Q_PRIORITY);
+    WIFI_DIAG_SEM = semMCreate(SEM_Q_PRIORITY);
+    CONTROL_DIAG_SEM = semMCreate(SEM_Q_PRIORITY);
+    IN_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_PRIORITY);
+    OUT_CONTROL_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_PRIORITY);
 
-    WIFI_TID = taskSpawn("wifiTask", PRI_1, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
-    CONTROL_TID = taskSpawn("ctrlTask", PRI_1, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
+
+    CONTROL_TID = taskCreate("ctrlTask", PRI_3, 0, 20000,(FUNCPTR) controlMain, 0,0,0,0,0,0,0,0,0,0);
+    WIFI_TID = taskCreate("wifiTask", PRI_2, 0, 20000,(FUNCPTR) wifiMain, 0,0,0,0,0,0,0,0,0,0);
     
+    taskCpuAffinitySet(CONTROL_TID, 1 << 3);
+    taskCpuAffinitySet(WIFI_TID, 1 << 3);
+    
+    taskActivate(CONTROL_TID);
+    taskActivate(WIFI_TID);
+
+
     //rimuovo tutte le risorse allocate prima di terminare il task
     free(node_net.prev_ids);
     free(node_net.prev_ips);

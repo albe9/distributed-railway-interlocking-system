@@ -7,7 +7,7 @@ void diagnosticsMain(){
     //aggiungo l'handler per il signal SIGUSR1
 	signal(SIGUSR1, diagnosticsDestructor);
 
-    logMessage("-----Inizio diagnostica", taskName(0), 1);
+    logMessage("[t82] Inizio loop diagTask", taskName(0), 0);
 
     // Segnaliamo lo start della diagniostica al wifi task
     if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
@@ -59,7 +59,7 @@ void diagnosticsMain(){
     // Scriviamo l'esito nell'area di memoria condivisa con il task di controllo
     if(semTake(CONTROL_DIAG_SEM, WAIT_FOREVER) < 0) logMessage(errorDescription(E_DEFAUL_ERROR), taskName(0), 2);
     logMessage("-----[t55] Acquisisco il semaforo", taskName(0), 0);
-    taskPrioritySet(0, PRI_2);
+    taskPrioritySet(0, PRI_3);
     logMessage("-----[t20] Scrivo esito diagnostica", taskName(0), 0);
     diag_ended = true;
     if(in_ping_fail_safe){

@@ -123,7 +123,8 @@ enum PRI_LEV{
     PRI_2 = 59,
     PRI_3 = 58,
     PRI_4 = 57,
-    PRI_5 = 56
+    PRI_5 = 56,
+    PRI_6 = 50
 }priority_levels; // Indica i livelli di priority, in VxWorks 0 è priorità massima e 255 minima
 
 typedef struct{

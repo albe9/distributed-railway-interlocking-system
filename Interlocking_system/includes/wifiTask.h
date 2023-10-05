@@ -43,7 +43,7 @@ extern void sendLogToHost(void);
 extern void wifiMain(void);
 extern exit_number handleInSingleMsg(char* msg, int sender_id);
 extern exit_number handleInMsgs(char* msg, int sender_id);
-extern exit_number handleOutControlMsg(tpcp_msg* out_control_msg);
+extern exit_number handleOutControlMsg(tpcp_msg* out_control_msg, bool flag_log_not_ok);
 extern exit_number checkDiag();
 extern void wifiDestructor(int sig);
 extern void resetConnections();

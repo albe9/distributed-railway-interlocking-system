@@ -1,6 +1,8 @@
 #include "positioningTask.h"
 
 void positioningMain(){
+
+    logMessage("[t83] Inizio posiTask", taskName(0), 0);
     exit_number status;
     if((status = positioning()) != E_SUCCESS){
         railswitch.in_position = false;
@@ -9,7 +11,7 @@ void positioningMain(){
     else{
         railswitch.in_position = true;
     }
-    logMessage("[t14] Terminazione del task di positioning", taskName(0), 0);
+    logMessage("[t80] Terminazione del task di positioning", taskName(0), 0);
     char msg[100];
     snprintf(msg, 100, "Deviatoio per rotta: %i   e in_position: %d", railswitch.last_route_id, railswitch.in_position);
     logMessage(msg, taskName(0), 1);
@@ -28,6 +30,7 @@ exit_number positioning(){
             positioning = positioning + 1;
         }
         sleep(3);
+        logMessage("[t14] positioning avvenuto", taskName(0), 0);
         return E_SUCCESS;
     }
 }

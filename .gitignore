@@ -12,4 +12,5 @@ rpivsb
 host_script/log_test/*
 host_script/importer_files/*
 host_script/trace_files/*
+host_script/analysis/*
 tapo.config
