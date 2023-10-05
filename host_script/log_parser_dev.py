@@ -3,6 +3,7 @@ import datetime
 import sys
 import os
 import matplotlib.pyplot as plt
+import matplotlib.ticker 
 import matplotlib.colors as mcolors
 import numpy as np
 import matplotlib.transforms as transforms
@@ -106,6 +107,7 @@ if not isExist:
     # Create a new directory because it does not exist
     os.makedirs(type1_path)
 
+
 for log_idx in range(1,6):
     # Extract the info from the logs
     log_path = f"{BASE_DIR}/connect/execution_log_files/log_192.168.1.21" + str(log_idx) + ".txt"
@@ -133,6 +135,9 @@ for log_idx in range(1,6):
                 result = round(result / 1000)
                 trans_name = match.group(2)
                 f.write(f"{trans_name}\n{result}\n")
+
+
+def draw_transition_times():
 
     # Create a list where element 0 has all the time of executions of transition t0 
     # for example the list will be [[0,0,0], [16,17,16,0], ...]
@@ -231,7 +236,7 @@ for log_idx in range(1,6):
             ax.text(tick_label, 0, str(tick_label), transform=trans, ha='center', fontsize=6)
     ax.set_ylim(0, 100)
     fig.savefig(f'{analysis_path}/transitions_exec_192.186.1.21{log_idx}.png')
-    
+
 
 def draw_task_execution_times():
 
@@ -270,27 +275,64 @@ def draw_task_execution_times():
                     if time < 0:
                         task_times[task_name].pop(time_idx)
 
-        if log_idx == 2 :
-            fig, axs = plt.subplots(len(task_times), sharex= False, constrained_layout=True)
-        else:
-            fig, axs = plt.subplots(len(task_times)-1, sharex= False, constrained_layout=True)
-            axs[1].sharex(axs[0])
-        fig.set_size_inches(10,10)
-        fig.suptitle("Distribution of task termination times", fontsize=20 ,fontweight='bold')
-        bins_n = 20
-        colors = ["red", "blue", "green", "orange"]
-
+        task_distribution_times = {"ctrlTask" : [[],[]],
+                                   "wifiTask" : [[],[]],
+                                   "diagTask" : [[],[]],
+                                   "posiTask" : [[],[]],
+                                   }
         
+        for task_name in task_times:
+            temp_dict = {}
+            for times in task_times[task_name]:
+                if times not in temp_dict:
+                    temp_dict[times] = 1
+                else :
+                    temp_dict[times] += 1
+            for different_times in temp_dict:
+                task_distribution_times[task_name][0].append(different_times)
+                task_distribution_times[task_name][1].append(temp_dict[different_times])
+
+
+        fig, axs = plt.subplots(1, 2, sharey= True)
+        fig.set_size_inches(10,10)
+        fig.subplots_adjust(wspace=0.05)
+        fig.suptitle("Distribution of task termination times", fontsize=20 ,fontweight='bold')
+        colors = ["red", "blue", "green", "orange"]
+        alpha = [1, 0.6, 0.6, 0.6]
+        
+        # hide the spines between ax and ax2
+        axs[0].spines.right.set_visible(False)
+        axs[1].spines.left.set_visible(False)
+        axs[1].tick_params(which="both", left=False)
+
+
+        separator_value = 200
 
         for task_idx, task_name in enumerate(task_times):
             if log_idx != 2 and task_name == "posiTask":
                 continue
-            axs[task_idx].hist(task_times[task_name], bins=bins_n, color=colors[task_idx])
-            axs[task_idx].ticklabel_format(useOffset=False)
-            axs[task_idx].set_title(task_name, fontsize=14 ,fontweight='bold')
-            axs[task_idx].set_xlabel("time (ms)")
-        
+            axs[0].bar(task_distribution_times[task_name][0], 
+                       task_distribution_times[task_name][1], width=2, color=colors[task_idx], alpha=alpha[task_idx], label=task_name, log=True)
+            axs[1].bar(task_distribution_times[task_name][0], 
+                       task_distribution_times[task_name][1], width=15, color=colors[task_idx], alpha=alpha[task_idx], label=task_name, log=True)
+            axs[0].set_xlim(0, separator_value)
+            axs[1].set_xlim(1900, 3100)
+
+        d = .5  # proportion of vertical to horizontal extent of the slanted line
+        kwargs = dict(marker=[(-1, -d), (1, d)], markersize=12,
+                    linestyle="none", color='k', mec='k', mew=1, clip_on=False)
+        axs[0].plot([1, 1], [0, 1], transform=axs[0].transAxes, **kwargs)
+        axs[1].plot([0, 0], [0, 1], transform=axs[1].transAxes, **kwargs)
+
+        axs[0].annotate('ms', xy=(0.98, -0.07), xycoords='axes fraction',
+             horizontalalignment='right', verticalalignment='center', fontsize=12)
+        axs[0].set_ylabel("Occurences", fontsize=12)
+
+        plt.legend()
         plt.savefig(f'{HOST_SCRIPT_DIR}/analysis/task_times_192.186.1.21{log_idx}.png')
 
 
-# draw_task_execution_times()
+        
+
+# draw_transition_times()
+draw_task_execution_times()
