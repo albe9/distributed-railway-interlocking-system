@@ -25,7 +25,9 @@
 			"syscall.h": "c",
 			"vxworkscommon.h": "c",
 			"syslib.h": "c",
-			"global_variables.h": "c"
+			"global_variables.h": "c",
+			"logtask.h": "c",
+			"timertask.h": "c"
 		}
 	},
 

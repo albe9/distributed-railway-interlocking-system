@@ -8,7 +8,7 @@ while read target;
         if [ $? -eq 0 ]; 
         then
             #apre wrdbg in background e definisce la named pipe come stdin e un file di log come std output e std error
-            (cd ./../../wrsdk-vxworks7-raspberrypi4b/tools/debug/22.03/x86_64-linux2/bin ; stdbuf -o0 ./wrdbg < /tmp/fifo_$target > $path_from_wrdgb/log_files/log_$target.txt 2>&1) &
+            (cd ./../../wrsdk-vxworks7-raspberrypi4b/tools/debug/22.03/x86_64-linux2/bin ; stdbuf -o0 ./wrdbg < /tmp/fifo_$target > $path_from_wrdgb/workbench_log_files/log_$target.txt 2>&1) &
             
             #matengo la scrittura sulla pipe sempre aperta grazie al fd 3
             exec 3>/tmp/fifo_$target

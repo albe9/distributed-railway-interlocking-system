@@ -8,9 +8,9 @@ while read target;
     done < target.txt
 
 # Controllo se è presente la directory in cui salvare i log, altrimenti la creo
-if [ ! -d "./log_files" ];
+if [ ! -d "./workbench_log_files" ];
     then 
-        mkdir ./log_files
+        mkdir ./workbench_log_files
     fi
 
 launch_connect(){
@@ -45,12 +45,12 @@ launch_connect(){
         fi
         for target in ${TARGETS[@]};
         do
-            if grep -Pzoq 'Connected to' ./log_files/log_$target.txt > /dev/null 2>&1;  
+            if grep -Pzoq 'Connected to' ./workbench_log_files/log_$target.txt > /dev/null 2>&1;  
             then
                 echo "log_$target.txt connesso" 
                 ((rasp_counter++))
                 #resetto il log
-                > ./log_files/log_$target.txt
+                > ./workbench_log_files/log_$target.txt
             fi
 
             if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
@@ -65,7 +65,7 @@ launch_connect(){
 build(){
 
     #resetto il build_log
-    > ./log_files/build_log.txt
+    > ./workbench_log_files/build_log.txt
 
     # Elimino i file generati precedentemente
     rm -R ./../Interlocking_system/rpivsb_ARMARCH8Allvm_LP64_LARGE_SMP/*
@@ -78,13 +78,13 @@ build(){
         mkfifo /tmp/fifo_wrtool
     fi
 
-    if [ ! -d "./log_files" ];
+    if [ ! -d "./workbench_log_files" ];
     then 
-        mkdir ./log_files
+        mkdir ./workbench_log_files
     fi
 
     #lancio la shell wrtool definendo il workspace
-    $WINDRIVER_PATH/workbench-4/wrtool -data ./../../ < /tmp/fifo_wrtool > ./log_files/build_log.txt &
+    $WINDRIVER_PATH/workbench-4/wrtool -data ./../../ < /tmp/fifo_wrtool > ./workbench_log_files/build_log.txt &
     sleep 0.5
     echo "cd .." > /tmp/fifo_wrtool
     sleep 0.5
@@ -97,28 +97,28 @@ build(){
     while true
         do  
             sleep 1
-            grep 'Nessuna regola per generare' ./log_files/build_log.txt
+            grep 'Nessuna regola per generare' ./workbench_log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Riprovo il build"
                     build
                     break
                 fi
-            grep 'No rule to make target' ./log_files/build_log.txt
+            grep 'No rule to make target' ./workbench_log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Riprovo il build"
                     build
                     break
                 fi
-            grep 'Build Failed' ./log_files/build_log.txt
+            grep 'Build Failed' ./workbench_log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Build fallito"
                     stty sane
                     exit
                 fi
-            grep 'Build Finished' ./log_files/build_log.txt
+            grep 'Build Finished' ./workbench_log_files/build_log.txt
             if [ $? -eq 0 ];
                 then
                     echo "Build completato correttamente"
@@ -185,12 +185,12 @@ load_module(){
         fi
         for target in ${TARGETS[@]};
         do
-            if grep -Pzoq 'Loading module .*done\nModule.*\n\(wrdbg\)' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            if grep -Pzoq 'Loading module .*done\nModule.*\n\(wrdbg\)' ./workbench_log_files/log_$target.txt > /dev/null 2>&1; 
             then
                 echo "log_$target.txt ha eseguito il load correttamente"
                 ((rasp_counter++))
                 #resetto il log
-                > ./log_files/log_$target.txt
+                > ./workbench_log_files/log_$target.txt
             fi
 
             if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
@@ -247,25 +247,25 @@ unload_module(){
         fi
         for target in ${TARGETS[@]};
         do
-            if grep -Pzoq 'Unloading module .*done' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            if grep -Pzoq 'Unloading module .*done' ./workbench_log_files/log_$target.txt > /dev/null 2>&1; 
             then
                 echo "log_$target.txt ha eseguito l'unload correttamente"
                 ((rasp_counter++))
                 #resetto il log
-                > ./log_files/log_$target.txt
+                > ./workbench_log_files/log_$target.txt
             
-            elif grep -Pzoq 'error: bad module ID or name' ./log_files/log_$target.txt > /dev/null 2>&1; 
+            elif grep -Pzoq 'error: bad module ID or name' ./workbench_log_files/log_$target.txt > /dev/null 2>&1; 
             then
                 echo "Impossibile eseguire l'unload, modulo già rimosso o non ancora caricato log_$target.txt"
                 ((rasp_counter++))
                 #resetto il log
-                > ./log_files/log_$target.txt
-            elif grep -Pzoq 'error' ./log_files/log_$target.txt > /dev/null 2>&1; 
+                > ./workbench_log_files/log_$target.txt
+            elif grep -Pzoq 'error' ./workbench_log_files/log_$target.txt > /dev/null 2>&1; 
             then
                 echo "Impossibile eseguire l'unload, il modulo ha risorse aperte log_$target.txt"
                 ((rasp_counter++))
                 #resetto il log
-                > ./log_files/log_$target.txt
+                > ./workbench_log_files/log_$target.txt
             fi
             
             if [ "$rasp_counter" -eq "${#TARGETS[@]}" ]; 
@@ -325,9 +325,9 @@ shutdown(){
 
 see_log(){
     # Controlla se esiste la cartella dove loggare
-    if [ ! -d "./execution_log_files" ];
+    if [ ! -d "./execution_workbench_log_files" ];
     then 
-        mkdir ./execution_log_files
+        mkdir ./execution_workbench_log_files
     fi
 
     # Lancia il file che mette l'host in ascolto
@@ -354,7 +354,7 @@ echo -e "Requisiti:
     "
 echo -e "Opzioni: 
         -c  (connect)          Si connette ai raspberry e apre le shell telnet per eseguire i comandi in remoto
-        -b  (build)            Esegue il Build del progetto, in caso di errori salva lo stato in log_files/build_log.txt
+        -b  (build)            Esegue il Build del progetto, in caso di errori salva lo stato in workbench_log_files/build_log.txt
         -l  (load)             Esegue il Load del modulo sui raspberry
         -u  (unload)           Esegue l'unload del modulo sui raspberry
         -o  (output)           Mostro i log dei raspberry
