@@ -60,6 +60,7 @@ void logMessage(char* msg, char* task_name, int logLevel){
 	//salvo il messaggio sulla coda
 	if(msgQSend(LOG_QUEUE, final_msg, strlen(final_msg), WAIT_FOREVER, MSG_PRI_NORMAL) == ERROR){
 		perror("\nErrore durante l'inserimento nella coda dei log : ");
+		printf("\n%s log_msg : %s", task_name, msg);
 	}
 	
 	
