@@ -394,7 +394,7 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		NOTA: nel caso di PING_REQ, PING_ACK e CLOSE non serve il campo dati*/
 	else{
 	    if((msg_data=strtok(NULL,"")) == NULL){
-	        printf("%i,   %i\n", strcmp(command_type, "PING_REQ"), strcmp(command_type, "PING_ACK"));
+	        // printf("%i,   %i\n", strcmp(command_type, "PING_REQ"), strcmp(command_type, "PING_ACK"));
 			if (!((strcmp(command_type, "PING_REQ") == 0) || (strcmp(command_type, "PING_ACK") == 0))){
 				return(E_PARSING_DATA_EMPTY);
 			}
@@ -409,20 +409,20 @@ exit_number handleInSingleMsg(char* msg, int sender_id){
 		// Trovo la connesione che mi ha inviato il ping
 		connection* conn_ping = getConnByID(sender_id);
 		char tmp_ping_msg[100];
-		sprintf(tmp_ping_msg, "-----Ricevuto comando PING_REQ da nodo %i", sender_id);
+		sprintf(tmp_ping_msg, "Ricevuto comando PING_REQ da nodo %i", sender_id);
 		logMessage(tmp_ping_msg, taskName(0), 1);
 		memset(tmp_ping_msg, 0, 100);		
 		//Rispondo al ping segnalando di essere un nodo attivo
 		sendToConn(conn_ping, "PING_ACK;.");
 		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0), 0);
-		sprintf(tmp_ping_msg, "-----[t11] Inviato comando PING_ACK al nodo %i", sender_id);
+		sprintf(tmp_ping_msg, "[t11] Inviato comando PING_ACK al nodo %i", sender_id);
 		logMessage(tmp_ping_msg, taskName(0), 0);
 		memset(tmp_ping_msg, 0, 100);
 	}
 	else if (strcmp(command_type, "PING_ACK") == 0){
 		char tmp_ping_msg_2[100];
 		logMessage("[t48] Preselection WiFi msg diagnostica", taskName(0), 0);
-		sprintf(tmp_ping_msg_2, "-----[t11] Ricevuto comando PING_ACK da nodo %i", sender_id);
+		sprintf(tmp_ping_msg_2, "[t11] Ricevuto comando PING_ACK da nodo %i", sender_id);
 		logMessage(tmp_ping_msg_2, taskName(0), 0);
 		memset(tmp_ping_msg_2, 0, 100);
 		// Se ricevo un PING_ACK e la procedura di ping è in corso aumento il contatore
@@ -549,9 +549,9 @@ exit_number handleOutControlMsg(tpcp_msg* out_control_msg, bool flag_log_not_ok)
 
 exit_number checkDiag(){
 	if(semTake(WIFI_DIAG_SEM, WAIT_FOREVER) < 0)return E_DEFAUL_ERROR;
-	logMessage("-----[t18] acquisisco semaforo", taskName(0), 0);
+	logMessage("[t18] acquisisco semaforo", taskName(0), 0);
 	//taskPrioritySet(0, PRI_2);
-	logMessage("-----[t32] controllo area di memoria", taskName(0), 0);
+	logMessage("[t32] controllo area di memoria", taskName(0), 0);
 	switch (ping_status)
 	{
 		case STARTING:
@@ -559,7 +559,7 @@ exit_number checkDiag(){
 			for(int node_idx=0; node_idx<total_conn; node_idx++){
 				sendToConn(&node_conn[node_idx], "PING_REQ;.");
 			}
-			logMessage("-----[t31] Inviato messaggi PING_REQ a tutti i vicini", taskName(0), 0);
+			logMessage("[t31] Inviato messaggi PING_REQ a tutti i vicini", taskName(0), 0);
 			// Cambiamo lo stato del ping
 			ping_status = ACTIVE;
 			break;
@@ -567,14 +567,14 @@ exit_number checkDiag(){
 			// Azzeriamo il contatore delle risposte al ping e indichiamo che la procedura di ping è disattivata
 			ping_answers = 0;
 			ping_status = NOT_ACTIVE;
-			logMessage("-----[t31] Non invio messaggi di ping", taskName(0), 0);
+			logMessage("[t31] Non invio messaggi di ping", taskName(0), 0);
 			break;
 		default:
 			//Se siamo in ACTIVE o NOT_ACTIVE non faccio nulla
-			logMessage("-----[t31] Non invio messaggi di ping", taskName(0), 0);
+			logMessage("[t31] Non invio messaggi di ping", taskName(0), 0);
 			break;
 	}
-	logMessage("-----[t19] Rilascio semaforo", taskName(0), 0);
+	logMessage("[t19] Rilascio semaforo", taskName(0), 0);
 	if(semGive(WIFI_DIAG_SEM) < 0)return E_DEFAUL_ERROR;
 	//taskPrioritySet(0, PRI_1);
 	
