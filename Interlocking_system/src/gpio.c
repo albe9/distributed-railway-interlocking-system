@@ -49,9 +49,9 @@ void changeLedColor(status_color node_status_col){
     led_active = true;
 
     // OFF_COL -> BLACK,
-    // INIT_COL -> CYAN,
+    // INIT_COL -> YELLOW,
     // NOT_RESERVED_COL -> BLUE,
-    // MESSAGE_EXCHANGE_COL -> YELLOW,
+    // MESSAGE_EXCHANGE_COL -> CYAN,
     // POSITIONING_COL -> WHITE,
     // RESERVED_COL -> GREEN,
     // TRAIN_IN_TRANSITION_COL -> MAGENTA,
@@ -61,16 +61,16 @@ void changeLedColor(status_color node_status_col){
         setLedColor(BLACK);
         break;
     case INIT_COL:
-        setLedColor(YELLOW);
+        setLedColor(CYAN);
         break;
     case NOT_RESERVED_COL:
         setLedColor(BLUE);
         break;
     case MESSAGE_EXCHANGE_COL:
-        setLedColor(CYAN);
+        setLedColor(WHITE);
         break;
     case POSITIONING_COL:
-        setLedColor(WHITE);
+        setLedColor(YELLOW);
         break;
     case RESERVED_COL:
         setLedColor(GREEN);

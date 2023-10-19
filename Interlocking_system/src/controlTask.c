@@ -490,6 +490,7 @@ void controlMain(void){
                                     // Il nodo di scambio ha il deviatoio su una rotta diversa oppure non è in posizione, si deve avviare il positioning
                                     logMessage("[t16] Non in posizione, avvio il positioning task", taskName(0), 0);
                                     railswitch.last_route_id = in_msg.route_id;
+                                    changeLedColor(POSITIONING_COL);
                                     POSITIONING_TID = taskCreate("posiTask", PRI_3, 0, 20000,(FUNCPTR) positioningMain, 0,0,0,0,0,0,0,0,0,0);
                                     taskCpuAffinitySet(POSITIONING_TID, 1 << 3);
                                     taskActivate(POSITIONING_TID);

@@ -7,6 +7,7 @@
 
 
 #include "initTask.h"
+#include "gpio.h"
 #define MAX_LOG_SIZE 1024
 #define MAX_LOG_BUFF 10
 
@@ -162,6 +163,10 @@ void printConfigInfo(route *routes, network *net){
 void initMain(void){
     // starto il logTask
     LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+
+    // Attendo che il task di log abbia creato la coda
+    taskDelay(8);
+    changeLedColor(INIT_COL);
 
 	//apro la connessione con l'host per ricevere i dati di configurazione
 	
