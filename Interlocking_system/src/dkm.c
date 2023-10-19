@@ -17,11 +17,11 @@
 
 // Eseguibili da telnet
 void start_timer(void){
-	TIMER_TID = taskSpawn("timerTask", PRI_3, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
+	TIMER_TID = taskSpawn("timerTask", PRI_0, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
 }
 
 void start_log(void){
-	LOG_TID = taskSpawn("LogTask", PRI_3, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
 }
 // Eseguita in fase di reload da workbench.sh
 void startDestructor(void){
@@ -36,8 +36,7 @@ void startInit(int rasp_id, char* host_ip){
 	snprintf(RASP_IP, 20, "192.168.1.21%i", RASP_ID);
 	//Setto l'ip dell'host
 	snprintf(HOST_IP, 20, host_ip);
-	
-	TIMER_TID = taskSpawn("timerTask", PRI_3, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
+
+	TIMER_TID = taskSpawn("timerTask", PRI_0, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
 	INIT_TID = taskSpawn("initTask", PRI_3, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
 }
-
