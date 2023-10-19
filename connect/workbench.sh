@@ -283,7 +283,7 @@ task_delete(){
 
     for target in ${TARGETS[@]};
         do
-            ( echo "startDestructor" ; sleep 2; ) | telnet $target &
+            ( sleep 3; echo "startDestructor" ; sleep 2; ) | telnet $target &
         done
     # aspetto che tutti i comandi telnet siano terminati
     wait
@@ -294,7 +294,7 @@ reboot_rasp(){
 
     for target in ${TARGETS[@]};
         do
-            ( echo "cmd" ; sleep 2 ; echo "reboot -c" ; sleep 2 ) | telnet $target &
+            ( sleep 3 ; echo "cmd" ; sleep 2 ; echo "reboot -c" ; sleep 2 ) | telnet $target &
         done
     
     rm /tmp/fifo*
@@ -325,9 +325,9 @@ shutdown(){
 
 see_log(){
     # Controlla se esiste la cartella dove loggare
-    if [ ! -d "./execution_workbench_log_files" ];
+    if [ ! -d "./execution_log_files" ];
     then 
-        mkdir ./execution_workbench_log_files
+        mkdir ./execution_log_files
     fi
 
     # Lancia il file che mette l'host in ascolto
@@ -338,7 +338,7 @@ see_log(){
     # Esegui il comando ai nodi per inviare il log verso l'host 
     for target in ${TARGETS[@]};
         do
-            ( echo "sendLogToHost"; sleep 1) | telnet $target  & 
+            ( sleep 3 ; echo "sendLogToHost"; sleep 1) | telnet $target  & 
         done
     
     wait

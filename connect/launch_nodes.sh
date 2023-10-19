@@ -5,7 +5,7 @@ while read target;
         ping -c2 $target > /dev/null 2>&1
         if [ $? -eq 0 ]; 
         then
-            ( echo "startInit(${target: -1}, \"$host_ip\")" ; sleep 3 ) | telnet $target &
+            ( sleep 3 ; echo "startInit(${target: -1}, \"$host_ip\")" ; sleep 3 ) | telnet $target &
         else 
             echo "Host $target not connected"
         fi
