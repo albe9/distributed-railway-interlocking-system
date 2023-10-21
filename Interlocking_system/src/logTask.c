@@ -5,7 +5,6 @@
 
 
 
-int LOG_FD;
 MSG_Q_ID LOG_QUEUE;
 
 
@@ -67,7 +66,7 @@ void logMessage(char* msg, char* task_name, int logLevel){
 }
 
 void logInit(void){
-	//Crea la directory e il file di log se non sono gi� esistenti
+	//Crea la directory e il file di log se non sono gia esistenti
 	
 	struct stat st = {0};
 	//Controlla se esiste directory di log, altrimenti la crea
@@ -77,7 +76,9 @@ void logInit(void){
 	    }
 	}
 	//reset del file di log se esiste
-	remove("/usr/log/log.txt");
+	if(remove("/usr/log/log.txt") == -1){
+		perror("\nErrore nel resettare il file di log:");
+	}
 	//Crea/apre il file di log in modalità append
 	if ((LOG_FD = open("/usr/log/log.txt",O_RDWR | O_APPEND  | O_CREAT, 00700)) < 0){
 		perror("\nErrore apertura file di log");
@@ -86,11 +87,14 @@ void logInit(void){
 	//creo la coda di messaggi per il log
 	LOG_QUEUE = msgQCreate(MAX_LOG_BUFF, MAX_LOG_SIZE, MSG_Q_FIFO);
 	
-	
-	
 	char log_buffer[MAX_LOG_SIZE] = {0}; 
+
 	//aggiungo l'handler per il signal SIGUSR1
 	signal(SIGUSR1, logDestructor);
+
+	//riattiva l'initTask
+	taskResume(INIT_TID);
+	
 	//main loop del task, controlla la coda dei messaggi di log e li scrive su file
 	while(true){
 		//mi metto in attesa di un messaggio

@@ -8,8 +8,6 @@
 
 #include "initTask.h"
 #include "gpio.h"
-#define MAX_LOG_SIZE 1024
-#define MAX_LOG_BUFF 10
 
 void setCurrentTime(time_t current_time){
 	
@@ -162,12 +160,15 @@ void printConfigInfo(route *routes, network *net){
 
 void initMain(void){
     // starto il logTask
-    LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+    LOG_TID = taskCreate("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+    taskCpuAffinitySet(LOG_TID, 1 << 2);
+    taskActivate(LOG_TID);
 
-    // Attendo che il task di log abbia creato la coda
-    taskDelay(8);
+
+    // Attendo che il task di log abbia creato la coda, (logTask riattiverà il task)
+    taskSuspend(0);
     changeLedColor(INIT_COL);
-
+    
 	//apro la connessione con l'host per ricevere i dati di configurazione
 	
 	connection host_s = {.sock=0, .connected_id=0};
