@@ -41,16 +41,18 @@ TASK_ID CONTROL_TID;
 TASK_ID POSITIONING_TID;
 TASK_ID DESTRUCTOR_TID;
 TASK_ID DIAGNOSTICS_TID;
+TASK_ID SEND_LOG_TID;
 TASK_ID TIMER_TID;
 
 SEM_ID TIMER_SEM;
 SEM_ID WIFI_CONTROL_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e controlTask
 SEM_ID WIFI_DIAG_SEM;                   //semaforo per gestire l'accesso alle variabili globali condivise da wifiTask e diagTask
 SEM_ID CONTROL_DIAG_SEM;                //semaforo per gestire l'accesso alle variabili globali condivise da constrolTask e diagTask
-//____________________________________________________________________________________________________________________________
+
+                             //file descriptor per /usr/log/log.txt
 extern int CURRENT_HOST;          //host corrente che ha avviato il two-phase-commit-protocol
 
-//____________________________________________________________________________________________________________________________
+
 
 MSG_Q_ID IN_CONTROL_QUEUE;        // coda di messaggi da task_wifi->task_controllo
 MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wifi
@@ -58,12 +60,12 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define MAX_CONN      50          //numero massimo di connessioni per un nodo
 #define TAIL_ID      -9999        //Id associato al nodo successivo all'ultimo nodo di una route
 #define MAX_LOG_SIZE  1024
-#define MAX_LOG_BUFF  10
+#define MAX_LOG_BUFF  50000
 #define MAX_CTRL_SIZE 1024      
 #define MAX_CTRL_BUFF 10
 #define TYPE_SWITCH   2
 #define TYPE_LINEAR   3 
-#define LOG_LEVEL 0                         // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL 
+#define LOG_LEVEL 0                         // Verranno loggati tutti i logMessage con logLevel >= a LOG_LEVEL   (0 [t]; 1 debug; 2 error)
 #define LOG_ACTIVE 1                        // Stato che indica che si sta eseguendo il log
 #define LOG_SUSPENDED 0                     // Stato che indica che il log è momentaneamente sospeso
 // TODO: controllare affidabilità della conversione tra tick e secondi effettivi  
@@ -98,6 +100,7 @@ typedef struct{
 
 extern int SERVER_PORT;
 extern int LOG_PORT;
+extern int LOG_FD;
 extern int RASP_ID;
 extern char HOST_IP[20];
 extern char RASP_IP[20];

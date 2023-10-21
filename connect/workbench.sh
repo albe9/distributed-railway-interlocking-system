@@ -338,7 +338,8 @@ see_log(){
     # Esegui il comando ai nodi per inviare il log verso l'host 
     for target in ${TARGETS[@]};
         do
-            ( sleep 3 ; echo "sendLogToHost"; sleep 1) | telnet $target  & 
+            ( sleep 3 ; echo "sendLogToHost"; sleep 1) | telnet $target > /dev/null 2>&1 & 
+            # ( sleep 3 ; echo "test_log"; sleep 1) | telnet $target > /dev/null 2>&1 & 
         done
     
     wait

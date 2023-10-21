@@ -34,8 +34,7 @@ extern connection* getConnByIndex(int conn_idx);
 extern connection* getConnByID(int rasp_id);
 extern void sendToConn(connection *conn, char *msg);
 extern exit_number readFromConn(connection *conn, char* buffer, ssize_t buf_size);
-extern exit_number getSizeofLog(char *path_to_file, int* size);
-exit_number processLogToSend(void);
+extern void processLogToSend(void);
 extern void sendLogToHost(void);
 
 

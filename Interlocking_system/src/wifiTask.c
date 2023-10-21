@@ -243,93 +243,209 @@ void resetConnections(){
 	
 }
 
-exit_number getSizeofLog(char *path_to_file, int* size){
-	// Apriamo il file
-	FILE *file;
-	if((file = fopen(path_to_file, "r")) < 0){
-		return E_LOG_OPEN;
-	}	
-	if (file != NULL) {
-    	/* Go to the end of the file. */
-		if (fseek(file, 0L, SEEK_END) == 0) {
-			/* Get the size of the file. */
-			int bufsize = (int) ftell(file);
-			if (bufsize == -1) {
-				return E_LOG_EMPTY;
-			}
-			if (log_debug_mode)
-				printf("bufsize %i \n", bufsize);
-			fclose(file);
-			*size = bufsize;
-			return E_SUCCESS;
-		}
-		else{
-			return E_DEFAUL_ERROR;
-		}
-	}
-	else{
-		return E_LOG_EMPTY;
-	}
-}
+void processLogToSend(void){
 
-exit_number processLogToSend(void){
-	// Si sospende il task che esegue il logInit
-	if(taskSuspend(LOG_TID) < 0){
-		return E_DEFAUL_ERROR;
-	}
+	logMessage("Avvio task di trasferimento log verso l'host", taskName(0), 1);
+	// creo stringa per messaggi di debug
+	char feedback_msg[100];
 	// Si crea un socket verso l'host
 	connection host_conn;
-	connectToServer(&host_conn, HOST_IP, LOG_PORT);
-	// Si legge quanto è lungo il file 
-	int logSize = 0;
-	exit_number status;
-	if((status = getSizeofLog("/usr/log/log.txt", &logSize)) != E_SUCCESS){
-		return status;
+	// connectToServer(&host_conn, HOST_IP, LOG_PORT);
+	connectToServer(&host_conn, "192.168.1.202", LOG_PORT);
+
+	// Si sospende il logTask
+	if(taskSuspend(LOG_TID) < 0){
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile sospendere il LogTask : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
 	}
-	// E si copia il contenuto in un buffer
-	char *logMsg = malloc(sizeof(char) * (logSize + 1));
-	if (log_debug_mode)
-		printf("Allocazione eseguita \n");
-	FILE *file = fopen("/usr/log/log.txt", "r");
-	/* Go back to the start of the file. */
-	if (fseek(file, 0L, SEEK_SET) != 0) { /* Error */ }
-	/* Read the entire file into memory. */
-	size_t newLen = fread(logMsg, sizeof(char), logSize, file);
-	if (log_debug_mode)
-		printf("newLen %i \n", newLen);
-	if ( ferror(file) != 0 ) {
-		fputs("Error reading file", stderr);
-	} else {
-		logMsg[newLen++] = '\0'; /* Just to be safe. */
+	
+	
+	sendToConn(&host_conn, "Iniziato task di invio log e interrotto il logTask.");
+
+	// Si legge quanto è lungo il file e lo si comunica all'host 
+	struct stat log_stat; 
+	if(fstat(LOG_FD, &log_stat) < 0){
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile utilizzare fstat sul file di log : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		// Riavviamo il logTask
+		if(taskResume(LOG_TID) < 0){
+			int err = errno;
+			memset(feedback_msg, 0, 100);
+			snprintf(feedback_msg, 100, "Impossibile riavviare il LogTask : %s.", strerror(err));
+			sendToConn(&host_conn, feedback_msg);
+			shutdown(host_conn.sock, SHUT_RDWR);
+			close(host_conn.sock);
+			exit(-1);
+		}
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
 	}
-	if (log_debug_mode)
-		printf("%s", logMsg);
-	fclose(file);
-	// Si invia il messaggio
-	sendToConn(&host_conn, logMsg);
-	// Liberiamo la memoria allocata
-	free(logMsg);
-	// TODO: capire meglio shutdown e close
+	off_t logSize = log_stat.st_size;
+	snprintf(feedback_msg, 100, "File di log di dimensione : [%lld] bytes.", (long long)logSize);
+	sendToConn(&host_conn, feedback_msg);
+
+	// Effettuiamo la copia del log.txt e in caso di errori lo comunichiamo all'host
+	sendToConn(&host_conn, "Iniziata la copia locale del file di log.");
+	int  fd_tmp_log;
+
+
+	if ((fd_tmp_log = creat("/usr/log/log_tmp_copy.txt", 00700)) == -1)
+	{
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile creare log_tmp_copy.txt: %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		// Riavviamo il logTask
+		if(taskResume(LOG_TID) < 0){
+			int err = errno;
+			memset(feedback_msg, 0, 100);
+			snprintf(feedback_msg, 100, "Impossibile riavviare il LogTask : %s.", strerror(err));
+			sendToConn(&host_conn, feedback_msg);
+			shutdown(host_conn.sock, SHUT_RDWR);
+			close(host_conn.sock);
+			exit(-1);
+		}
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
+	}
+	
+    char buffer_to_copy[8192];
+    ssize_t bytesRead = 0, bytesWritten = 0;
+
+	if (lseek(LOG_FD, 0, SEEK_SET) == -1) {
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile eseguire lseek su LOG_FD : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		close(fd_tmp_log);
+		// Riavviamo il logTask
+		if(taskResume(LOG_TID) < 0){
+			int err = errno;
+			memset(feedback_msg, 0, 100);
+			snprintf(feedback_msg, 100, "Impossibile riavviare il LogTask : %s.", strerror(err));
+			sendToConn(&host_conn, feedback_msg);
+			shutdown(host_conn.sock, SHUT_RDWR);
+			close(host_conn.sock);
+			exit(-1);
+		}
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
+	}
+
+    while ((bytesRead = read(LOG_FD, buffer_to_copy, sizeof(buffer_to_copy))) > 0) {
+        bytesWritten = write(fd_tmp_log, buffer_to_copy, bytesRead);
+        if (bytesWritten < 0) {
+            int err = errno;
+			memset(feedback_msg, 0, 100);
+			snprintf(feedback_msg, 100, "Errore durante la scrittura su fd_tmp_log : %s.", strerror(err));
+			sendToConn(&host_conn, feedback_msg);
+			close(fd_tmp_log);
+			// Riavviamo il logTask
+			if(taskResume(LOG_TID) < 0){
+				int err = errno;
+				memset(feedback_msg, 0, 100);
+				snprintf(feedback_msg, 100, "Impossibile riavviare il LogTask : %s.", strerror(err));
+				sendToConn(&host_conn, feedback_msg);
+				shutdown(host_conn.sock, SHUT_RDWR);
+				close(host_conn.sock);
+				exit(-1);
+			}
+			shutdown(host_conn.sock, SHUT_RDWR);
+			close(host_conn.sock);
+            exit(-1);
+        }
+    }
+
+    if (bytesRead < 0) {
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Errore durante la lettura da LOG_FD : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		close(fd_tmp_log);
+		// Riavviamo il logTask
+		if(taskResume(LOG_TID) < 0){
+			int err = errno;
+			memset(feedback_msg, 0, 100);
+			snprintf(feedback_msg, 100, "Impossibile riavviare il LogTask : %s.", strerror(err));
+			sendToConn(&host_conn, feedback_msg);
+			shutdown(host_conn.sock, SHUT_RDWR);
+			close(host_conn.sock);
+			exit(-1);
+		}
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
+    }
+
+    close(fd_tmp_log);
+
+	// Riavviamo il logTask
+	if(taskResume(LOG_TID) < 0){
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile riavviare il LogTask : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
+	}
+
+	sendToConn(&host_conn, "Riavviato il logTask, inizio invio dei log [START_SENDING].");
+
+	// Attendiamo così da essere sicuri che lo script python sia pronto a ricevere i log
+	taskDelay(5);
+
+	// Apriamo la copia dei log per spedirli
+	if ((fd_tmp_log = open("/usr/log/log_tmp_copy.txt", O_RDONLY , 00700)) < 0){
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile aprire fd_tmp_log : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
+	}
+
+
+	char buffer_to_send[SO_SNDBUF];
+	while((bytesRead = read(fd_tmp_log, buffer_to_send, sizeof(buffer_to_send))) > 0) {
+        sendToConn(&host_conn, buffer_to_send);
+    }
+
+	if(bytesRead < 0){
+		int err = errno;
+		memset(feedback_msg, 0, 100);
+		snprintf(feedback_msg, 100, "Impossibile leggere da fd_tmp_log : %s.", strerror(err));
+		sendToConn(&host_conn, feedback_msg);
+		shutdown(host_conn.sock, SHUT_RDWR);
+		close(host_conn.sock);
+		exit(-1);
+	}
+
+
+	// comunico all'host che l'invio ha avuto successo
+	sendToConn(&host_conn, "[END_WITH_SUCCESS]");
 	shutdown(host_conn.sock, SHUT_RDWR);
-	if (close(host_conn.sock) < 0){
-		return E_DEFAUL_ERROR;
-	}
-	// Riavviamo il task di log e loggiamo il completamento dell'invio
-	printf("Socket di log chiuso, riavvio task di log \n");
-	if((taskResume(LOG_TID) < 0)){
-		return E_RESUME_LOG;
-	}
-	return E_SUCCESS;
+	close(host_conn.sock);
+
+	logMessage("Inviato con successo il log all'host", taskName(0), 1);
+
 }
 
 void sendLogToHost(void){
-	exit_number status;
-	if((status = processLogToSend()) != E_SUCCESS){
-		logMessage(errorDescription(status), taskName(0), 2);
-	}
-	else{
-		logMessage("Inviato con successo il log all'host", taskName(LOG_TID), 1);
-	}
+	SEND_LOG_TID = taskCreate("sendLogTask", PRI_0, 0, 100000,(FUNCPTR) processLogToSend, 0,0,0,0,0,0,0,0,0,0);
+	taskCpuAffinitySet(SEND_LOG_TID, 1 << 2);
+    taskActivate(SEND_LOG_TID);
 }
 
 exit_number handleInMsgs(char* msg, int sender_id){
