@@ -21,8 +21,11 @@ void start_timer(void){
 }
 
 void start_log(void){
-	LOG_TID = taskSpawn("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+	LOG_TID = taskCreate("LogTask", PRI_0, 0, 20000,(FUNCPTR) logInit, 0,0,0,0,0,0,0,0,0,0);
+    taskCpuAffinitySet(LOG_TID, 1 << 2);
+    taskActivate(LOG_TID);
 }
+
 // Eseguita in fase di reload da workbench.sh
 void startDestructor(void){
 	DESTRUCTOR_TID = taskSpawn("destructorTask", PRI_0, 0, 20000,(FUNCPTR) destructorMain, 0,0,0,0,0,0,0,0,0,0);
@@ -39,4 +42,42 @@ void startInit(int rasp_id, char* host_ip){
 
 	TIMER_TID = taskSpawn("timerTask", PRI_0, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
 	INIT_TID = taskSpawn("initTask", PRI_3, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);
+}
+
+void test_gen_log(){
+
+	struct stat st = {0};
+	//Controlla se esiste directory di log, altrimenti la crea
+	if (stat("/usr/log", &st) == -1) {
+	    if(mkdir("/usr/log", 00700) < 0){
+	    	perror("\nErrore creazione directory di log:");
+	    }
+	}
+
+	if(remove("/usr/log/log.txt") == -1){
+		perror("\nErrore nel resettare il file di log:");
+	}
+
+	int test_fd;
+	if ((test_fd = open("/usr/log/log.txt",O_RDWR | O_APPEND  | O_CREAT, 00700)) < 0){
+		perror("\nErrore apertura file di log");
+	}
+
+	char log_buffer[] = "TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST TEST\n"; 
+
+	for(int i = 0;i < 1000; i++){
+		if(write(test_fd, log_buffer, strlen(log_buffer)) == ERROR){
+			perror("\nErrore nella scrittura di un log:");
+		}
+	}
+	
+	close(test_fd);
+}
+
+void test_log(){
+	test_gen_log();
+	start_log();
+	taskDelay(2);
+	sendLogToHost();
+
 }
