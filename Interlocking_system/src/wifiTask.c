@@ -250,8 +250,8 @@ void processLogToSend(void){
 	char feedback_msg[100];
 	// Si crea un socket verso l'host
 	connection host_conn;
-	// connectToServer(&host_conn, HOST_IP, LOG_PORT);
-	connectToServer(&host_conn, "192.168.1.202", LOG_PORT);
+	connectToServer(&host_conn, HOST_IP, LOG_PORT);
+	// connectToServer(&host_conn, "192.168.1.202", LOG_PORT);
 
 	// Si sospende il logTask
 	if(taskSuspend(LOG_TID) < 0){
@@ -292,12 +292,17 @@ void processLogToSend(void){
 	snprintf(feedback_msg, 100, "File di log di dimensione : [%lld] bytes.", (long long)logSize);
 	sendToConn(&host_conn, feedback_msg);
 
+
+	if(remove("/usr/log/log_tmp_copy.txt") == -1){
+		// Non è un problema, vuol dire che non è stato ancora creato
+	}
+
 	// Effettuiamo la copia del log.txt e in caso di errori lo comunichiamo all'host
 	sendToConn(&host_conn, "Iniziata la copia locale del file di log.");
+
 	int  fd_tmp_log;
 
-
-	if ((fd_tmp_log = creat("/usr/log/log_tmp_copy.txt", 00700)) == -1)
+	if ((fd_tmp_log = open("/usr/log/log_tmp_copy.txt", O_WRONLY | O_CREAT, 00700)) == -1)
 	{
 		int err = errno;
 		memset(feedback_msg, 0, 100);
