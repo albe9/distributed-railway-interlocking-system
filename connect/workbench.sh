@@ -345,6 +345,26 @@ see_log(){
     wait
 }
 
+testing(){
+
+    if [ "$#" -ne 1 ]; then
+        echo "Errore, fornire i numeri di rotte da riservare"
+        exit
+    fi
+    
+    gnome-terminal --tab -- bash -c "./launch_host.sh $1; bash"
+    sleep 1
+    ./launch_nodes.sh "SIM"
+
+    # # Esegui il comando ai nodi per inviare il log verso l'host 
+    # for target in ${TARGETS[@]};
+    #     do
+    #         ( sleep 3 ; echo "test_log"; sleep 1) | telnet $target > /dev/null 2>&1 & 
+    #     done
+    
+    # wait
+}
+
 help_workbench(){
 
 echo -e "Requisiti:
@@ -367,7 +387,7 @@ echo -e "Opzioni:
     "
 }
 
-while getopts "cbluodrsth" options;
+while getopts "cbluodrsvt:h" options;
     do                                  
         case "${options}" in      
             c)
@@ -398,9 +418,13 @@ while getopts "cbluodrsth" options;
                 echo "Reboot dei raspberry"
                 reboot_rasp
                 ;;
-            t)
+            v)
                 echo "Spegnimento e accensione della presa"
                 reboot_devices
+                ;;
+            t)
+                echo "Avvio testing"
+                testing $OPTARG
                 ;;
             s)
                 echo "Shutdown system"

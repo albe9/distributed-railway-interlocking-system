@@ -52,14 +52,11 @@ def receiveAndSaveLog(conn : socket.socket, addr : tuple[str, int]):
     encoded_log = b''
 
     while True:        
-        # ricevo il chunk di bytes e rimuovo i suffissi                
+        # ricevo il chunk di bytes e lo accodo               
         recived_bytes = conn.recv(rc_buff_size)
         encoded_log += recived_bytes
 
-        # log_data = recived_bytes.decode(encoding='utf8', errors="costum_handler")
-        # log += log_data
-
-
+        # progress feedback
         if log_file_size != 0:
             actual_progress = round((len(encoded_log) * 100 ) / log_file_size)
             #se la differenza in percentuale è maggiore di 5 stampo un feedback
@@ -73,25 +70,19 @@ def receiveAndSaveLog(conn : socket.socket, addr : tuple[str, int]):
             
             encoded_log = bytearray(encoded_log)
             
-            # Define the chunk size and number of bytes to skip
+            # Dimensione del chunk con i bytes da rimuovere (ogni 4097 ci sono 34 bytes da rimuovere)
             chunk_size = 4131
             bytes_to_skip = 34
     
             encoded_clean_log = bytearray()
 
-            # Iterate through the original bytearray
             for i in range(0, len(encoded_log), chunk_size):
                 chunk = encoded_log[i:i+chunk_size]
                 encoded_clean_log.extend(chunk[:chunk_size - bytes_to_skip])
                 
-            # # Rimuovi i bytes nel renge 00 to 1F
-            # encoded_clean_log = bytearray(byte for byte in encoded_log if not ((0x00 <= byte <= 0x1F) and byte not in (0x0A, 0x0D)))
-            # # Altri bytes specifici da rimuovere
-            # bytes_to_remove_list = [b"\xee", b"\xf6"]
-            # for byte_to_remove in bytes_to_remove_list:
-            #     encoded_clean_log = encoded_clean_log.replace(byte_to_remove, b"")
             
             with open(f"{WD_PATH}/execution_log_files/log_{addr[0]}.txt", "w") as log_file:
+                # Effettuo il decoding
                 decoded_log = encoded_clean_log.decode(errors="costum_handler")
 
                 if decoded_log.endswith("[END_WITH_SUCCESS]"):

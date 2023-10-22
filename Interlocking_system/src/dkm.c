@@ -33,12 +33,14 @@ void startDestructor(void){
 
 
 // Eseguita da launch_nodes.sh
-void startInit(int rasp_id, char* host_ip){
-	//Setto l'id e l'ip del raspberry
+void startInit(int rasp_id, char* host_ip, bool sim_sensor){
+	// Setto l'id e l'ip del raspberry
 	RASP_ID = rasp_id;
 	snprintf(RASP_IP, 20, "192.168.1.21%i", RASP_ID);
-	//Setto l'ip dell'host
+	// Setto l'ip dell'host
 	snprintf(HOST_IP, 20, host_ip);
+	// Setto la modalità di lettura dei sensorOff
+	SIM_SENSOR = sim_sensor;
 
 	TIMER_TID = taskSpawn("timerTask", PRI_0, 0, 20000,(FUNCPTR) timerMain, 0,0,0,0,0,0,0,0,0,0);
 	INIT_TID = taskSpawn("initTask", PRI_3, 0, 20000,(FUNCPTR) initMain, 0,0,0,0,0,0,0,0,0,0);

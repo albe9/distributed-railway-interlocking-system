@@ -75,7 +75,6 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define ROUTE_ID_PING 8888                  //  Const int used in diagnostics task
 #define HOST_ID_PING 7777                   //  Const int used in diagnostics task
 #define DIAG_TIME 2                         // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
-#define SIM_SENSOR 0                        // Se 1 indica che i SENSOR_ON sono simulati con messaggi, se 0 si utilizzano i pulsanti fisici
 #define TIME_TO_GET_OVERFLOW_MICRO 79536431 // Esprimiamo il tempo in microsecondi totali trascorsi  (2^32-1)/54 = numero di microsecondi che impiega sysTimestamp ad effettuare overflow
 #define TIMER_FREQ_MHz 54                    // Frequenza del timer della cpu BCM2711 espresso in MHz
 
@@ -104,6 +103,8 @@ extern int LOG_FD;
 extern int RASP_ID;
 extern char HOST_IP[20];
 extern char RASP_IP[20];
+extern bool SIM_SENSOR;       // Se 1 indica che i SENSOR_ON sono simulati con messaggi, se 0 si utilizzano i pulsanti fisici
+extern int SIM_SENSOR_OFF_TIME;     // Indica il tempo di passaggio simulato di un treno in secondi
 extern int log_status;
 extern route *node_routes;
 extern int route_count;

@@ -3,6 +3,8 @@
 int RASP_ID = -1;
 char HOST_IP[20];
 char RASP_IP[20];
+bool SIM_SENSOR = false;
+int SIM_SENSOR_OFF_TIME = 2;
 int SERVER_PORT = 6543;
 int LOG_PORT = 6544;
 int LOG_FD = -1;

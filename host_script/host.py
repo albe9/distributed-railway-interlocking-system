@@ -13,9 +13,12 @@ HOST_IP_SUFFIX = "192.168.1.21"
 HOST_ID = 0
 HOST_IP = sys.argv[2]
 TAIL_ID = -9999
-AUTOMATIC_TESTING_ROUTES = False
-ROUTES_TO_TEST = [3,3]
-ROUTES_TESTED_COUNTER = [0,0]
+if len(sys.argv) == 4:
+    AUTOMATIC_TESTING_ROUTES = True
+    ROUTES_TO_TEST = [int(sys.argv[3]), int(sys.argv[3])]
+    ROUTES_TESTED_COUNTER = [0,0]
+else:
+    AUTOMATIC_TESTING_ROUTES = False
 
 class Node:
     # rasp_id deve essere univoco in tutto il grafo

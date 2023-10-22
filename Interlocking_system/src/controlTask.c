@@ -176,6 +176,10 @@ void controlMain(void){
     // Setto lo stato iniziale come NOT_RESERVED
     resetNodeStatus();
 
+    // Se siamo in modalità simulazione setto il seed 
+    if(SIM_SENSOR){
+        srand(time(NULL));
+    }
     // Definiamo un timer per poter far partire la diagnostica secondo le specifiche (Es ogni 15 secondi senza ricezioni di msg)
     clock_t startDiagnTime, currentDiagnTime, 
             startSensorOffTime, currentSensorOffTime;
@@ -202,6 +206,8 @@ void controlMain(void){
                     setNodeStatus(TRAIN_IN_TRANSITION);
                     startSensorOffTime = tickGet();
                     sensor_on_detected = false;
+                    // Calcolo randomicamente il tempo di sensorOff in un range [2:10]
+                    SIM_SENSOR_OFF_TIME = rand() % 9 + 2;
                 }
                 else{
                     logMessage("[t73] preselection", taskName(0), 0);
@@ -218,7 +224,7 @@ void controlMain(void){
             if(NODE_STATUS == TRAIN_IN_TRANSITION){
                 currentSensorOffTime = tickGet();
                 elapsedSensorOffTimer = (double)(currentSensorOffTime - startSensorOffTime)/TICKS_TO_SECOND;
-                if(elapsedSensorOffTimer >= 2){
+                if(elapsedSensorOffTimer >= SIM_SENSOR_OFF_TIME){
                     logMessage("[t57] Preselection", taskName(0), 0);
                     logMessage("[t3] SensorOff e setto lo stato NOT_RESERVED", taskName(0), 0);
                     sensors_msg.route_id = current_route->route_id;
