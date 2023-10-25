@@ -77,6 +77,8 @@ MSG_Q_ID OUT_CONTROL_QUEUE;       // coda di messaggi da task_controllo->task_wi
 #define DIAG_TIME 2                         // tempo (in secondi) da quando non si ricevono msg prima di avviare il task di diagnostica
 #define TIME_TO_GET_OVERFLOW_MICRO 79536431 // Esprimiamo il tempo in microsecondi totali trascorsi  (2^32-1)/54 = numero di microsecondi che impiega sysTimestamp ad effettuare overflow
 #define TIMER_FREQ_MHz 54                    // Frequenza del timer della cpu BCM2711 espresso in MHz
+#define PROB_ERROR 0                        // probabilità in percentule dell'errore nel positioning
+
 
 typedef struct{
     int route_id;
