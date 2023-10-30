@@ -381,7 +381,8 @@ echo -e "Opzioni:
         -o  (output)           Mostro i log dei raspberry
         -d  (delete)           Effettua il task delete nei raspberry
         -r  (reboot)           Effettua il reboot dei raspberry
-        -t  (hard reboot)      Effettua uno spegnimento e accensione dell'alimentazione 
+        -v  (hard reboot)      Effettua uno spegnimento e accensione dell'alimentazione 
+        -t  (testing)          Effettua automaticamente un numero (passato come argomento) di richieste di prenotazioni delle rotte
         -s  (shutdown)         Effettua lo spegnimento completo del sistema
         -h  (help)             Mostra questo messaggio
     "
