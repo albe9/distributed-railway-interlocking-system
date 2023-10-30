@@ -1,23 +1,24 @@
 # distributed-railway-interlocking-system
-## Introduction
+
+## About
 In the field of railway signaling, an interlocking is the signaling apparatus that prevents conflicting train movements in order to ensure traffic safety. Typically such a system is centralized and controls signals and switches in accordance with safety rules codified in current regulations.
 
 Instead, in this project, a distributed system was considered, in which railroad track elements such as tracks and switches have computational capabilities that they use not only to control sensors and actuators, but also for safety and rail traffic management functions. In this way, this distributed network is able to perform the interlocking function without the aid of any centralized computational elements (except for overall operation monitoring).
 
-The goal of this project was to write the code to create a working prototype of a distributed interlocking system and create a representation of the system through the formalism of a Petri net.
+The goal of this project was to write the ***code to create a working prototype of a distributed interlocking system*** and ***create a representation of the system through the formalism of a Petri net***.
 
 ![Prototype](./Docs/media/prototype.jpg)
 
 *Prototype of the distributed railway interlocking system*
 
-The project in its entirety consists of approximately 3900-4000 lines of code divided into approximately 35 files using C, Python and Bash languages.
+The project in its entirety consists of approximately **3900-4000 lines of code** divided into approximately **35 files** using **C, Python and Bash languages**.
     
 ## System architecture
 Each track or switch within the rail network is referred to as a node. In order to reserve passage for a particular route, a train (referred to as a "host") communicates with the nodes on that route and thanks to the two-phase commit protocol receives an acknowledgement or rejection on passage.
 
 Each node is equipped with a Raspberry Pi 4B and VxWorks 7 real-time operating system to perform the required computations. Specifically, each node runs a multitasking application to ensure proper operation and security of the rail system. Communication between tasks is possible through message queues and traffic lights. Each node is also equipped with a sensor to check whether a train is currently occupying the line section and an LED to indicate the node's operating status. To enable automatic testing, a special message was also developed to simulate the passage of a train without having to press the button. In addition, if the node is a switch node, the positioning of the switch between two possible positions is also simulated.
 
-## Two-phase commit protocol.
+## Two-phase commit protocol
 The node control logic implements a two-phase commit protocol mechanism to enable route reservation. This protocol can be schematized as the following state machine:
 
 |                                                              |                                  |
@@ -66,7 +67,7 @@ The test prototype uses the configuration shown in the figure. Specifically, the
 *Configuration setup*
 
 This was verified:
-- A route request is successful, for both routes, in case neither track circuit nor interchange is occupied.
+- A route request is successful, for both routes, in case neither track circuit nor railway switch is occupied.
 - The request of an itinerary fails, for both itineraries, in case the track circuit or the switch, or both, are occupied.
 - Sequential occupancy of the elements of a requested itinerary, followed by sequential release of the same elements, makes the itinerary available again.
 - Requesting a second route while a first route is requested or reserved fails.
@@ -74,13 +75,16 @@ This was verified:
 
 
 ## Modeling with Petri Net
-In addition to implementing the code capable of enabling the operation of the distributed interlocking system another main objective of this project was to create a model of the system using a Petri net. Petri nets, in fact, allow for very efficient modeling of systems in which there are choices and concurrent executions. In our design, the Petri net must provide an accurate and detailed representation of a distributed rail interlocking system, including both the physical components, such as trains, tracks and switches, and the communication components that play a crucial role in orchestrating operations. Given the need to model a physical system in which time plays a key role, it was decided to opt for an extension of the Petri net called the Timed Petri Net. Since in the VxWorks real-time operating system the scheduler allocates resources with a priority mechanism, providing the possibility of preemption between tasks, this possibility was also added in the model, through the use of Preemptive Timed Petri Net. The Oris Tool 1.0 developed by the University of Florence was used to create and analyze this network. This tool made it possible to:
+In addition to implementing the code capable of enabling the operation of the distributed interlocking system another main objective of this project was to create a model of the system using a Petri net. Petri nets, in fact, allow for very efficient modeling of systems in which there are choices and concurrent executions. In our design, the Petri net must provide an accurate and detailed representation of a distributed rail interlocking system, including both the physical components, such as trains, tracks and switches, and the communication components that play a crucial role in orchestrating operations. Given the need to model a physical system in which time plays a key role, it was decided to opt for an extension of the Petri net called the Timed Petri Net. Since in the VxWorks real-time operating system the scheduler allocates resources with a priority mechanism, providing the possibility of preemption between tasks, this possibility was also added in the model, through the use of Preemptive Timed Petri Net. The Oris Tool 1.0 developed by the Università degli Studi di Firenze was used to create and analyze this network.
+
+This tool made it possible to:
 - Enumerate the states reachable by the system,
 - Verify the correctness in order and execution time of each sub-part of a task (called transition) by going to analyze the execution logs of each node,
 - Verify compliance with the deadlines set for the execution of each task by analyzing the execution logs
 
---- PETRI NET SVG TO ADD ---
+The Petri net is shown below, with the different tasks and shared memory zones highlighted in different colors:
 
+![Petri net](./Docs/media/distributed-railway-interlocking-system-v-5-2.svg)
 
 ## Deadline
 An essential point in the development of the model was to go out and identify and quantify any time constraints that must be met to ensure that interlocking works properly. Some of these deadlines are for example:
@@ -103,15 +107,17 @@ Each node is equipped with an LED that shows the status and a button that, when 
 
 *Button and LED*
 
-## Software Setup
+## Getting started
 - The system was developed using Ubuntu 22.04
 - Raspberry Pi 4Bs running VxWorks 7 were used. This was accomplished by following the instructions on [Windriver's official website](https://labs.windriver.com/downloads/wrsdk-vxworks7-docs/README-raspberrypi4b.html)
 - Workbench 4 installation of VxWorks 7 is required
 - You proceed to clone this [github repo](https://github.com/albe9/distributed-railway-interlocking-system)
 - You need to download and extract the SDK for Raspberry Pi 4B from the [official VxWorks site](https://forums.windriver.com/t/vxworks-software-development-kit-sdk/43). The extraction must be done in the parent directory of the project (i.e. *parent_folder/distributed-railway-interlocking-system*). The SDK version 1.4 was used during development
-- Within the *connect* folder you must rename the *build_example.config* file to *build.config* and add the WindRiver installation path and the IP address of the host (PC simulating the train from which to send commands):
-
-    --- ADD FILE build.config ---
+- Within the *connect* folder you must rename the *build_example.config* file to *build.config* and add the WindRiver installation path and the IP address of the host (PC simulating the train from which to send commands) as shown in the code below:
+    ```
+    [WindRiver_path] : "/PATH/TO/INSTALLATION/WindRiver",
+    [Host_ip] : "192.168.1.203"
+    ```
   
 - You proceed to unzip the *rpivsb.rar* file so that the extracted contents are inside the git root (i.e. inside *distributed-railway-interlocking-system*)
 - We proceed to unzip the *vxWorks.zip* file so that the extracted contents are inside the *connect* folder
@@ -139,9 +145,53 @@ The functionality implemented in *./workbench.sh* can be used by running the com
 
 Note: These commands can be called in succession, e.g. to compile, connect, and load forms you can run *./workbench -bcl*
 
-## Example of use.
+## Usage example
 Once a terminal is started and placed in *connect* run *./workbench -bcl* to compile, connect to targets and load modules.  Open two terminals and run from terminal A *launch_host.sh* and from terminal B *launch_nodes.sh* to start the configuration and connection phase. From terminal A to ask node 1 to start the procedure to reserve route 2 on behalf of train 0 type the command *1 REQ;0;2.* and press enter.
 
---- ADD SCREENSHOT ---
+![Initialization and request](./Docs/media/launch_host_nodes.png)
+
+*Node initialization and requests for two different routes*
 
 ## References
+Fantechi Alessandro. *“Distributing the challenge of model checking interlocking control tables”*. 
+In: *Leveraging Applications of Formal Methods, Verification and Validation. Applications and Case Studies - 5th International Symposium, pp. 276–289, Heraclion, Crete, 15-18 October 2012*. Springer, Berlin, DEU, 2012.
+
+DOI: [10.1007/978-3-642-34032-1_26](https://doi.org/10.1007/978-3-642-34032-1_26)
+
+-----------
+
+Giacomo Bucci, Laura Carnevali, Lorenzo Ridi, and Enrico Vicario. *“Oris: A tool for modeling, verification and evaluation of real-time systems”*. In: *STTT  12 (Sept. 2010), pp. 391–403.*
+
+DOI: [10.1007/s10009-010-0156-8](https://doi.org/10.1007/s10009-010-0156-8)
+
+-----------
+
+Alessandro Fantechi, Anne Haxthausen, and Michel Nielsen. *“Model Checking Geographically Distributed Interlocking Systems Using UMC”*. In: *Jan. 2017, pp. 278–286.*
+
+DOI: [10.1109/PDP.2017.66](https://doi.org/10.1109/PDP.2017.66).
+
+
+# Project Authors
+
+This project was carried out for the course "Software Engineering for Embedded Systems" in the Advanced Computing curriculum of the Master of Science degree in Computer Engineering at the Università degli Studi di Firenze. 
+The project assignment and outline of system requirements were directed by: 
+* Laura Carnevali - Associate Professor - Università degli Studi di Firenze
+* Alessandro Fantechi - Full Professor - Università degli Studi di Firenze
+* Imad Zaza - Ph.D - Università degli Studi di Firenze
+
+
+## Project technical leads:
+
+* Damerini Jacopo - Student - Florence (Italy)
+* Filino Alessandro - Student - Florence (Italy)
+* Macaluso Alberto​ - Student - Florence (Italy)
+
+
+## Developers:
+
+* Damerini Jacopo - Student - Florence (Italy)
+* Filino Alessandro - Student - Florence (Italy)
+* Macaluso Alberto​ - Student - Florence (Italy)
+
+
+
