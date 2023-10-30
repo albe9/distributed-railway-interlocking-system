@@ -180,14 +180,14 @@ The project assignment and outline of system requirements were directed by:
 * Imad Zaza - Ph.D - Università degli Studi di Firenze
 
 
-## Project technical leads:
+## Project technical leads
 
 * Damerini Jacopo - Student - Florence (Italy)
 * Filino Alessandro - Student - Florence (Italy)
 * Macaluso Alberto​ - Student - Florence (Italy)
 
 
-## Developers:
+## Developers
 
 * Damerini Jacopo - Student - Florence (Italy)
 * Filino Alessandro - Student - Florence (Italy)
