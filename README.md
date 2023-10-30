@@ -6,7 +6,7 @@ Instead, in this project, a distributed system was considered, in which railroad
 
 The goal of this project was to write the code to create a working prototype of a distributed interlocking system and create a representation of the system through the formalism of a Petri net.
 
-![Prototype](./media/prototype.jpg)
+![Prototype](./Docs/media/prototype.jpg)
 
 *Prototype of the distributed railway interlocking system*
 
@@ -22,8 +22,8 @@ The node control logic implements a two-phase commit protocol mechanism to enabl
 
 |                                                              |                                  |
 | ------------------------------------------------------------ | -------------------------------- |
-| ![State machine track circuit](./media/state_machine1.jpg)   | State machine track circuit      |
-| ![State machine railroad switch](./media/state_machine2.jpg) | State machine railroad switch    |
+| ![State machine track circuit](./Docs/media/state_machine1.jpg)   | State machine track circuit      |
+| ![State machine railroad switch](./Docs/media/state_machine2.jpg) | State machine railroad switch    |
 
 **Legend state machines:**
 - req : incoming route request message
@@ -34,7 +34,7 @@ The node control logic implements a two-phase commit protocol mechanism to enabl
 
 
 The following is a diagram of the two phases that make up the two-phase commit protocol:
-![State machine railroad switch](./media/two_phase_commit.jpg)
+![State machine railroad switch](./Docs/media/two_phase_commit.jpg)
 
 *Two phase commit protocol*
 
