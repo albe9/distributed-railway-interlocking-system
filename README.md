@@ -1,5 +1,24 @@
 # distributed-railway-interlocking-system
 
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li><a href="About">About</a></li>
+    <li><a href="System architecture">System architecture</a></li>
+    <li><a href="Two-phase commit protocol">Two-phase commit protocol</a></li>
+    <li><a href="Taskset">Taskset</a></li>
+    <li><a href="Test configuration">Test configuration</a></li>
+    <li><a href="Modeling with Petri Net">Modeling with Petri Net</a></li>
+    <li><a href="Deadline">Deadline</a></li>
+    <li><a href="Hardware Setup">Hardware Setup</a></li>
+    <li><a href="Getting started">Getting started</a></li>
+    <li><a href="Workbench">Workbench</a></li>
+    <li><a href="Usage example">Usage example</a></li>
+    <li><a href="References">References</a></li>
+    <li><a href="Project Authors">Project Authors</a></li>
+  </ol>
+</details>
+
 ## About
 In the field of railway signaling, an interlocking is the signaling apparatus that prevents conflicting train movements in order to ensure traffic safety. Typically such a system is centralized and controls signals and switches in accordance with safety rules codified in current regulations.
 
